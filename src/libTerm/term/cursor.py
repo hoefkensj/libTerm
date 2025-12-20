@@ -129,6 +129,7 @@ class vCursor(Cursor):
 
 	def hide(__s, state=True):
 		if state:
+			import atexit
 			print('\x1b[?25l', end='', flush=True)
 			atexit.register(__s.show)
 		else:
