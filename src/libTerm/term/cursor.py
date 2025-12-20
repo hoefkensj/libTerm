@@ -37,6 +37,10 @@ class Cursor():
 	def xy(__s):
 		__s._xy=__s.__update__()
 		return __s._xy
+	@xy.setter
+	def xy(__s,coord):
+		print('\x1b[{y};{x}H'.format(**Coord(coord)), end='', flush=True)
+		__s.__update__()
 
 	def __update__(__s, get='XY'):
 		def Parser():
