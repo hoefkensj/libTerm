@@ -5,6 +5,7 @@ from collections import namedtuple
 import re
 from libTerm.term.types import Coord
 from time import time_ns
+
 import sys
 @dataclass()
 class ANSI_Cursor(str, Enum):
@@ -42,6 +43,13 @@ class Cursor():
 		print('\x1b[{y};{x}H'.format(**Coord(coord)), end='', flush=True)
 		__s.__update__()
 
+	def storeloc(s):
+		s.history=[s.xy,*s.history][:-1]
+	def restoreloc(s):
+		xy=s.history.pop(0)
+		s.history.append(None)
+		s.xy=xy
+
 	def __update__(__s, get='XY'):
 		def Parser():
 			buf = ' '
@@ -74,6 +82,7 @@ class Cursor():
 
 	def hide(__s, state=True):
 		if state:
+			import atexit
 			print('\x1b[?25l', end='', flush=True)
 			atexit.register(__s.show)
 		else:

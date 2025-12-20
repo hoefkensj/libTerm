@@ -145,14 +145,14 @@ class Term():
 
 	def __mode__(s,mode=None):
 		def Normal():
-			# s.cursor.show(True)
+			s.cursor.show(True)
 			s.echo(True)
 			s.canonical(True)
 			s.tcsetattr(s.attrs.init)
 			s._mode = nmodi.get('normal')
 
 		def Ctl():
-			# s.cursor.show(False)
+			s.cursor.show(False)
 			s.echo(False)
 			s.canonical(False)
 			s._mode = nmodi.get('ctl')
