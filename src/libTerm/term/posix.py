@@ -61,11 +61,6 @@ class Term():
 		s.fd        = sys.stdin.fileno()
 		s.tty       = os.ttyname(s.fd)
 
-		s.TCSAFLUSH = termios.TCSAFLUSH
-		s.ECHO      = termios.ECHO
-		s.ICANON    = termios.ICANON
-		s.TCSANOW   = termios.TCSANOW
-
 		s.attrs     = TermAttrs()
 
 
@@ -131,16 +126,16 @@ class Term():
 
 	def echo(s,enable=False):
 		s.attrs.stage()
-		s.attrs.staged[3] &= ~s.ECHO
+		s.attrs.staged[3] &= ~ECHO
 		if enable:
-			s.attrs.staged[3] |= s.ECHO
+			s.attrs.staged[3] |= ECHO
 		s.update()
 
 	def canonical(s,enable):
 		s.attrs.stage()
-		s.attrs.staged[3] &= ~s.ICANON
+		s.attrs.staged[3] &= ~ICANON
 		if enable:
-			s.attrs.staged[3] |= s.ICANON
+			s.attrs.staged[3] |= ICANON
 		s.update()
 
 	def __mode__(s,mode=None):

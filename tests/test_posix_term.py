@@ -1,7 +1,8 @@
 import importlib
 import sys
 import unittest
-
+from libTerm import Term
+from libTerm.term.types import Coord
 POSIX_MODULE = 'libTerm.term.posix'
 
 TTY = sys.stdin.isatty()
@@ -10,8 +11,8 @@ TTY = sys.stdin.isatty()
 class TestPosixTerm(unittest.TestCase):
 	def setUp(self):
 		# Create a Term instance that will use the real terminal APIs.
-		mod = importlib.import_module(POSIX_MODULE)
-		self.Term = mod.Term
+		# mod = importlib.import_module(POSIX_MODULE)
+		self.Term = Term
 		self.t = self.Term()
 
 	def tearDown(self):
@@ -68,5 +69,14 @@ class TestPosixTerm(unittest.TestCase):
 		self.assertEqual(list(loc), [5, 6])
 		self.assertEqual(dict(**loc), {'x': 5, 'y': 6})
 
+	def test_cursor(self):
+		xy=self.t.cursor.xy
+		self.assertIsInstance(xy,Coord)
+		self.t.mode('normal')
+		self.t.echo(True)
+		self.t.cursor.show(False)
+		self.t.cursor.hide(False)
+		self.t.cursor.storeloc()
+		self.t.cursor.restoreloc()
 if __name__ == '__main__':
 	unittest.main()

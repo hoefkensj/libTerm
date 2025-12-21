@@ -36,21 +36,25 @@ class Cursor():
 		__s.init = __s.__update__()
 	@property
 	def xy(__s):
-		__s._xy=__s.__update__()
-		return __s._xy
+		xy=__s.__update__()
+		return xy
 	@xy.setter
 	def xy(__s,coord):
-		print('\x1b[{y};{x}H'.format(**Coord(coord)), end='', flush=True)
+		print('\x1b[{y};{x}H'.format(**coord), end='', flush=True)
 		__s.__update__()
 
 	def storeloc(s):
-		s.history=[s.xy,*s.history][:-1]
+		xy=s.xy
+		s.history=[xy,*s.history][:-1]
+		return xy
+
 	def restoreloc(s):
 		xy=s.history.pop(0)
 		s.history.append(None)
 		s.xy=xy
+		return xy
 
-	def __update__(__s, get='XY'):
+	def __update__(__s):
 		def Parser():
 			buf = ' '
 			while buf[-1] != "R":
@@ -90,13 +94,13 @@ class Cursor():
 
 	@property
 	def x(__s):
-		__s.X=__s.__update__('X')
-		return __s.X
+		xy=__s.__update__()
+		return xy.x
 
 	@property
 	def y(__s):
-		__s.Y=__s.__update__('Y')
-		return __s.Y
+		xy=__s.__update__()
+		return xy.y
 
 
 class vCursor(Cursor):
