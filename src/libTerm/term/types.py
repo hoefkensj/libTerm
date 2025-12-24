@@ -197,3 +197,42 @@ class Colors():
 			__s.__setattr__(ground, result)
 
 		return {'fg': __s.fg, 'bg': __s.bg}
+
+class Store():
+	def __init__(__s, **k):
+		__s._storage = {}
+		__s._pointer = 0
+
+	def save(__s,value):
+		index=len(__s._storage)
+		__s._storage[index] = value
+		__s._pointer+=1
+		return {index:value}
+
+	def load(__s,index):
+		return __s._storage.get(index, None)
+
+	def pop(__s,index=None):
+		if index is None:
+			index = len(__s._storage)
+		__s._pointer-=1
+		return __s._storage.pop(index, None)
+
+	def clear(__s):
+		__s._storage.clear()
+		__s._pointer=0
+
+	def prev(__s):
+		value=__s._storage.get(__s._pointer)
+		__s._pointer-=1 or 1
+		return value
+
+	def next(__s):
+		if __s._pointer == len(__s._storage):
+			__s._pointer = len(__s._storage)
+		else:
+			__s._pointer+=1
+		return __s._storage.get(__s._pointer)
+
+	def __len__(__s):
+		return len(__s._storage)

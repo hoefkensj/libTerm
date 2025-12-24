@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from collections import namedtuple
 from libTerm.term.types import Coord,color, Size,Colors
-from libTerm.term.cursor import  Cursor, vCursor
+from libTerm.term.cursor import  Cursor
 
 
 
@@ -69,10 +69,10 @@ class Term():
 		s.attrs.stack += [list(s.attrs.active)]
 
 		s._mode     = 0
+		s.cursor    = Cursor(s)
 		s.mode      = s.__mode__
 		atexit.register(s.mode,'normal')
-		s.cursor    = Cursor(s)
-		s.vcursors  = {0:vCursor(s,s.cursor)}
+		# s.vcursors  = {0:vCursor(s,s.cursor)}
 		s.size      = Size(parent=s)
 		s.color     = Colors(parent=s)
 

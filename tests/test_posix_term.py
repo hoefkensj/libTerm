@@ -28,7 +28,6 @@ class TestPosixTerm(unittest.TestCase):
 		self.assertTrue(hasattr(self.t, 'fd'))
 		self.assertTrue(hasattr(self.t, 'tty'))
 		self.assertTrue(hasattr(self.t, 'cursor'))
-		self.assertTrue(hasattr(self.t, 'vcursors'))
 		self.assertTrue(hasattr(self.t, 'size'))
 		self.assertTrue(hasattr(self.t, 'color'))
 		self.assertTrue(isinstance(self.t.attrs.active, list))
@@ -76,7 +75,7 @@ class TestPosixTerm(unittest.TestCase):
 		self.t.echo(True)
 		self.t.cursor.show(False)
 		self.t.cursor.hide(False)
-		self.t.cursor.storeloc()
-		self.t.cursor.restoreloc()
+		self.t.cursor.save()
+		self.t.cursor.load()
 if __name__ == '__main__':
 	unittest.main()
