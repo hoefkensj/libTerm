@@ -1,13 +1,12 @@
-
-
-from collections import namedtuple
-import re
-from libTerm.term.types import Coord
-from time import time_ns
 import sys
-
-from dataclasses import dataclass
+import re
 from enum import Enum
+from dataclasses import dataclass
+from collections import namedtuple
+from time import time_ns
+from libTerm.term.types import Coord,Store
+
+
 @dataclass()
 class Move(str,Enum):
 	abs= '\x1b[{Y};{X}H'
@@ -133,7 +132,18 @@ class Cursor():
 	def y(__s):
 		y=__s.xy.y
 		return y
-
+	def save(s):
+		return s.store.save(s.xy)
+	def load(s,n):
+		coord=s.store.load(n)
+		s.xy=coord
+		return coord
+	def undo(s):
+		current=s.store.selected
+		coord=s.store._store[current]
+		s.xy=coord
+		s.store.prev()
+		return coord
 
 #TODO: class vCursor(Cursor):
 # 	def __init__(__s, term,cursor):

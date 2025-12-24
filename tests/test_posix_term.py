@@ -69,13 +69,31 @@ class TestPosixTerm(unittest.TestCase):
 		self.assertEqual(dict(**loc), {'x': 5, 'y': 6})
 
 	def test_cursor(self):
+		import time
 		xy=self.t.cursor.xy
 		self.assertIsInstance(xy,Coord)
 		self.t.mode('normal')
 		self.t.echo(True)
 		self.t.cursor.show(False)
 		self.t.cursor.hide(False)
-		self.t.cursor.save()
-		self.t.cursor.load()
+		print('\x1b[B\x1b[D▌',flush=True)
+		for i in range(8):
+			for i in range(20):
+				print('\x1b[B\x1b[D░' 	,end='',flush=True)
+				val=self.t.cursor.save();time.sleep(0.01)
+			print('\x1b[D\x1b[B░░░░░░',end='',flush=True)
+			val = self.t.cursor.save();	time.sleep(0.01)
+
+			for i in range(20):
+				print('\x1b[A\x1b[D░',end='',flush=True)
+				val = self.t.cursor.save();	time.sleep(0.01)
+			print('\x1b[A\x1b[D░░░░░░',end='',flush=True)
+			val = self.t.cursor.save();	time.sleep(0.01)
+
+		for i in range(320):
+			self.t.cursor.undo()
+			print('\x1b[D ',end='',flush=True)
+			time.sleep(0.01)
+
 if __name__ == '__main__':
 	unittest.main()

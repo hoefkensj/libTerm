@@ -1,3 +1,4 @@
+import select
 from dataclasses import dataclass,field
 from collections import namedtuple
 from os import get_terminal_size
@@ -198,41 +199,143 @@ class Colors():
 
 		return {'fg': __s.fg, 'bg': __s.bg}
 
+class Selector():
+
+	def __init__(s,n, **k):
+		s.selection = k.get('start', 0)
+		s.n=n
+		s.prev = lambda: s.selector(-1)
+		s.next = lambda: s.selector(1)
+		s.read = lambda: s.selector(0)
+		s.write = s.setval
+
+	def wrap(s,ss):
+		return  ~(~ss * -~-s.n) % s.n
+
+	def selector(s,i):
+		s.selection = s.wrap(s.selection + i)
+		return s.selection
+
+	def setval(s,i):
+		s.selection = s.wrap(i)
+		return s.selection
+
+
+
+
+
 class Store():
 	def __init__(__s, **k):
-		__s._storage = {}
-		__s._pointer = 0
+		"""Simple contiguous store backed by a list of values.
 
-	def save(__s,value):
-		index=len(__s._storage)
-		__s._storage[index] = value
-		__s._pointer+=1
-		return {index:value}
+		Keys are 1-based integers (1..n). Internally values are stored in
+		`__s._values` where index 0 corresponds to key 1.
 
-	def load(__s,index):
-		return __s._storage.get(index, None)
+		Pointer semantics:
+		- __s._pointer ranges from -1 .. len(__s._values)
+		- -1 means before-first
+		- 0..len-1 means index into values (current)
+		- len means after-last
 
-	def pop(__s,index=None):
-		if index is None:
-			index = len(__s._storage)
-		__s._pointer-=1
-		return __s._storage.pop(index, None)
+		By default the store has unlimited size; use `setmax` to bound it.
+		"""
+		__s._store = {0:None,}
+		__s.tail=1
+		__s.size=lambda:len(__s._store)
+		__s._current= 0
+		__s._pointer = lambda:__s._values.get(__s._current)
+		__s._max = None
+
+		__s.select=Selector(__s.size())
+		__s.selected = __s.select.read()
+
+	def _next_key(__s):
+		"""Return next integer key (1-based) without inserting."""
+		result = len(__s._values) + 1
+		return result
+
+	def setmax(__s, maximum: int | None):
+		"""Set maximum number of stored items (None = unlimited)."""
+		result = None
+		if maximum is not None:
+			if not isinstance(maximum, int) or maximum < 1:
+				raise ValueError("maximum must be a positive int or None")
+		__s._max = maximum
+		return result
+
+	def save(__s, value):
+		__s._store[__s.size()]=value
+		__s.tail+=1
+		current=__s.select.read()
+		__s.select=Selector(__s.tail)
+		__s.select.write(current+1)
+		__s.selected = __s.select.read()
+		return __s.selected
+
+	def load(__s):
+		__s.selected=__s.select.read()
+		return __s._store[__s.selected]
+	def remove(__s, index: int):
+		result = None
+		pos = index - 1
+		if 0 <= pos < len(__s._values):
+			val = __s._values.pop(pos)
+			# adjust pointer
+			if __s._pointer > pos:
+				__s._pointer -= 1
+			elif __s._pointer == pos:
+				__s._pointer = max(pos - 1, -1)
+			if __s._pointer > len(__s._values):
+				__s._pointer = len(__s._values)
+			result = val
+		return result
+
+	def pop(__s, index: int | None = None):
+		"""Pop last inserted item if index is None, else remove by key.
+		Return popped value or None."""
+		result = None
+		if not __s._values:
+			result = None
+		else:
+			if index is None:
+				val = __s._values.pop()
+				if __s._pointer >= len(__s._values):
+					__s._pointer = len(__s._values)
+				result = val
+			else:
+				result = __s.remove(index)
+		return result
 
 	def clear(__s):
-		__s._storage.clear()
-		__s._pointer=0
+		"""Clear the store."""
+		result = None
+		__s._values.clear()
+		__s._pointer = 0
+		return result
 
 	def prev(__s):
-		value=__s._storage.get(__s._pointer)
-		__s._pointer-=1 or 1
-		return value
+		__s.selected=__s.select.prev()
+		return __s._store[__s.selected]
+
 
 	def next(__s):
-		if __s._pointer == len(__s._storage):
-			__s._pointer = len(__s._storage)
-		else:
-			__s._pointer+=1
-		return __s._storage.get(__s._pointer)
+		__s.selected=__s.select.next()
+		return __s._store[__s.selected]
+
+	def replace(__s, index: int, value):
+		"""Replace value in-place at given key. Return True if replaced else False."""
+		result = False
+		pos = index - 1
+		if 0 <= pos < len(__s._values):
+			__s._values[pos] = value
+			result = True
+		return result
 
 	def __len__(__s):
-		return len(__s._storage)
+		result = len(__s._values)
+		return result
+
+	def keys(__s):
+		"""Return the list of integer keys (1-based)."""
+		result = list(range(1, len(__s._values) + 1))
+		return result

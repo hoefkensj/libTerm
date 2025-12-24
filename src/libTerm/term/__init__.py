@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-import os
+import os,sys
+
 if os.name == 'nt':
 	from libTerm.term.winnt import Term
 else:

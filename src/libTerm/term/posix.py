@@ -1,10 +1,12 @@
 #!/usr/bin/env python
+import io
 import os
 import termios
 import tty
 import atexit
 import re
 import sys
+from statistics import stdev
 from time import time_ns
 from shutil import get_terminal_size
 from dataclasses import dataclass, field
@@ -12,7 +14,7 @@ from enum import Enum
 from collections import namedtuple
 from libTerm.term.types import Coord,color, Size,Colors
 from libTerm.term.cursor import  Cursor
-
+from contextlib import suppress
 
 
 # Indices for termios list.
@@ -57,9 +59,10 @@ class Term():
 		# super().__init__()
 		s.pid       = os.getpid()
 		s.ppid      = os.getpid()
-		
-		s.fd        = sys.stdin.fileno()
-		s.tty       = os.ttyname(s.fd)
+		s.fd		= sys.__stdin__.fileno()
+		with suppress(io.UnsupportedOperation):
+			s.fd        = sys.stdin.fileno()
+			s.tty       = os.ttyname(s.fd)
 
 		s.attrs     = TermAttrs()
 
