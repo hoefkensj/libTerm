@@ -248,13 +248,9 @@ class Store():
 
 		__s.select=Selector(__s.size())
 		__s.selected = __s.select.read()
+		__s._value=__s._store[__s.selected]
 
-	def _next_key(__s):
-		"""Return next integer key (1-based) without inserting."""
-		result = len(__s._values) + 1
-		return result
-
-	def setmax(__s, maximum: int | None):
+	def setmax(__s, maximum):
 		"""Set maximum number of stored items (None = unlimited)."""
 		result = None
 		if maximum is not None:
@@ -262,56 +258,45 @@ class Store():
 				raise ValueError("maximum must be a positive int or None")
 		__s._max = maximum
 		return result
+	def read(__s):
+		__s.selected = __s.select.read()
+		return __s.selected
+	def write(__s,index):
+		__s.select.write(index)
+		__s.selected = __s.select.read()
+		return __s.selected
+	@property
+	def value(__s):
+		__s.read()
+		__s._value=__s._store[__s.selected]
+		return __s._value
 
 	def save(__s, value):
 		__s._store[__s.size()]=value
 		__s.tail+=1
-		current=__s.select.read()
+		current=__s.read()
 		__s.select=Selector(__s.tail)
-		__s.select.write(current+1)
-		__s.selected = __s.select.read()
+		__s.write(current+1)
+		__s.read()
 		return __s.selected
 
 	def load(__s):
-		__s.selected=__s.select.read()
+		__s.read()
 		return __s._store[__s.selected]
-	def remove(__s, index: int):
-		result = None
-		pos = index - 1
-		if 0 <= pos < len(__s._values):
-			val = __s._values.pop(pos)
-			# adjust pointer
-			if __s._pointer > pos:
-				__s._pointer -= 1
-			elif __s._pointer == pos:
-				__s._pointer = max(pos - 1, -1)
-			if __s._pointer > len(__s._values):
-				__s._pointer = len(__s._values)
-			result = val
-		return result
 
-	def pop(__s, index: int | None = None):
-		"""Pop last inserted item if index is None, else remove by key.
-		Return popped value or None."""
-		result = None
-		if not __s._values:
-			result = None
-		else:
-			if index is None:
-				val = __s._values.pop()
-				if __s._pointer >= len(__s._values):
-					__s._pointer = len(__s._values)
-				result = val
-			else:
-				result = __s.remove(index)
-		return result
+	def remove(__s):
+		__s.read()
+		value=__s._store.pop(__s.selected)
+		return value
 
 	def clear(__s):
-		"""Clear the store."""
 		result = None
-		__s._values.clear()
-		__s._pointer = 0
-		return result
+		__s._store.clear()
+		__s._tail = 1
+		__s._current=0
+		__s.select=Selector(__s.size())
+		__s.read()
+		return
 
 	def prev(__s):
 		__s.selected=__s.select.prev()
@@ -323,13 +308,9 @@ class Store():
 		return __s._store[__s.selected]
 
 	def replace(__s, index: int, value):
-		"""Replace value in-place at given key. Return True if replaced else False."""
-		result = False
-		pos = index - 1
-		if 0 <= pos < len(__s._values):
-			__s._values[pos] = value
-			result = True
-		return result
+		__s.read()
+		__s._store[__s.selected]=value
+
 
 	def __len__(__s):
 		result = len(__s._values)

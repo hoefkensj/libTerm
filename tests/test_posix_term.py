@@ -81,19 +81,58 @@ class TestPosixTerm(unittest.TestCase):
 			for i in range(20):
 				print('\x1b[B\x1b[D░' 	,end='',flush=True)
 				val=self.t.cursor.save();time.sleep(0.01)
-			print('\x1b[D\x1b[B░░░░░░',end='',flush=True)
+			val = self.t.cursor.save();	time.sleep(0.01)
+			for i in range(6):
+				val=self.t.cursor.save();time.sleep(0.01)
+				print('░',end='',flush=True)
+
 			val = self.t.cursor.save();	time.sleep(0.01)
 
 			for i in range(20):
 				print('\x1b[A\x1b[D░',end='',flush=True)
 				val = self.t.cursor.save();	time.sleep(0.01)
-			print('\x1b[A\x1b[D░░░░░░',end='',flush=True)
+			for i in range(6):
+				val=self.t.cursor.save();time.sleep(0.01)
+				print('░',end='',flush=True)
 			val = self.t.cursor.save();	time.sleep(0.01)
 
-		for i in range(320):
+		for i in range(380):
 			self.t.cursor.undo()
 			print('\x1b[D ',end='',flush=True)
 			time.sleep(0.01)
+	def test_cursor2(self):
+		import time
+		xy=self.t.cursor.xy
+		self.assertIsInstance(xy,Coord)
+		self.t.mode('normal')
+		self.t.echo(True)
+		self.t.cursor.show(False)
+		self.t.cursor.hide(False)
+		self.t.cursor.hide(True)
+		print('\x1b[B\x1b[D▌',flush=True)
+		for i in range(8):
+			for i in range(20):
+				print('\x1b[B\x1b[D\x1b[38;2;0;255;0m░\x1b[m' 	,end='',flush=True)
+				val=self.t.cursor.save()
+			val = self.t.cursor.save();
+			for i in range(6):
+				val=self.t.cursor.save()
+				print('░',end='',flush=True)
+
+			val = self.t.cursor.save();
+
+			for i in range(20):
+				print('\x1b[A\x1b[D░',end='',flush=True)
+				val = self.t.cursor.save();
+			for i in range(6):
+				val=self.t.cursor.save();
+				print('░',end='',flush=True)
+			val = self.t.cursor.save();
+
+		for i in range(380):
+			self.t.cursor.undo()
+			print('\x1b[D ',end='',flush=True)
+			time.sleep(0)
 
 if __name__ == '__main__':
 	unittest.main()

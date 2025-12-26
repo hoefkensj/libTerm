@@ -5,12 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="bc73ff2f-338a-4651-a389-91491c2041b6" name="Changes" comment="added tests , prolly not that usefull as its only testing if stuff exists , and written by copilot">
+      <change beforePath="$PROJECT_DIR$/.idea/libTerm.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/libTerm.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/libTerm/term/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/term/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/libTerm/term/cursor.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/term/cursor.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/libTerm/term/posix.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/term/posix.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/libTerm/term/types.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/term/types.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/test_cursor.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_cursor.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/test.py" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/tests/test_posix_term.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_posix_term.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -34,12 +32,12 @@
     &quot;assignee&quot;: &quot;hoefkensj&quot;
   }
 }</component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "git@github.com:hoefkensj/libTerm.git",
-    "accountId": "83115fc6-e880-4ff2-ba16-86683450c01f"
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;git@github.com:hoefkensj/libTerm.git&quot;,
+    &quot;accountId&quot;: &quot;83115fc6-e880-4ff2-ba16-86683450c01f&quot;
   }
-}]]></component>
+}</component>
   <component name="HighlightingSettingsPerFile">
     <setting file="file://$USER_HOME$/.cache/JetBrains/PyCharmCE2025.1/python_stubs/1055943265/termios.py" root0="SKIP_INSPECTION" />
   </component>
@@ -54,30 +52,30 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "Python tests.Python tests for test_cursor.TestCursor.executor": "Run",
-    "Python tests.Python tests for test_cursor.TestCursor.test_ansi_enum_repr.executor": "Run",
-    "Python tests.Python tests for test_cursor.TestCursor.test_cursor.executor": "Run",
-    "Python tests.Python tests for test_posix_term.TestPosixTerm.executor": "Run",
-    "Python tests.Python tests for test_posix_term.TestPosixTerm.test_cursor.executor": "Run",
-    "Python tests.Python tests in test_cursor.py.executor": "Run",
-    "Python tests.Python tests in test_posix_term.py.executor": "Run",
-    "Python.__init__ (1).executor": "Run",
-    "Python.__init__.executor": "Run",
-    "Python.python -m build.executor": "Run",
-    "Python.python -m twine upload dist/*.executor": "Run",
-    "Python.test.executor": "Run",
-    "Python.types.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "master",
-    "last_opened_file_path": "J:/libTerm",
-    "settings.editor.selected.configurable": "com.github.copilot.settings.customization.CustomizationConfigurable"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;Python tests.Python tests for test_cursor.TestCursor.executor&quot;: &quot;Run&quot;,
+    &quot;Python tests.Python tests for test_cursor.TestCursor.test_ansi_enum_repr.executor&quot;: &quot;Run&quot;,
+    &quot;Python tests.Python tests for test_cursor.TestCursor.test_cursor.executor&quot;: &quot;Run&quot;,
+    &quot;Python tests.Python tests for test_posix_term.TestPosixTerm.executor&quot;: &quot;Run&quot;,
+    &quot;Python tests.Python tests for test_posix_term.TestPosixTerm.test_cursor.executor&quot;: &quot;Run&quot;,
+    &quot;Python tests.Python tests in test_cursor.py.executor&quot;: &quot;Run&quot;,
+    &quot;Python tests.Python tests in test_posix_term.py.executor&quot;: &quot;Run&quot;,
+    &quot;Python.__init__ (1).executor&quot;: &quot;Run&quot;,
+    &quot;Python.__init__.executor&quot;: &quot;Run&quot;,
+    &quot;Python.python -m build.executor&quot;: &quot;Run&quot;,
+    &quot;Python.python -m twine upload dist/*.executor&quot;: &quot;Run&quot;,
+    &quot;Python.test.executor&quot;: &quot;Run&quot;,
+    &quot;Python.types.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/run/media/jeroen/CCCOMA_X64FRE_EN-GB_DV9/python/libTerm/.local/venvs/x64.linux.cpython-3.12.9/bin/python&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="H:\libTerm" />
@@ -87,7 +85,7 @@
       <recent name="$PROJECT_DIR$/.local/venvs" />
     </key>
   </component>
-  <component name="RunManager" selected="Python tests.Python tests for test_cursor.TestCursor.test_cursor">
+  <component name="RunManager" selected="Python tests.Python tests for test_posix_term.TestPosixTerm.test_cursor">
     <configuration name="types" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="libTerm" />
       <option name="ENV_FILES" value="" />
@@ -125,21 +123,6 @@
       <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
-    <configuration name="Python tests for test_cursor.TestCursor.test_ansi_enum_repr" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
-      <module name="libTerm" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/tests" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;test_cursor.TestCursor.test_ansi_enum_repr&quot;" />
-      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
-      <method v="2" />
-    </configuration>
     <configuration name="Python tests for test_cursor.TestCursor.test_cursor" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
       <module name="libTerm" />
       <option name="ENV_FILES" value="" />
@@ -152,6 +135,21 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <option name="_new_additionalArguments" value="&quot;&quot;" />
       <option name="_new_target" value="&quot;test_cursor.TestCursor.test_cursor&quot;" />
+      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
+      <method v="2" />
+    </configuration>
+    <configuration name="Python tests for test_posix_term.TestPosixTerm.test_cursor" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
+      <module name="libTerm" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/tests" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="_new_additionalArguments" value="&quot;&quot;" />
+      <option name="_new_target" value="&quot;test_posix_term.TestPosixTerm.test_cursor&quot;" />
       <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
@@ -172,11 +170,11 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python tests.Python tests for test_cursor.TestCursor.test_cursor" />
+        <item itemvalue="Python tests.Python tests for test_posix_term.TestPosixTerm.test_cursor" />
         <item itemvalue="Python tests.Python tests in test_cursor.py" />
+        <item itemvalue="Python tests.Python tests for test_cursor.TestCursor.test_cursor" />
         <item itemvalue="Python tests.Python tests for test_cursor.TestCursor" />
         <item itemvalue="Python.types" />
-        <item itemvalue="Python tests.Python tests for test_cursor.TestCursor.test_ansi_enum_repr" />
       </list>
     </recent_temporary>
   </component>
