@@ -4,14 +4,14 @@ import sys
 import msvcrt
 import atexit
 import struct
-from libTerm.term.types import color
+from libTerm.term.types import Color
 from libTerm.term.types import Size
 
 class Colors:
 	def __init__(s,**k):
 		s.parent = k.get('parent')
-		s.fg = color(255, 255, 255)
-		s.bg = color(0, 0, 0)
+		s.fg = Color(255, 255, 255)
+		s.bg = Color(0, 0, 0)
 		s.refresh()
 	def refresh(s):
 		# Windows API constants

@@ -6,18 +6,18 @@ from  time import sleep, time_ns
 import sys
 
 
-@dataclass()
+@dataclass(frozen=True)
 class Coord(namedtuple('Coord', ['x', 'y'])):
 	__module__ = None
 	__qualname__='Coord'
 	_x: int = field(default=0)
 	_y: int = field(default=0)
 
-	def __str__(s):
+	def str__(s):
 		return f'\x1b[{s.y + 1};{s.x + 1}H'
 
 	def __repr__(s):
-		return f"{s.__class__.__name__}({s.x}, {s.y})"
+		return f'{s.__class__.__name__}({s.x}, {s.y})'
 
 	def __len__(s):
 		return 2
@@ -33,11 +33,6 @@ class Coord(namedtuple('Coord', ['x', 'y'])):
 		if value is None:
 			raise KeyError('index must be int 0 or 1 or str "x" or "y" ')
 		return value
-
-
-	def keys(s):
-		return ('x', 'y')
-
 	def __add__(s, other):
 		if isinstance(other,Coord):
 			x=s.x+other.x
@@ -48,9 +43,14 @@ class Coord(namedtuple('Coord', ['x', 'y'])):
 			y=s.y+other.imag
 			return Coord(x,y)
 		elif isinstance(other,str):
-			return f'{s.__str__()}{other}'
+			return f'{s.str__()}{other}'
 		else:
-			raise TypeError(f"cannot add {type(s)} to {type(other)}")
+			raise TypeError(f'cannot add {type(s)} to {type(other)}')
+
+
+	def keys(s):
+		return ('x', 'y')
+
 
 	@property
 	def xy(s) -> tuple[int, int]:
@@ -66,138 +66,117 @@ class Coord(namedtuple('Coord', ['x', 'y'])):
 
 
 @dataclass(frozen=True)
-class color:
-	R: int = field(default=0, metadata={"range": (0, 65535)})
-	G: int = field(default=0, metadata={"range": (0, 65535)})
-	B: int = field(default=0, metadata={"range": (0, 65535)})
-	BIT: int = field(default=8, metadata={"set": (4, 8, 16, 32)})
+class Color:
+	R: int = field(default=0, metadata={'range': (0, 65535)})
+	G: int = field(default=0, metadata={'range': (0, 65535)})
+	B: int = field(default=0, metadata={'range': (0, 65535)})
+	BIT: int = field(default=8, metadata={'set': (4, 8, 16, 32)})
 
-	def __post_init__(self):
-		for attr_name in ("R", "G", "B"):
-			value = getattr(self, attr_name)
+	def __post_init__(s):
+		rgb_error='{rgb} must be an integer between 0 and 65535. Got {value}.'
+		bit_error='{rgb} must be one of 4,8,16,32. Got {value}.'
+		for rgb in ('R', 'G', 'B'):
+			value = getattr(s, rgb)
 			if not isinstance(value, int):
-				raise ValueError(f"{attr_name.upper()} must be an integer between 0 and 65535. Got {value}.")
-		if not isinstance(getattr(self, "BIT"), int):
-			raise ValueError(f"{attr_name.upper()} must be one of 4,8,16,32. Got {value}.")
+				raise ValueError(rgb_error.format(rgb=rgb.upper(),value=value))
+		if not isinstance(getattr(s, 'BIT'), int):
+			raise ValueError(bit_error.format(rgb=rgb.upper(),value=value))
 
 	@property
-	def RGB(self) -> tuple[int, int, int]:
-		return (self.R, self.G, self.B)
-
-# @dataclass()
-# class TermCo(namedtuple('Co',['x','y'])):
-# 	x:int=field(default=0)
-# 	y:int=field(default=0)
-# class Line(namedtuple('Line',['a','b'])):
-# 	a:Co=field(default_factory=Co)
-# 	b:Co=field(default_factory=Co)
-# 	@classmethod
-# 	def __add__(s, o):
-# 		if isinstance(o,Line):
-# 			if len(s.a)!=0 and len(s.b)!=0:
-# 				lenx=abs(s.b.x-s.a.x)+abs(o.b.x-o.a.x)
-# 				leny=abs(s.b.y-s.a.y)+abs(o.b.y-o.a.y)
-# 				L=Line(s.a,Co(s.a.x+lenx,s.a.y+leny))
-# 			else:
-# 				return 0
-#
-# 	def __len__(s):
-# 		if len(s.a) != 0 and len(s.b) != 0:
-# 			lenx = abs(s.b.x - s.a.x) + abs(o.b.x - o.a.x)
-# 			leny = abs(s.b.y - s.a.y) + abs(o.b.y - o.a.y)
-# 			return ((lenx**2+leny**2)**(1/2))
+	def RGB(s) -> tuple[int, int, int]:
+		return (s.R, s.G, s.B)
 
 class Size():
-	def __init__(__s, **k):
-		__s.parent = k.get('parent')
-		__s.getsize = get_terminal_size
-		__s.time = None
-		__s.last = None
-		__s.xy = Coord(1, 1)
-		__s._tmp = Coord(1, 1)
-		__s.rows = 1
-		__s.cols = 1
+	def __init__(s, **k):
+		s.term = k.get('term')
+		s.getsize = get_terminal_size
+		s.time = None
+		s.last = None
+		s.xy = Coord(1, 1)
+		s._tmp = Coord(1, 1)
+		s.rows = 1
+		s.cols = 1
 
-		__s.history = []
-		__s.changed = False
-		__s.changing = False
-
-		__s.__kwargs__(**k)
-		__s.__update__()
+		s.history = []
+		s.changed = False
+		s.changing = False
+		s.__kwargs__(**k)
+		s.__update__()
 
 	@property
-	def width(__s):
-		__s.__update__()
-		return __s.cols
+	def width(s):
+		s.__update__()
+		return s.cols
 	@property
-	def height(__s):
-		__s.__update__()
-		return __s.rows
+	def height(s):
+		s.__update__()
+		return s.rows
 	@property
-	def rc(__s):
-		__s.__update__()
-		return (__s.cols, __s.rows)
+	def rc(s):
+		s.__update__()
+		return (s.cols, s.rows)
 
-	def __kwargs__(__s, **k):
-		__s.term = k.get('parent')
+	def __kwargs__(s, **k):
+		s.term = k.get('term')
 
-	def __update__(__s):
-		if __s.time is None:
-			__s.last = time_ns()
-		size = Coord(*__s.getsize())
-		if size != __s.xy:
-			if size != __s._tmp:
-				__s.changing = True
-				__s._tmp = size
-				__s._tmptime = time_ns()
-			if size == __s._tmp:
-				if (time_ns() - __s._tmptime) * 1e6 > 500:
-					__s.changing = False
-					__s.changed = True
-					__s.history += [__s.xy]
-					__s.xy = size
-					__s.rows = __s.xy.y
-					__s.cols = __s.xy.x
+	def __update__(s):
+		if s.time is None:
+			s.last = time_ns()
+		size = Coord(*s.getsize())
+		if size != s.xy:
+			if size != s._tmp:
+				s.changing = True
+				s._tmp = size
+				s._tmptime = time_ns()
+			if size == s._tmp:
+				if (time_ns() - s._tmptime) * 1e6 > 500:
+					s.changing = False
+					s.changed = True
+					s.history += [s.xy]
+					s.xy = size
+					s.rows = s.xy.y
+					s.cols = s.xy.x
 				else:
-					__s._tmp = size
-		if size == __s.xy:
-			__s.changed = False
+					s._tmp = size
+		if size == s.xy:
+			s.changed = False
 
-class Colors():
-	def __init__(__s, **k):
-		__s.parent = None
-		__s.specs = {'fg': 10, 'bg': 11}
-		__s._ansi = '\x1b]{spec};?\a'
-		__s.__kwargs__(**k)
-		__s.fg = color(255, 255, 255)
-		__s.bg = color(0, 0, 0)
-		__s.init = __s.__update__()
-
-	def __kwargs__(__s, **k):
-		__s.term = k.get('parent')
-
-	@staticmethod
-	def _ansiparser_():
-		buf = ''
-		try:
-			for i in range(23):
-				buf += sys.stdin.read(1)
-			rgb = buf.split(':')[1].split('/')
-			rgb = [int(i, base=16) for i in rgb]
-			rgb = color(*rgb, 16)
-		except Exception as E:
-			# print(E)
-			rgb = None
-		return rgb
-
-	def __update__(__s):
-		for ground in __s.specs:
-			result = None
-			while not result:
-				result = __s.term.ansi(__s._ansi.format(spec=__s.specs[ground]), __s._ansiparser_)
-			__s.__setattr__(ground, result)
-
-		return {'fg': __s.fg, 'bg': __s.bg}
+# class TermColors():
+# 	def __init__(s, **k):
+# 		s.term = None
+# 		s.specs = {'fg': 10, 'bg': 11}
+# 		s._ansi = '\x1b]{spec};?\a'
+# 		s.__kwargs__(**k)
+# 		s.fg = Color(255, 255, 255)
+# 		s.bg = Color(0, 0, 0)
+# 		s.__kwargs__(**k)
+# 		s.init = s.__update__()
+#
+# 	def __kwargs__(s, **k):
+# 		s.term = k.get('term')
+#
+# 	@staticmethod
+# 	def _ansiparser_():
+# 		buf = ''
+# 		try:
+# 			for i in range(23):
+# 				buf += sys.stdin.read(1)
+# 			rgb = buf.split(':')[1].split('/')
+# 			rgb = [int(i, base=16) for i in rgb]
+# 			rgb = Color(*rgb, 16)
+# 		except Exception as E:
+# 			# print(E)
+# 			rgb = None
+# 		return rgb
+#
+# 	def __update__(s):
+# 		for ground in s.specs:
+# 			result = None
+# 			while not result:
+# 				result = s.term.ansi(s._ansi.format(spec=s.specs[ground]), s._ansiparser_)
+# 			s.__setattr__(ground, result)
+#
+# 		return {'fg': s.fg, 'bg': s.bg}
 
 class Selector():
 
@@ -225,98 +204,98 @@ class Selector():
 
 
 class Store():
-	def __init__(__s, **k):
+	def __init__(s, **k):
 		"""Simple contiguous store backed by a list of values.
 
 		Keys are 1-based integers (1..n). Internally values are stored in
-		`__s._values` where index 0 corresponds to key 1.
+		`s._values` where index 0 corresponds to key 1.
 
 		Pointer semantics:
-		- __s._pointer ranges from -1 .. len(__s._values)
+		- s._pointer ranges from -1 .. len(s._values)
 		- -1 means before-first
 		- 0..len-1 means index into values (current)
 		- len means after-last
 
 		By default the store has unlimited size; use `setmax` to bound it.
 		"""
-		__s._store = {0:None,}
-		__s.tail=1
-		__s.size=lambda:len(__s._store)
-		__s._current= 0
-		__s._pointer = lambda:__s._values.get(__s._current)
-		__s._max = None
+		s._store = {0:None,}
+		s.tail=1
+		s.size=lambda:len(s._store)
+		s._current= 0
+		s._pointer = lambda:s._values.get(s._current)
+		s._max = None
 
-		__s.select=Selector(__s.size())
-		__s.selected = __s.select.read()
-		__s._value=__s._store[__s.selected]
+		s.select=Selector(s.size())
+		s.selected = s.select.read()
+		s._value=s._store[s.selected]
 
-	def setmax(__s, maximum):
+	def setmax(s, maximum):
 		"""Set maximum number of stored items (None = unlimited)."""
 		result = None
 		if maximum is not None:
 			if not isinstance(maximum, int) or maximum < 1:
-				raise ValueError("maximum must be a positive int or None")
-		__s._max = maximum
+				raise ValueError('maximum must be a positive int or None')
+		s._max = maximum
 		return result
-	def read(__s):
-		__s.selected = __s.select.read()
-		return __s.selected
-	def write(__s,index):
-		__s.select.write(index)
-		__s.selected = __s.select.read()
-		return __s.selected
+	def read(s):
+		s.selected = s.select.read()
+		return s.selected
+	def write(s,index):
+		s.select.write(index)
+		s.selected = s.select.read()
+		return s.selected
 	@property
-	def value(__s):
-		__s.read()
-		__s._value=__s._store[__s.selected]
-		return __s._value
+	def value(s):
+		s.read()
+		s._value=s._store[s.selected]
+		return s._value
 
-	def save(__s, value):
-		__s._store[__s.size()]=value
-		__s.tail+=1
-		current=__s.read()
-		__s.select=Selector(__s.tail)
-		__s.write(current+1)
-		__s.read()
-		return __s.selected
+	def save(s, value):
+		s._store[s.size()]=value
+		s.tail+=1
+		current=s.read()
+		s.select=Selector(s.tail)
+		s.write(current+1)
+		s.read()
+		return s.selected
 
-	def load(__s):
-		__s.read()
-		return __s._store[__s.selected]
+	def load(s):
+		s.read()
+		return s._store[s.selected]
 
-	def remove(__s):
-		__s.read()
-		value=__s._store.pop(__s.selected)
+	def remove(s):
+		s.read()
+		value=s._store.pop(s.selected)
 		return value
 
-	def clear(__s):
+	def clear(s):
 		result = None
-		__s._store.clear()
-		__s._tail = 1
-		__s._current=0
-		__s.select=Selector(__s.size())
-		__s.read()
+		s._store.clear()
+		s._tail = 1
+		s._current=0
+		s.select=Selector(s.size())
+		s.read()
 		return
 
-	def prev(__s):
-		__s.selected=__s.select.prev()
-		return __s._store[__s.selected]
+	def prev(s):
+		s.selected=s.select.prev()
+		return s._store[s.selected]
 
 
-	def next(__s):
-		__s.selected=__s.select.next()
-		return __s._store[__s.selected]
+	def next(s):
+		s.selected=s.select.next()
+		return s._store[s.selected]
 
-	def replace(__s, index: int, value):
-		__s.read()
-		__s._store[__s.selected]=value
+	def replace(s, index: int, value):
+		s.read()
+		s._store[s.selected]=value
 
 
-	def __len__(__s):
-		result = len(__s._values)
+	def __len__(s):
+		result = len(s._values)
 		return result
 
-	def keys(__s):
+	def keys(s):
 		"""Return the list of integer keys (1-based)."""
-		result = list(range(1, len(__s._values) + 1))
+		result = list(range(1, len(s._values) + 1))
 		return result

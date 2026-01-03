@@ -12,7 +12,7 @@ from shutil import get_terminal_size
 from dataclasses import dataclass, field
 from enum import Enum
 from collections import namedtuple
-from libTerm.term.types import Coord,color, Size,Colors
+from libTerm.term.types import Coord,Color, Size
 from libTerm.term.cursor import  Cursor
 from contextlib import suppress
 
@@ -34,11 +34,14 @@ VTIME = 5
 
 
 class TermAttrs():
-	def __init__(s):
+	def __init__(s,**k):
+		s.term=k.get('term')
 		s.stack=[]
-		s.init=None
+		s.active=s.term.tcgetattr()
+		s.init=list([*s.active])
+		s.stack+= [list(s.active)]
 		s.staged=None
-		s.active=None
+
 	def stage(s):
 		s.staged=list(s.active)
 	def update(s,new=None):
@@ -52,6 +55,42 @@ class TermAttrs():
 			s.staged=s.stack.pop()
 		return s.staged
 
+class TermColors():
+	def __init__(s, **k):
+		s.term = k.get('term')
+		s.specs = {'fg': 10, 'bg': 11}
+		s._ansi = '\x1b]{spec};?\a'
+		s.__kwargs__(**k)
+		s.fg = Color(255, 255, 255)
+		s.bg = Color(0, 0, 0)
+		s.__kwargs__(**k)
+		s.init = s.__update__()
+
+	def __kwargs__(s, **k):
+		s.term = k.get('term')
+
+	@staticmethod
+	def _ansiparser_():
+		buf = ''
+		try:
+			for i in range(23):
+				buf += sys.stdin.read(1)
+			rgb = buf.split(':')[1].split('/')
+			rgb = [int(i, base=16) for i in rgb]
+			rgb = Color(*rgb, 16)
+		except Exception as E:
+			# print(E)
+			rgb = None
+		return rgb
+
+	def __update__(s):
+		for ground in s.specs:
+			result = None
+			while not result:
+				result = s.term.ansi(s._ansi.format(spec=s.specs[ground]), s._ansiparser_)
+			s.__setattr__(ground, result)
+
+		return {'fg': s.fg, 'bg': s.bg}
 
 
 class Term():
@@ -64,20 +103,14 @@ class Term():
 			s.fd        = sys.stdin.fileno()
 			s.tty       = os.ttyname(s.fd)
 
-		s.attrs     = TermAttrs()
-
-
-		s.attrs.active =  s.tcgetattr()
-		s.attrs.init   =  list([*s.attrs.active])
-		s.attrs.stack += [list(s.attrs.active)]
-
+		s.attrs     = TermAttrs(term=s)
 		s._mode     = 0
 		s.cursor    = Cursor(s)
 		s.mode      = s.__mode__
 		atexit.register(s.mode,'normal')
 		# s.vcursors  = {0:vCursor(s,s.cursor)}
-		s.size      = Size(parent=s)
-		s.color     = Colors(parent=s)
+		s.size      = Size(term=s)
+		s.color     = TermColors(term=s)
 
 
 	def tcgetattr(s):
