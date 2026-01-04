@@ -56,7 +56,7 @@ class TestPosixTerm(unittest.TestCase):
 		except Exception:
 			pass
 		# Attempt to apply staged attributes; this will perform real tcsetattr calls.
-		self.t.update()
+		self.t._update_()
 		# Attempt a restore
 		restored = self.t.attrs.restore()
 		# restore might be None or a list; ensure the call succeeded

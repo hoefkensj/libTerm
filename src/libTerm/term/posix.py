@@ -2,17 +2,9 @@
 import io
 import os
 import termios
-import tty
 import atexit
-import re
 import sys
-from statistics import stdev
-from time import time_ns
-from shutil import get_terminal_size
-from dataclasses import dataclass, field
-from enum import Enum
-from collections import namedtuple
-from libTerm.term.types import Coord,Color, Size
+from libTerm.term.types import Color, Size
 from libTerm.term.cursor import  Cursor
 from contextlib import suppress
 
@@ -58,13 +50,12 @@ class TermAttrs():
 class TermColors():
 	def __init__(s, **k):
 		s.term = k.get('term')
-		s.specs = {'fg': 10, 'bg': 11}
+		s._specs = {'fg': 10, 'bg': 11}
 		s._ansi = '\x1b]{spec};?\a'
-		s.__kwargs__(**k)
 		s.fg = Color(255, 255, 255)
 		s.bg = Color(0, 0, 0)
 		s.__kwargs__(**k)
-		s.init = s.__update__()
+		s.init = s._update_()
 
 	def __kwargs__(s, **k):
 		s.term = k.get('term')
@@ -83,17 +74,18 @@ class TermColors():
 			rgb = None
 		return rgb
 
-	def __update__(s):
-		for ground in s.specs:
+	def _update_(s):
+		for ground in s._specs:
 			result = None
 			while not result:
-				result = s.term.ansi(s._ansi.format(spec=s.specs[ground]), s._ansiparser_)
+				result = s.term.ansi(s._ansi.format(spec=s._specs[ground]), s._ansiparser_)
 			s.__setattr__(ground, result)
 
 		return {'fg': s.fg, 'bg': s.bg}
 
 
 class Term():
+
 	def __init__(s,*a,**k):
 		# super().__init__()
 		s.pid       = os.getpid()
@@ -106,12 +98,11 @@ class Term():
 		s.attrs     = TermAttrs(term=s)
 		s._mode     = 0
 		s.cursor    = Cursor(s)
-		s.mode      = s.__mode__
+		s.mode      = s._mode_
 		atexit.register(s.mode,'normal')
 		# s.vcursors  = {0:vCursor(s,s.cursor)}
 		s.size      = Size(term=s)
 		s.color     = TermColors(term=s)
-
 
 	def tcgetattr(s):
 		return termios.tcgetattr(s.fd)
@@ -140,10 +131,10 @@ class Term():
 		# Case B: MIN>0, TIME=0
 		# A pending read shall block until MIN (here 1) bytes are received,
 		# or a signal is received.
-		s.attrs.staged[CC] = list(s.attr.staged[CC])
+		s.attrs.staged[CC] = list(s.attrs.staged[CC])
 		s.attrs.staged[CC][VMIN] = 1
 		s.attrs.staged[CC][VTIME] = 0
-		s.update(when)
+		s._update_(when)
 
 	def setcbreak(s,when=TCSAFLUSH):
 		"""Put terminal into cbreak mode."""
@@ -158,23 +149,23 @@ class Term():
 		s.attrs.staged[CC] = list(s.attrs.staged[CC])
 		s.attrs.staged[CC][VMIN] = 1
 		s.attrs.staged[CC][VTIME] = 0
-		s.update(when)
+		s._update_(when)
 
 	def echo(s,enable=False):
 		s.attrs.stage()
 		s.attrs.staged[3] &= ~ECHO
 		if enable:
 			s.attrs.staged[3] |= ECHO
-		s.update()
+		s._update_()
 
-	def canonical(s,enable):
+	def canonical(s,enable=True):
 		s.attrs.stage()
 		s.attrs.staged[3] &= ~ICANON
 		if enable:
 			s.attrs.staged[3] |= ICANON
-		s.update()
+		s._update_()
 
-	def __mode__(s,mode=None):
+	def _mode_(s, mode=None):
 		def Normal():
 			s.cursor.show(True)
 			s.echo(True)
@@ -198,11 +189,11 @@ class Term():
 			fmodi.get(nmode)()
 		return s._mode
 		
-	def update(s,when=TCSAFLUSH):
+	def _update_(s, when=TCSAFLUSH):
 		s.tcsetattr( s.attrs.staged,when)
 		s.attrs.update(s.tcgetattr())
 
-	def ansi(s, ansi, parser):
+	def _ansi_(s, ansi, parser):
 		s.setcbreak()
 		try:
 			sys.stdout.write(ansi)
