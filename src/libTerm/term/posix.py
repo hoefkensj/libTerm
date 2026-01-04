@@ -78,7 +78,7 @@ class TermColors():
 		for ground in s._specs:
 			result = None
 			while not result:
-				result = s.term.ansi(s._ansi.format(spec=s._specs[ground]), s._ansiparser_)
+				result = s.term._ansi_(s._ansi.format(spec=s._specs[ground]), s._ansiparser_)
 			s.__setattr__(ground, result)
 
 		return {'fg': s.fg, 'bg': s.bg}

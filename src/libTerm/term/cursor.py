@@ -27,16 +27,20 @@ class Move(str,Enum):
 		Y=k.get('Y')
 		if 'X' in str(s.value):
 			if X is None:
-				X=(1*(len(a)==0)) or a[0]
+				X = 1
+				if (len(a)>0):
+					X=a[0]
 
 		if 'Y' in str(s.value):
 			if Y is None:
-				Y=((a[1]*(len(a)>1))+
-				   (a[0]*(len(a)==1)))
-
+				Y=1
+				if (len(a)==1):
+					if not 'X' in str(s.value):
+						Y=a[0]
+				if (len(a) > 1):
+					Y=a[1]
 		tplvars={'X':X,'Y':Y}
-		string=str(s.value).format(**tplvars)
-		return string
+		print(str(s.value).format(**tplvars),end='',flush=True)
 
 @dataclass()
 class ANSI_Cursor(str, Enum):

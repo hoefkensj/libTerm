@@ -6,8 +6,16 @@ print(term.size.xy)
 print(term.color.bg)
 print(term.cursor.xy)
 
-CursorCoord=Coord(10,5)
-term.cursor.xy=CursorCoord
-print(term.cursor.xy)
-term.mode='ctrl'
-print(input())
+term.cursor.xy=Coord(10,5)
+print('#',end='',flush=True)
+term.cursor.move.down()
+print('#',end='',flush=True)
+term.cursor.move.right()
+print('#',end='',flush=True)
+term.cursor.move.up(2)
+print('#',end='',flush=True)
+term.cursor.move.abs(X=2,Y=12)
+print('#',end='',flush=True)
+
+
+term.mode('ctl')
