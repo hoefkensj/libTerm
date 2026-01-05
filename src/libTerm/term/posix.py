@@ -4,7 +4,7 @@ import os
 import termios
 import atexit
 import sys
-from libTerm.term.types import Color, Size
+from libTerm.term.types import Color, Size,Mode
 from libTerm.term.cursor import  Cursor
 from contextlib import suppress
 
@@ -85,7 +85,7 @@ class TermColors():
 
 
 class Term():
-
+	MODE=Mode
 	def __init__(s,*a,**k):
 		# super().__init__()
 		s.pid       = os.getpid()
@@ -95,11 +95,10 @@ class Term():
 			s.fd        = sys.stdin.fileno()
 			s.tty       = os.ttyname(s.fd)
 
-		s.attrs     = TermAttrs(term=s)
-		s._mode     = 0
-		s.cursor    = Cursor(s)
-		s.mode      = s._mode_
-		atexit.register(s.mode,'normal')
+		s._mode     = Mode.NONE
+		s.attr      = TermAttrs(term=s)
+		s.cursor    = Cursor(term=s)
+		atexit.register(s.mode,Mode.NORMAL)
 		# s.vcursors  = {0:vCursor(s,s.cursor)}
 		s.size      = Size(term=s)
 		s.color     = TermColors(term=s)
@@ -113,85 +112,83 @@ class Term():
 	def setraw(s, when=TCSAFLUSH):
 		"""Put terminal into raw mode."""
 		from termios import IGNBRK,BRKINT,IGNPAR,PARMRK,INPCK,ISTRIP,INLCR,IGNCR,ICRNL,IXON,IXANY,IXOFF,OPOST,PARENB,CSIZE,CS8,ECHO,ECHOE,ECHOK,ECHONL,ICANON,IEXTEN,ISIG,NOFLSH,TOSTOP
-		s.attrs.stage()
+		s.attr.stage()
 		# Clear all POSIX.1-2017 input mode flags.
 		# See chapter 11 "General Terminal Interface"
 		# of POSIX.1-2017 Base Definitions.
-		s.attrs.staged[IFLAG] &= ~( IGNBRK | BRKINT | IGNPAR | PARMRK | INPCK | ISTRIP | INLCR | IGNCR | ICRNL | IXON
-									| IXANY | IXOFF)
+		s.attr.staged[IFLAG] &= ~(IGNBRK | BRKINT | IGNPAR | PARMRK | INPCK | ISTRIP | INLCR | IGNCR | ICRNL | IXON
+								  | IXANY | IXOFF)
 		# Do not post-process output.
-		s.attrs.staged[OFLAG] &= ~OPOST
+		s.attr.staged[OFLAG] &= ~OPOST
 		# Disable parity generation and detection; clear character size mask;
 		# let character size be 8 bits.
-		s.attrs.staged[CFLAG] &= ~(PARENB | CSIZE)
-		s.attrs.staged[CFLAG] |= CS8
+		s.attr.staged[CFLAG] &= ~(PARENB | CSIZE)
+		s.attr.staged[CFLAG] |= CS8
 		# Clear all POSIX.1-2017 local mode flags.
-		s.attrs.staged[LFLAG] &= ~(ECHO | ECHOE | ECHOK | ECHONL | ICANON | IEXTEN | ISIG | NOFLSH | TOSTOP)
+		s.attr.staged[LFLAG] &= ~(ECHO | ECHOE | ECHOK | ECHONL | ICANON | IEXTEN | ISIG | NOFLSH | TOSTOP)
 		# POSIX.1-2017, 11.1.7 Non-Canonical Mode Input Processing,
 		# Case B: MIN>0, TIME=0
 		# A pending read shall block until MIN (here 1) bytes are received,
 		# or a signal is received.
-		s.attrs.staged[CC] = list(s.attrs.staged[CC])
-		s.attrs.staged[CC][VMIN] = 1
-		s.attrs.staged[CC][VTIME] = 0
+		s.attr.staged[CC] = list(s.attr.staged[CC])
+		s.attr.staged[CC][VMIN] = 1
+		s.attr.staged[CC][VTIME] = 0
 		s._update_(when)
 
 	def setcbreak(s,when=TCSAFLUSH):
 		"""Put terminal into cbreak mode."""
 		# this code was lifted from the tty module and adapted for being a method
-		s.attrs.stage()
+		s.attr.stage()
 		# Do not echo characters; disable canonical input.
-		s.attrs.staged[LFLAG] &= ~(ECHO | ICANON)
+		s.attr.staged[LFLAG] &= ~(ECHO | ICANON)
 		# POSIX.1-2017, 11.1.7 Non-Canonical Mode Input Processing,
 		# Case B: MIN>0, TIME=0
 		# A pending read shall block until MIN (here 1) bytes are received,
 		# or a signal is received.
-		s.attrs.staged[CC] = list(s.attrs.staged[CC])
-		s.attrs.staged[CC][VMIN] = 1
-		s.attrs.staged[CC][VTIME] = 0
+		s.attr.staged[CC] = list(s.attr.staged[CC])
+		s.attr.staged[CC][VMIN] = 1
+		s.attr.staged[CC][VTIME] = 0
 		s._update_(when)
 
 	def echo(s,enable=False):
-		s.attrs.stage()
-		s.attrs.staged[3] &= ~ECHO
+		s.attr.stage()
+		s.attr.staged[3] &= ~ECHO
 		if enable:
-			s.attrs.staged[3] |= ECHO
+			s.attr.staged[3] |= ECHO
 		s._update_()
 
 	def canonical(s,enable=True):
-		s.attrs.stage()
-		s.attrs.staged[3] &= ~ICANON
+		s.attr.stage()
+		s.attr.staged[3] &= ~ICANON
 		if enable:
-			s.attrs.staged[3] |= ICANON
+			s.attr.staged[3] |= ICANON
 		s._update_()
 
-	def _mode_(s, mode=None):
+	def mode(s, mode=Mode.NONE):
 		def Normal():
 			s.cursor.show(True)
 			s.echo(True)
 			s.canonical(True)
-			s.tcsetattr(s.attrs.init)
-			s._mode = nmodi.get('normal')
+			s.tcsetattr(s.attr.init)
+			s._mode = Mode.NORMAL
 
 		def Ctl():
 			s.cursor.show(False)
 			s.echo(False)
 			s.canonical(False)
-			s._mode = nmodi.get('ctl')
+			s._mode = Mode.CONTROL
 
-		nmodi={'normal' : 1,'ctl': 2 }
 		fmodi = {
 			1   :  Normal,
 			2   :  Ctl,
 		}
-		if mode is not None and mode != s._mode:
-			nmode=nmodi.get(mode)
-			fmodi.get(nmode)()
+		if mode is not None and mode != 0:
+			fmodi.get(mode)()
 		return s._mode
 		
 	def _update_(s, when=TCSAFLUSH):
-		s.tcsetattr( s.attrs.staged,when)
-		s.attrs.update(s.tcgetattr())
+		s.tcsetattr(s.attr.staged, when)
+		s.attr.update(s.tcgetattr())
 
 	def _ansi_(s, ansi, parser):
 		s.setcbreak()
@@ -200,6 +197,6 @@ class Term():
 			sys.stdout.flush()
 			result = parser()
 		finally:
-			s.tcsetattr(s.attrs.restore())
+			s.tcsetattr(s.attr.restore())
 		return result
 #

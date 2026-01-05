@@ -30,7 +30,7 @@ class TestPosixTerm(unittest.TestCase):
 		self.assertTrue(hasattr(self.t, 'cursor'))
 		self.assertTrue(hasattr(self.t, 'size'))
 		self.assertTrue(hasattr(self.t, 'color'))
-		self.assertTrue(isinstance(self.t.attrs.active, list))
+		self.assertTrue(isinstance(self.t.attr.active, list))
 
 	def test_mode_switch_changes_internal_mode(self):
 		# Switch modes and check the internal indicator changes.
@@ -48,17 +48,17 @@ class TestPosixTerm(unittest.TestCase):
 
 	def test_update_and_stage_restore_do_not_error(self):
 		# Stage, update and restore attributes to ensure call paths succeed.
-		self.t.attrs.stage()
+		self.t.attr.stage()
 		# mutate staged safely if present
 		try:
-			if isinstance(self.t.attrs.staged, list):
-				self.t.attrs.staged[3] = self.t.attrs.staged[3]
+			if isinstance(self.t.attr.staged, list):
+				self.t.attr.staged[3] = self.t.attr.staged[3]
 		except Exception:
 			pass
 		# Attempt to apply staged attributes; this will perform real tcsetattr calls.
 		self.t._update_()
 		# Attempt a restore
-		restored = self.t.attrs.restore()
+		restored = self.t.attr.restore()
 		# restore might be None or a list; ensure the call succeeded
 		self.assertTrue(restored is None or isinstance(restored, list))
 
@@ -75,7 +75,7 @@ class TestPosixTerm(unittest.TestCase):
 		self.t.mode('normal')
 		self.t.echo(True)
 		self.t.cursor.show(False)
-		self.t.cursor.hide(False)
+		self.t.cursor.hide(True)
 		print('\x1b[B\x1b[D▌',flush=True)
 		for i in range(8):
 			for i in range(20):

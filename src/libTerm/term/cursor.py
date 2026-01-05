@@ -145,8 +145,9 @@ class Cursor():
 	def undo(s):
 		current=s.store.selected
 		coord=s.store._store[current]
-		s.xy=coord
-		s.store.prev()
+		if coord is not None:
+			s.xy=coord
+			s.store.prev()
 		return coord
 
 #TODO: class vCursor(Cursor):

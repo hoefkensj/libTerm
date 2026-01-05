@@ -1,13 +1,13 @@
 #/usr/bin/env python -m setuptools
 [project]
 name = "libTerm"
-version = "0.1.5"
+version = "0.1.6"
 authors = [{ name = "Jeroen Hoefkens", email = "hoefkens.j@gmail.com" }]
 readme = "README.md"
 
 [project.urls]
 Homepage = "https://github.com/hoefkensj/libTerm"
-Issues = "https://github.com/hoefkensj/Clict/libTerm"
+Issues = "https://github.com/hoefkensj/libTerm"
 
 [build-system]
 requires = ["setuptools", "setuptools-scm"]

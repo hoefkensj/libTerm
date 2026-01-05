@@ -4,6 +4,25 @@ from collections import namedtuple
 from os import get_terminal_size
 from  time import sleep, time_ns
 import sys
+from enum import IntEnum
+
+
+
+class Mode(IntEnum):
+	NONE    = 0
+	none    = 1
+	NRML    = 1
+	nrml    = 1
+	NORMAL  = 1
+	normal  = 1
+	DEFAULT = 1
+	default = 1
+	CTL     = 2
+	ctl     = 2
+	CTRL    = 2
+	ctrl    = 2
+	CONTROL = 2
+	control = 2
 
 
 @dataclass(frozen=True)
@@ -63,7 +82,6 @@ class Coord(namedtuple('Coord', ['x', 'y'])):
 	@property
 	def x(s):
 		return s._x
-
 
 @dataclass(frozen=True)
 class Color:
@@ -141,43 +159,6 @@ class Size():
 		if size == s.xy:
 			s.changed = False
 
-# class TermColors():
-# 	def __init__(s, **k):
-# 		s.term = None
-# 		s.specs = {'fg': 10, 'bg': 11}
-# 		s._ansi = '\x1b]{spec};?\a'
-# 		s.__kwargs__(**k)
-# 		s.fg = Color(255, 255, 255)
-# 		s.bg = Color(0, 0, 0)
-# 		s.__kwargs__(**k)
-# 		s.init = s.__update__()
-#
-# 	def __kwargs__(s, **k):
-# 		s.term = k.get('term')
-#
-# 	@staticmethod
-# 	def _ansiparser_():
-# 		buf = ''
-# 		try:
-# 			for i in range(23):
-# 				buf += sys.stdin.read(1)
-# 			rgb = buf.split(':')[1].split('/')
-# 			rgb = [int(i, base=16) for i in rgb]
-# 			rgb = Color(*rgb, 16)
-# 		except Exception as E:
-# 			# print(E)
-# 			rgb = None
-# 		return rgb
-#
-# 	def __update__(s):
-# 		for ground in s.specs:
-# 			result = None
-# 			while not result:
-# 				result = s.term.ansi(s._ansi.format(spec=s.specs[ground]), s._ansiparser_)
-# 			s.__setattr__(ground, result)
-#
-# 		return {'fg': s.fg, 'bg': s.bg}
-
 class Selector():
 
 	def __init__(s,n, **k):
@@ -198,10 +179,6 @@ class Selector():
 	def setval(s,i):
 		s.selection = s.wrap(i)
 		return s.selection
-
-
-
-
 
 class Store():
 	def __init__(s, **k):

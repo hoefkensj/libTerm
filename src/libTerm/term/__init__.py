@@ -6,4 +6,4 @@ if os.name == 'nt':
 else:
 	from libTerm.term.posix import Term
 
-from libTerm.term.types import Coord,Color,Size
+from libTerm.term.types import Coord,Color,Size,Mode

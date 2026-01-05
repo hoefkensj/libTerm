@@ -5,6 +5,7 @@ term=Term()
 print(term.size.xy)
 print(term.color.bg)
 print(term.cursor.xy)
+term.mode(Term.MODE.CTRL)
 
 term.cursor.xy=Coord(10,5)
 print('#',end='',flush=True)
@@ -17,5 +18,6 @@ print('#',end='',flush=True)
 term.cursor.move.abs(X=2,Y=12)
 print('#',end='',flush=True)
 
+print(term.mode(Term.MODE.normal))
 
-term.mode('ctl')
+
