@@ -96,6 +96,7 @@ class Term():
 			s.tty       = os.ttyname(s.fd)
 
 		s._mode     = Mode.NONE
+		s.mode      = s.setmode
 		s.attr      = TermAttrs(term=s)
 		s.cursor    = Cursor(term=s)
 		atexit.register(s.mode,Mode.NORMAL)
@@ -164,7 +165,8 @@ class Term():
 			s.attr.staged[3] |= ICANON
 		s._update_()
 
-	def mode(s, mode=Mode.NONE):
+
+	def setmode(s, mode=Mode.NONE):
 		def Normal():
 			s.cursor.show(True)
 			s.echo(True)
@@ -178,12 +180,14 @@ class Term():
 			s.canonical(False)
 			s._mode = Mode.CONTROL
 
-		fmodi = {
-			1   :  Normal,
-			2   :  Ctl,
-		}
-		if mode is not None and mode != 0:
-			fmodi.get(mode)()
+		if isinstance(mode,str):
+			if mode.casefold().startswith('n'):
+				mode=Mode.NORMAL
+			elif mode.casefold().startswith('c'):
+				mode=Mode.CONTROL
+
+		if mode is not None and mode != Mode.NONE:
+			{1:Normal,2:Ctl}.get(mode)()
 		return s._mode
 		
 	def _update_(s, when=TCSAFLUSH):
