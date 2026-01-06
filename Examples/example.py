@@ -6,6 +6,16 @@ print(term.size.xy)
 print(term.color.bg)
 print(term.cursor.xy)
 term.mode(Term.MODE.CTRL)
+print('press q to resume:')
+while True:
+	if term.stdin.event:
+		key=term.stdin.read()
+		print('\x1b[3;1HKey:\x1b[32m {KEY}\x1b[m'.format(KEY=key),end='',flush=True)
+		if key=='q':
+			print('continuing')
+			break
+
+
 
 term.cursor.xy=Coord(10,5)
 print('#',end='',flush=True)

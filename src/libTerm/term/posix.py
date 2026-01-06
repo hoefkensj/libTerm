@@ -6,6 +6,7 @@ import atexit
 import sys
 from libTerm.term.types import Color, Size,Mode
 from libTerm.term.cursor import  Cursor
+from libTerm.term.input import  Stdin
 from contextlib import suppress
 
 
@@ -102,6 +103,7 @@ class Term():
 		atexit.register(s.mode,Mode.NORMAL)
 		# s.vcursors  = {0:vCursor(s,s.cursor)}
 		s.size      = Size(term=s)
+		s.stdin		= Stdin(term=s)
 		s.color     = TermColors(term=s)
 
 	def tcgetattr(s):
