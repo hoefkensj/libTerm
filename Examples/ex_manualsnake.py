@@ -21,7 +21,7 @@ class Snake():
 term=Term()
 term.mode(Mode.CONTROL)
 snake=Snake(term)
-print('\x1b[J\x1b[1;1HPress one of w,a,s,d to start and  q to quit!')
+print('\x1b[J\x1b[1;1HPress one of up,down,left,right to start and  q to quit!')
 while True:
 	if term.stdin.event:
 		key=term.stdin.read()
