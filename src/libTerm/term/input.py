@@ -1,8 +1,6 @@
 # /usr/bin/env pyhthon
 # !/usr/bin/env python
-import sys
 from select import select
-from signal import SIGUSR1
 import os
 
 
@@ -19,28 +17,34 @@ class Stdin():
 		s._event = select([s.term.fd], [], [], 0)[0] != []
 		return s._event
 
-	def read(s):
-		ret = None
-		if s.event:
-			while s.event:
-				s._buffer += [sys.stdin.read(1)]
-			ret = ''.join(s._buffer)
-			s.flush()
-			s._count += 1
-		return ret
-
 	@property
-	def counted(s):
+	def count(s):
 		return s._count
 
+	def read(s):
+		s.buffer()
+		ret = ''.join([i.decode('UTF-8') for i in s._buffer])
+		s.flush()
+		return ret
+
+	def buffer(s):
+		while select([s.term.fd], [], [], 0)[0]:
+			s._buffer += [os.read(s.term.fd, 8)]
+			s._count += 1
+		return s._count
+
+	def getbuffer(s):
+		return s._buffer
+
 	def getch(s):
-		if len(s.buffer) != 0:
-			c = s.buffer[-1]
-			s.flush()
+		c=''
+		if len(s._buffer) != 0:
+			c = s._buffer.pop(-1)
+		return c
 
 	def flush(s):
 		s._buffer = []
-		sys.stdin.flush()
+
 
 
 

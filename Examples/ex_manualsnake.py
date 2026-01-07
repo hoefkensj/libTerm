@@ -21,19 +21,17 @@ class Snake():
 term=Term()
 term.mode(Mode.CONTROL)
 snake=Snake(term)
-print('\x1b[J\x1b[1;1HPress Q to quit!')
+print('\x1b[J\x1b[1;1HPress one of w,a,s,d to start and  q to quit!')
 while True:
 	if term.stdin.event:
 		key=term.stdin.read()
-		# print('\x1b[3;1HKey:\x1b[32m {KEY}\x1b[m'.format(KEY=key),end='',flush=True)
-
-		if key=='w':
+		if key=='\x1b[A':
 			snake.piece='\x1b[A\x1b[D░'
-		elif key=="s":
+		elif key=="\x1b[B":
 			snake.piece='\x1b[B\x1b[D░'
-		elif key=='d':
+		elif key=='\x1b[C':
 			snake.piece='░'
-		elif key=='a':
+		elif key=='\x1b[D':
 			snake.piece = '\x1b[D\x1b[D░'
 		elif key=='q':
 			while term.cursor.store.selected:
