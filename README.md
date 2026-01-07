@@ -1,4 +1,4 @@
-````markdown
+
 # libTerm
 
 **libTerm** is a lightweight Python library for **low-level terminal control** and **interactive TUI-style programs**.  
@@ -348,4 +348,4 @@ Bug reports and experimental ideas encouraged.
 Happy hacking 🐍🖥
 
 ```
-```
+
