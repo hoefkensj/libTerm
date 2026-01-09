@@ -83,7 +83,27 @@ class TermColors():
 			s.__setattr__(ground, result)
 
 		return {'fg': s.fg, 'bg': s.bg}
-
+class TermBuffers:
+	def __init__(s,term):
+		s.term=term
+		s.ansi='\x1b[?1049{hl}'
+		s.current=0
+	def default(s):
+		print(s.ansi.format(hl='l'),end='',flush=True)
+	def alternate(s):
+		print(s.ansi.format(hl='h'),end='',flush=True)
+	def switch(s):
+		if s.current==0:
+			s.alternate()
+			s.current=1
+		else:
+			s.default()
+			s.current=0
+	def set(s,buffer):
+		if buffer == 1:
+			s.alternate()
+		if buffer == 0:
+			s.default()
 
 class Term():
 	MODE=Mode
@@ -92,7 +112,7 @@ class Term():
 		s.pid       = os.getpid()
 		s.ppid      = os.getpid()
 		s.fd		= sys.__stdin__.fileno()
-		with suppress(io.UnsupportedOperation):
+		with suppress(io.UnsupportedOperation,OSError):
 			s.fd        = sys.stdin.fileno()
 			s.tty       = os.ttyname(s.fd)
 
@@ -105,6 +125,7 @@ class Term():
 		s.size      = Size(term=s)
 		s.stdin		= Stdin(term=s)
 		s.color     = TermColors(term=s)
+		s.buffer	= TermBuffers(term=s)
 
 	def tcgetattr(s):
 		return termios.tcgetattr(s.fd)

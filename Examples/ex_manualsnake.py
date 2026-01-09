@@ -21,6 +21,7 @@ class Snake():
 term=Term()
 term.mode(Mode.CONTROL)
 snake=Snake(term)
+term.buffer.switch()
 print('\x1b[J\x1b[1;1HPress one of up,down,left,right to start and  q to quit!')
 while True:
 	if term.stdin.event:
@@ -41,3 +42,4 @@ while True:
 	if snake.piece!='':
 		snake.addpiece()
 	time.sleep(snake.speed)
+term.buffer.default()
