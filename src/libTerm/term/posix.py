@@ -4,7 +4,7 @@ import os
 import termios
 import atexit
 import sys
-from libTerm.term.types import Color, Size,Mode
+from libTerm.types import Color, Size,Mode
 from libTerm.term.cursor import  Cursor
 from libTerm.term.input import  Stdin
 from contextlib import suppress
@@ -53,6 +53,7 @@ class TermColors():
 		s.term = k.get('term')
 		s._specs = {'fg': 10, 'bg': 11}
 		s._ansi = '\x1b]{spec};?\a'
+		s._swap=False
 		s.fg = Color(255, 255, 255)
 		s.bg = Color(0, 0, 0)
 		s.__kwargs__(**k)
@@ -83,6 +84,15 @@ class TermColors():
 			s.__setattr__(ground, result)
 
 		return {'fg': s.fg, 'bg': s.bg}
+	def swap(s):
+		swap=(7*(not s._swap))+(27*(s._swap))
+		s._swap= not s._swap
+		return '\x1b[{SWAP}m'.format(SWAP=swap)
+	def invert(s):
+		return '\x1b[{SWAP}m'.format(SWAP=7)
+	def revert(s):
+		return '\x1b[{SWAP}m'.format(SWAP=27)
+
 class TermBuffers:
 	def __init__(s,term):
 		s.term=term
@@ -108,19 +118,18 @@ class TermBuffers:
 class Term():
 	MODE=Mode
 	def __init__(s,*a,**k):
-		# super().__init__()
 		s.pid       = os.getpid()
 		s.ppid      = os.getpid()
 		s.fd		= sys.__stdin__.fileno()
+		s.attr      = None
 		with suppress(io.UnsupportedOperation,OSError):
 			s.fd        = sys.stdin.fileno()
 			s.tty       = os.ttyname(s.fd)
+			s.attr      = TermAttrs(term=s)
 
 		s._mode     = Mode.NONE
-		s.mode      = s.setmode
-		s.attr      = TermAttrs(term=s)
 		s.cursor    = Cursor(term=s)
-		atexit.register(s.mode,Mode.NORMAL)
+		atexit.register(s.setmode,Mode.NORMAL)
 		# s.vcursors  = {0:vCursor(s,s.cursor)}
 		s.size      = Size(term=s)
 		s.stdin		= Stdin(term=s)
@@ -188,6 +197,13 @@ class Term():
 			s.attr.staged[3] |= ICANON
 		s._update_()
 
+	@property
+	def mode(s):
+		return s._mode
+
+	@mode.setter
+	def mode(s,mode):
+		s.setmode(mode)
 
 	def setmode(s, mode=Mode.NONE):
 		def Normal():

@@ -2,9 +2,8 @@ import sys
 import re
 from enum import Enum
 from dataclasses import dataclass
-from collections import namedtuple
 from time import time_ns
-from libTerm.term.types import Coord,Store
+from libTerm.types import Coord,Store
 
 
 @dataclass()
@@ -60,7 +59,6 @@ class ANSI_Cursor(str, Enum):
 
 class Cursor():
 	def __init__(s, term):
-		super().__init__()
 		s.term    = term
 		s.ansi    = ANSI_Cursor
 		s.move    = Move
@@ -69,6 +67,7 @@ class Cursor():
 		s.store   = Store()
 		s.visible = True
 		s.hidden  = False
+		s.slaves  = []
 		#TODO:		s.stamp=time_ns()
 		#TODO:		s.moved=False
 		#TODO:		s._history = [*(None,) * 64]
@@ -80,6 +79,11 @@ class Cursor():
 
 	@xy.setter
 	def xy(s,coord):
+		# record the last set position on the term so mock Term can respond to getxy
+		try:
+			s.term._last_xy = coord
+		except Exception:
+			pass
 		print('\x1b[{y};{x}H'.format(**coord), end='', flush=True)
 		s.__update__()
 
@@ -134,7 +138,10 @@ class Cursor():
 	@property
 	def y(s):
 		y=s.xy.y
-		return y
+	def changed(s):
+		ref=s._xy
+		if s.xy !=ref:
+			return True
 
 	def save(s):
 		return s.store.save(s.xy)
@@ -150,35 +157,100 @@ class Cursor():
 			s.store.prev()
 		return coord
 
+
+
 #TODO: class vCursor(Cursor):
-# 	def __init__(s, term,cursor):
-# 		s.term = term
-# 		s.realcursor=cursor
-# 		s.position = Coord(s.realcursor.x,s.realcursor.y)
-# 		s.history = [*(None,) * 64]
-# 		s.controled = False
-# 		s.bound = True
-# 		s.frozen = False
-# 		s.init = s.__update__()#
-# 	def freeze(s, state=True):
-# 		if state:
-# 			s.frozen = True
-# 			s.bind(False)
-# 			s.control(False)
-# 		else:
-# 			s.frozen = False#
-# 	def __update__(s, get='XY'):
-# 		pass#
-# 	def show(s, state=True):
-# 		if state:
-# 			print('\x1b[?25h', end='', flush=True)
-# 		else:
-# 			s.hide()#
-# 	def hide(s, state=True):
-# 		if state:
-# 			import atexit
-# 			print('\x1b[?25l', end='', flush=True)
-# 			atexit.register(s.show)
-# 		else:
-# 			s.show()
-#
+class VirtCursor():
+	def __init__(s, term,real,xy=Coord(0,0),symbol='░'):
+		s.real    = real
+		s.real.slaves+=[s]
+		s.term    = term
+		s.symbol  = symbol
+		s._xy     = xy
+		s._XY     = s.real.xy
+		s.store   = Store()
+		s.visible = True
+		s.hidden  = False
+		s.enabled = False
+		s.init    = s.__update__()
+		s.draw()
+	def enable(s):
+		s.enabled = True
+	@property
+	def xy(s):
+		s._xy
+
+	@xy.setter
+	def xy(s,coord):
+		# record the last set position on the term so mock Term can respond to getxy
+		try:
+			s.real.term._last_xy = coord
+		except Exception:
+			pass
+		print('\x1b[{y};{x}H'.format(**coord), end='', flush=True)
+		s.__update__()
+
+	def stored(s):
+		return s.store.stored
+
+	def __update__(s):
+		def Parser():
+			buf = ' '
+			while buf[-1] != "R":
+				buf += sys.stdin.read(1)
+			# reading the actual values, but what if a keystroke appears while reading
+			# from stdin? As dirty work around, getpos() returns if this fails: None
+			try:
+				groups = s.re.search(buf).groupdict()
+				result = Coord(int(groups['X']), int(groups['Y']))
+			except AttributeError:
+				result = None
+			return result
+
+		result = None
+		timeout = {}
+		timeout['limit'] = 500
+		timeout['start'] = time_ns() // 1e6
+		timeout['running'] = 0
+		while not result:
+			result = s.term._ansi_(s.ansi.getxy, Parser)
+		s._xy =result
+		return result
+
+	def show(s, state=True):
+		if s.hidden and state:
+			s.ansi.show()
+			s.hidden=False
+			s.visible=True
+		if s.visible and not state:
+			s.ansi.hide()
+			s.hidden=True
+			s.visible=False
+
+	def hide(s, state=True):
+		s.show(not state)
+
+	@property
+	def x(s):
+		x=s.xy.x
+		return x
+	@property
+	def y(s):
+		y=s.xy.y
+		return y
+
+	def save(s):
+		return s.store.save(s.xy)
+	def load(s,n):
+		coord=s.store.load(n)
+		s.xy=coord
+		return coord
+	def undo(s):
+		current=s.store.selected
+		coord=s.store._store[current]
+		if coord is not None:
+			s.xy=coord
+			s.store.prev()
+		return coord
+	def draw(s):
+		print(s.xy,s.symbol,end='',flush=True)

@@ -23,6 +23,11 @@ class Mode(IntEnum):
 	ctrl	= 2
 	CONTROL = 2
 	control = 2
+	inp     = 3
+	Inp     = 3
+	Input   = 3
+	INP      = 3
+	INPUT      = 3
 
 
 @dataclass(frozen=True)
@@ -242,10 +247,10 @@ class Store():
 		By default the store has unlimited size; use `setmax` to bound it.
 		"""
 		s._store = {0:None,}
-		s.tail=1
+		s._tail=1
 		s.size=lambda:len(s._store)
 		s._current= 0
-		s._pointer = lambda:s._values.get(s._current)
+		s._pointer = lambda:s._store.values.get(s._current)
 		s._max = None
 
 		s.select=Selector(s.size())
@@ -253,7 +258,6 @@ class Store():
 		s._value=s._store[s.selected]
 
 	def setmax(s, maximum):
-		"""Set maximum number of stored items (None = unlimited)."""
 		result = None
 		if maximum is not None:
 			if not isinstance(maximum, int) or maximum < 1:
@@ -275,9 +279,9 @@ class Store():
 
 	def save(s, value):
 		s._store[s.size()]=value
-		s.tail+=1
+		s._tail+=1
 		current=s.read()
-		s.select=Selector(s.tail)
+		s.select=Selector(s._tail)
 		s.write(current+1)
 		s.read()
 		return s.selected
@@ -292,7 +296,6 @@ class Store():
 		return value
 
 	def clear(s):
-		result = None
 		s._store.clear()
 		s._tail = 1
 		s._current=0
@@ -304,7 +307,6 @@ class Store():
 		s.selected=s.select.prev()
 		return s._store[s.selected]
 
-
 	def next(s):
 		s.selected=s.select.next()
 		return s._store[s.selected]
@@ -315,10 +317,9 @@ class Store():
 
 
 	def __len__(s):
-		result = len(s._values)
+		result = len(s._store.values())
 		return result
 
 	def keys(s):
-		"""Return the list of integer keys (1-based)."""
-		result = list(range(1, len(s._values) + 1))
+		result = list(range(1, len(s._store.values()) + 1))
 		return result

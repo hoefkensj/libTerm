@@ -19,7 +19,7 @@ class Snake():
 		print('\x1b[D ', end='', flush=True)
 
 term=Term()
-term.mode(Mode.CONTROL)
+term.mode=Mode.CONTROL
 snake=Snake(term)
 term.buffer.switch()
 print('\x1b[J\x1b[1;1HPress one of up,down,left,right to start and  q to quit!')
