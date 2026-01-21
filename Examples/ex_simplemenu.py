@@ -50,7 +50,7 @@ class Menu:
 
 term=Term()
 term.buffer.switch()
-term.mode(Mode.CONTROL)
+term.mode=Mode.CONTROL
 
 M=Menu(term,'aaaa','bbbbbb','cccccccccc','dd',coord=Coord(10,10))
 print(M)
