@@ -132,7 +132,7 @@ class Term():
 			if result is None:
 				result = Coord(0, 0)
 			return result
-		# OSC color query sequences start with ESC ]
+		# OSC color query sequences start with "ESC ]"
 		if ansi_str.startswith('\x1b]'):
 			# return a white foreground / black background as mock
 			result = Color(255, 255, 255)

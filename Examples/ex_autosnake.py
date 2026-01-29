@@ -25,14 +25,13 @@ class Snake():
 		print('\x1b[A\x1b[D', end='', flush=True)
 		s.addpiece()
 	def right(s):
-		print('', end='', flush=True)
 		s.addpiece()
 	def left(s):
 		print('\x1b[D\x1b[D', end='', flush=True)
 		s.addpiece()
 
 t=Term()
-t.echo(False)
+t.echo=False
 t.cursor.show(False)
 print('\n\n\n\n\n\n\n')
 t.mode=Mode.CONTROL

@@ -3,56 +3,70 @@ from libTerm import Term,Color,Coord,Mode,Selector
 import time
 
 class Menu:
-	def __init__(s,xy,*a,coord=None):
-		s._tplit='{{XY}}{{COLR}}{NO}. {ITEM}\x1b[m'
-		s.colr='\x1b[{SEL}38;2;192;192;192m'
-		s.xy=xy
-		s.selector=Selector(len(a),start=1)
+	def __init__(s,term,items,xy=None,coord=None):
+		s._tplxy='\x1b[{Y};{X}H'
+		s._tplit='{XY}{COLR}{NO}. {ITEM}{DESEL}'
+		s._colr='\x1b[{SEL}38;2;192;192;192m'
+		s._items=items
+		s.term=term
+		s.xy=xy or s.term.cursor.xy
+		s.selector=Selector(len(s._items),start=1)
 		s.selected=s.selector.read
-		s.items=['']
-		s.menu=['']
+		s.current=None
+		s.items=[]
+		s.menu=['MENU']
 		s.changed=[]
-		s.__args__(*a)
+		s.it_width = lambda: max([len(n) for n in s._items]) + 2
+		s.nr_width = lambda: len(str(len(s._items)))
+		s.__itemlist__()
 		s.build()
 
 	def __len__(s):
 		return len(s.items)
 
-	def __args__(s,*a):
-		wit=max([len(n) for n in a])+2
-		wno = len(str(len(a)))
-		for i,arg in enumerate(a,start=1):
-			XY = '\x1b[{Y};{X}H'.format(Y=s.xy.y + i, X=s.xy.x)
-			s.items+=[s._tplit.format(NO=str(i).rjust(wno),ITEM=arg.ljust(wit))]
+	def __itemlist__(s):
+		for i,arg in enumerate(s._items,start=1):
+
+			XY = s._tplxy.format(Y=s.xy.y + i, X=s.xy.x)
+			s.items+=[s._tplit.format(DESEL='\x1b[27m',COLR=s._colr,XY=XY,NO=str(i).rjust(s.nr_width()),ITEM=arg.ljust(s.it_width()))]
+
 	def build(s):
 		for i,item in enumerate(s.items,start=1):
-			sel='' if i != s.selector.read() else s.sel
-			s.menu+=[item.format(COLR=s.colr,SEL=sel)]
+			if  i == s.selected() :
+				sel='7;'
+				s.current=item.format(SEL='0;')
+				listitem=item.format(SEL=sel)
+			else:
+				listitem = item.format(SEL='0;')
 
+			s.menu+=[listitem]
 
 	def next(s):
-		old=s.selected()
-		s.changed=[s.items[s.selected-1].format(COLR=s.colr,SEL='')]
+		cur=s.selected()
 		s.selector.next()
-		s.changed += [s.items[s.selector.read()-1].format(COLR=s.colr, SEL=s.sel)]
-		return s.__update__()
+		s.changed=[s.current.format(SEL='0;')]
+		s.changed += [s.items[cur].format(SEL='7;')]
+		s.current=s.items[cur]
+		return s.update()
 
 	def prev(s):
-		s.changed=[s.items[s.selector.read()-1].format(COLR=s.colr,SEL='')]
 		s.selector.prev()
-		s.changed += [s.items[s.selector.read()-1].format(COLR=s.colr, SEL=s.sel)]
-		return s.__update__()
+		cur=s.selected()
+		s.changed=[s.current.format(SEL='0;')]
+		s.changed += [s.items[cur].format(SEL='7;')]
+		s.current=s.items[cur]
+		return s.update()
 
-	def __update__(s):
+	def update(s):
 		return lambda :print(''.join(s.changed),end='',flush=True)
 	def __str__(s):
-		return ''.join(s.menu).format(SEL='')
+		return ''.join(s.menu[1:]).format(SEL='')
 
 term=Term()
 term.buffer.switch()
 term.mode=Mode.CONTROL
-
-M=Menu(term,'aaaa','bbbbbb','cccccccccc','dd',coord=Coord(10,10))
+items=['aaaa','bbbbbb','cccccccccc','dd']
+M=Menu(term,items ,xy=Coord(10,10))
 print(M)
 while True:
 	if M.term.stdin.event:
@@ -61,5 +75,9 @@ while True:
 			update=M.next()
 		elif key=='\x1b[A':
 			update=M.prev()
+		elif key=='q':
+			break
+		else:
+			continue
 		update()
 	time.sleep(0.01)

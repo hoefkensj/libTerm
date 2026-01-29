@@ -12,8 +12,8 @@ class TestCursor(unittest.TestCase):
 		
 	def test_cursor(s):
 		s.assertIsInstance(s.cursor.xy,Coord)
-		s.cursor.xy=Coord(2,2)
-		s.assertEqual(s.cursor.xy,Coord(2,2))
+		s.cursor.xy=Coord(0,0)
+		s.assertEqual(s.cursor.xy,Coord(0,0))
 
 
 

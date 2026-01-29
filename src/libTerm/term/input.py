@@ -7,7 +7,7 @@ import os
 class Stdin():
 	def __init__(s,**k):
 		# super().__init__()
-		s.term = s.term = k.get('term')
+		s.term = k.get('term')
 		s._buffer = []
 		s._event = True
 		s._count = 0

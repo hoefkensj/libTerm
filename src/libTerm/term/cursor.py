@@ -79,11 +79,6 @@ class Cursor():
 
 	@xy.setter
 	def xy(s,coord):
-		# record the last set position on the term so mock Term can respond to getxy
-		try:
-			s.term._last_xy = coord
-		except Exception:
-			pass
 		print('\x1b[{y};{x}H'.format(**coord), end='', flush=True)
 		s.__update__()
 
@@ -170,7 +165,7 @@ class VirtCursor():
 		s._XY     = s.real.xy
 		s.store   = Store()
 		s.visible = True
-		s.hidden  = False
+		s.locked  = True
 		s.enabled = False
 		s.init    = s.__update__()
 		s.draw()
@@ -182,11 +177,6 @@ class VirtCursor():
 
 	@xy.setter
 	def xy(s,coord):
-		# record the last set position on the term so mock Term can respond to getxy
-		try:
-			s.real.term._last_xy = coord
-		except Exception:
-			pass
 		print('\x1b[{y};{x}H'.format(**coord), end='', flush=True)
 		s.__update__()
 
@@ -194,36 +184,14 @@ class VirtCursor():
 		return s.store.stored
 
 	def __update__(s):
-		def Parser():
-			buf = ' '
-			while buf[-1] != "R":
-				buf += sys.stdin.read(1)
-			# reading the actual values, but what if a keystroke appears while reading
-			# from stdin? As dirty work around, getpos() returns if this fails: None
-			try:
-				groups = s.re.search(buf).groupdict()
-				result = Coord(int(groups['X']), int(groups['Y']))
-			except AttributeError:
-				result = None
-			return result
-
-		result = None
-		timeout = {}
-		timeout['limit'] = 500
-		timeout['start'] = time_ns() // 1e6
-		timeout['running'] = 0
-		while not result:
-			result = s.term._ansi_(s.ansi.getxy, Parser)
-		s._xy =result
+		result=''
 		return result
 
 	def show(s, state=True):
 		if s.hidden and state:
-			s.ansi.show()
 			s.hidden=False
 			s.visible=True
 		if s.visible and not state:
-			s.ansi.hide()
 			s.hidden=True
 			s.visible=False
 
@@ -254,3 +222,26 @@ class VirtCursor():
 		return coord
 	def draw(s):
 		print(s.xy,s.symbol,end='',flush=True)
+	def edit(s):
+		s.locked=False
+		s._edit=True
+		s.visible=True
+		s.draw()
+		s.term.mode = s.MODE.CONTROL
+		xy=s.term.cursor.xy
+		y=xy.y
+		x=xy.x
+		while s._edit:
+			if s.term.stdin.event:
+				key = s.term.stdin.read()
+				if key == '\x1b[D':
+					s.xy=Coord(x-1,y)
+				elif key == '\x1b[C':
+					s.xy=Coord(x-1,y)
+				elif key == '\x1b[A':
+					s.xy=Coord(x,y-1)
+				elif key == '\x1b[B':
+					s.xy=Coord(x,y+1)
+				elif key == 'q':
+					sys.exit(0)
+				print(repr(key))

@@ -1,9 +1,11 @@
 # /usr/bin/env pyhthon
 
 from libTerm import Term,Mode
+import sys
 buf = b""
 term=Term()
-term.mode(Mode.CONTROL)
+term.mode=Mode.CONTROL
+print('Press Q to quit, Press arrowkeys to Test')
 while True:
 	if term.stdin.event:
 		key=term.stdin.read()
@@ -15,4 +17,6 @@ while True:
 			print("UP")
 		elif key == '\x1b[B':
 			print("DOWN")
+		elif key == 'q':
+			sys.exit(0)
 		print(repr(key))

@@ -30,12 +30,15 @@ class Mode(IntEnum):
 	INPUT      = 3
 
 
+
 @dataclass(frozen=True)
 class Coord(namedtuple('Coord', ['x', 'y'])):
 	__module__ = None
 	__qualname__='Coord'
 	_x: int = field(default=0)
 	_y: int = field(default=0)
+
+
 
 	def __str__(s):
 		return f'\x1b[{s.y + 1};{s.x + 1}H'
@@ -61,16 +64,49 @@ class Coord(namedtuple('Coord', ['x', 'y'])):
 		if isinstance(other,Coord):
 			x=s.x+other.x
 			y=s.y+other.y
-			return Coord(x,y)
 		elif isinstance(other,complex):
 			x=s.x+other.real
 			y=s.y+other.imag
-			return Coord(x,y)
+
 		elif isinstance(other,str):
 			return f'{s.__str__()}{other}'
 		else:
-			raise TypeError(f'cannot add {type(s)} to {type(other)}')
+			raise TypeError(f'cannot add {type(s)} to {type(other)}{{EXTRA}}')
 
+		return Coord(x, y)
+
+	def __eq__(s,other):
+		error=lambda :f'cannot compare {type(s)} to {type(other)}'
+		if isinstance(other,Coord):
+			result=(s.x==other.x)*(s.y==other.y)
+		elif isinstance(other,complex):
+			result=(s.real==other.real)*(s.imag==other.imag)
+		elif isinstance(other,tuple):
+			if len(other)!=2:
+				raise error().format(EXTRA=f' of length {len(other)}')
+			result=(s.x==other[0])*(s.y==other[1])
+		elif isinstance(other,list):
+			if len(other)!=2:
+				raise TypeError(error().format(EXTRA=f' of length {len(other)}'))
+			result=(s.x==other[0])*(s.y==other[1])
+		elif isinstance(other,set):
+			if len(other)!=2:
+				raise TypeError(error().format(EXTRA=f' of length {len(other)}'))
+			result=(s.x==other[0])*(s.y==other[1])
+		else:
+			raise TypeError(error().format(EXTRA=''))
+		return result
+
+	def __complex__(s):
+		return complex(real=s.x,imag=s.y)
+
+	@property
+	def real(s):
+		return s.x
+
+	@property
+	def imag(s):
+		return s.y
 
 	def keys(s):
 		return ('x', 'y')
@@ -87,6 +123,8 @@ class Coord(namedtuple('Coord', ['x', 'y'])):
 	@property
 	def x(s):
 		return s._x
+
+
 
 @dataclass(frozen=True)
 class Color:
@@ -213,7 +251,7 @@ class Size():
 class Selector():
 
 	def __init__(s,n, **k):
-		s.selection = k.get('start', 0)
+		s.selection = 0
 		s.n=n
 		s.prev = lambda: s.selector(-1)
 		s.next = lambda: s.selector(1)

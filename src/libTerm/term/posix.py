@@ -51,17 +51,13 @@ class TermAttrs():
 class TermColors():
 	def __init__(s, **k):
 		s.term = k.get('term')
-		s._specs = {'fg': 10, 'bg': 11}
-		s._ansi = '\x1b]{spec};?\a'
-		s._swap=False
-		s.fg = Color(255, 255, 255)
-		s.bg = Color(0, 0, 0)
-		s.__kwargs__(**k)
+		s._specs = {'fg': 10, 'bg': 11,'swap':7,'unswap':27}
+		s._ansi_q = '\x1b]{spec};?\a'
+		s._ansi_a = '\x1b[{spec}m'
+		s._swaped=False
+		s.fg = Color(192,192,192)
+		s.bg = Color(16, 16, 16)
 		s.init = s._update_()
-
-	def __kwargs__(s, **k):
-		s.term = k.get('term')
-
 	@staticmethod
 	def _ansiparser_():
 		buf = ''
@@ -77,10 +73,10 @@ class TermColors():
 		return rgb
 
 	def _update_(s):
-		for ground in s._specs:
+		for ground in ['fg','bg']:
 			result = None
 			while not result:
-				result = s.term._ansi_(s._ansi.format(spec=s._specs[ground]), s._ansiparser_)
+				result = s.term._ansi_(s._ansi_q.format(spec=s._specs[ground]), s._ansiparser_)
 			s.__setattr__(ground, result)
 
 		return {'fg': s.fg, 'bg': s.bg}
@@ -127,14 +123,16 @@ class Term():
 			s.tty       = os.ttyname(s.fd)
 			s.attr      = TermAttrs(term=s)
 
-		s._mode     = Mode.NONE
+		s._mode     = s.MODE.NONE
+		s._echo		= True
 		s.cursor    = Cursor(term=s)
-		atexit.register(s.setmode,Mode.NORMAL)
 		# s.vcursors  = {0:vCursor(s,s.cursor)}
 		s.size      = Size(term=s)
 		s.stdin		= Stdin(term=s)
 		s.color     = TermColors(term=s)
 		s.buffer	= TermBuffers(term=s)
+		atexit.register(s.setmode,s.MODE.NORMAL)
+
 
 	def tcgetattr(s):
 		return termios.tcgetattr(s.fd)
@@ -182,7 +180,11 @@ class Term():
 		s.attr.staged[CC][VMIN] = 1
 		s.attr.staged[CC][VTIME] = 0
 		s._update_(when)
+	@property
+	def echo(s):
+		return s._echo
 
+	@echo.setter
 	def echo(s,enable=False):
 		s.attr.stage()
 		s.attr.staged[3] &= ~ECHO
@@ -208,14 +210,14 @@ class Term():
 	def setmode(s, mode=Mode.NONE):
 		def Normal():
 			s.cursor.show(True)
-			s.echo(True)
+			s.echo=True
 			s.canonical(True)
 			s.tcsetattr(s.attr.init)
 			s._mode = Mode.NORMAL
 
 		def Ctl():
 			s.cursor.show(False)
-			s.echo(False)
+			s.echo=False
 			s.canonical(False)
 			s._mode = Mode.CONTROL
 
