@@ -4,7 +4,7 @@ import os
 import termios
 import atexit
 import sys
-from libTerm.types import Color, Size,Mode
+from libTerm.types import Color, Size,mode
 from libTerm.term.cursor import  Cursor
 from libTerm.term.input import  Stdin
 from contextlib import suppress

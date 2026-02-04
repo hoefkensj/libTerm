@@ -141,12 +141,12 @@ class Cursor():
 	def save(s):
 		return s.store.save(s.xy)
 	def load(s,n):
-		coord=s.store.load(n)
+		coord=s.store.select(n)
 		s.xy=coord
 		return coord
 	def undo(s):
-		current=s.store.selected
-		coord=s.store._store[current]
+		current,coord=s.store.selected
+		print(f'\x1b[s\x1b[1;1H{current}\x1b[u')
 		if coord is not None:
 			s.xy=coord
 			s.store.prev()

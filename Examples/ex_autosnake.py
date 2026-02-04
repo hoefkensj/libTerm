@@ -1,6 +1,5 @@
 # /usr/bin/env pyhthon
-from libTerm import Term
-from libTerm import Coord,Mode
+from libTerm import Term,Coord,Mode
 import time
 
 
@@ -16,8 +15,11 @@ class Snake():
 		s.term.cursor.save()
 
 	def rempiece(s):
-		s.term.cursor.undo()
-		print('\x1b[D ', end='', flush=True)
+		step=s.term.cursor.undo()
+		if step is not None:
+			print('\x1b[D ', end='', flush=True)
+		else:
+			return step
 	def down(s):
 		print('\x1b[B\x1b[D', end='', flush=True)
 		s.addpiece()
@@ -54,8 +56,9 @@ for i in range(8):
 		snake.right()
 		time.sleep(snake.speed)
 
-while t.cursor.store.selected:
+while t.cursor.store.selected is not None:
 	snake.rempiece()
+
 	time.sleep(snake.speed)
 
 

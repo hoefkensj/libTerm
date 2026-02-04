@@ -1,10 +1,10 @@
-# /usr/bin/env pyhthon
+# /usr/bin/env python
 
 import time
-from libTerm import Term
-from libTerm import Coord,Mode,Color
+from libTerm import Term, Mode
+from libTerm import Coord, Color
 
-class Snake():
+class Snake:
 	def __init__(s,t,speed=10):
 		s.speed=1 / (speed or 1)
 		s.term=t
@@ -20,8 +20,11 @@ class Snake():
 
 term=Term()
 term.mode=Mode.CONTROL
-snake=Snake(term)
 term.buffer.switch()
+
+
+# time.sleep(5)
+snake=Snake(term)
 print('\x1b[J\x1b[1;1HPress one of up,down,left,right to start and  q to quit!')
 while True:
 	if term.stdin.event:
@@ -37,9 +40,16 @@ while True:
 		elif key=='q':
 			while term.cursor.store.selected:
 				snake.rempiece()
+				print(f'\x1b[s\x1b7\x1b[{2};1H', repr(term.cursor.xy), '\x1b[u\x1b8', end='', flush=True)
+
 				time.sleep(snake.speed)
 			break
 	if snake.piece!='':
 		snake.addpiece()
+	print(f'\x1b[s\x1b7\x1b[{2};1H',repr(term.cursor.xy),'\x1b[u\x1b8',end='',flush=True)
+
 	time.sleep(snake.speed)
+
+
+
 term.buffer.default()

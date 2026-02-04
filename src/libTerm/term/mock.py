@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import os
 import sys
-from libTerm.types import Mode, Coord, Color
+from libTerm.types import mode, Coord, Color
 from libTerm.term.cursor import Cursor
 from libTerm.term.input import Stdin
 # reuse TermAttrs/TermColors/TermBuffers from posix for compatibility

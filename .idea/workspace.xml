@@ -5,14 +5,30 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="bc73ff2f-338a-4651-a389-91491c2041b6" name="Changes" comment="added tests , prolly not that usefull as its only testing if stuff exists , and written by copilot">
-      <change afterPath="$PROJECT_DIR$/Examples/ex_printkeys.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Examples/libextra/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Examples/libextra/class_menu.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/dist/libterm-0.2.6-py3-none-any.whl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/dist/libterm-0.2.6.tar.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libTerm.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/libTerm.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Examples/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/Examples/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Examples/ex_autosnake.py" beforeDir="false" afterPath="$PROJECT_DIR$/Examples/ex_autosnake.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Examples/ex_manualsnake.py" beforeDir="false" afterPath="$PROJECT_DIR$/Examples/ex_manualsnake.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Examples/ex_simplemenu.py" beforeDir="false" afterPath="$PROJECT_DIR$/Examples/ex_simplemenu.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Examples/example.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/libTerm/term/cursor.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/term/cursor.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/libTerm/types.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/types.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="CopilotPersistence">
+    <persistenceIdMap>
+      <entry key="_/home/jeroen/Development/Code/Python/Projects/libTerm" value="32XLRp94VBFj5lgNkdim9ARFbbU" />
+    </persistenceIdMap>
   </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
@@ -39,6 +55,7 @@
   <component name="HighlightingSettingsPerFile">
     <setting file="file://$USER_HOME$/.cache/JetBrains/PyCharmCE2025.1/python_stubs/-1711940630/termios.py" root0="SKIP_INSPECTION" />
     <setting file="file://$USER_HOME$/.cache/JetBrains/PyCharmCE2025.1/python_stubs/1055943265/termios.py" root0="SKIP_INSPECTION" />
+    <setting file="file://$APPLICATION_HOME_DIR$/plugins/python-ce/helpers/pydev/_pydev_imps/_pydev_execfile.py" root0="SKIP_INSPECTION" />
   </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 1
@@ -68,18 +85,20 @@
     "Python tests.Python tests in tests.executor": "Run",
     "Python.__init__ (1).executor": "Run",
     "Python.__init__.executor": "Run",
+    "Python.class_menu.executor": "Run",
     "Python.ex3.executor": "Run",
     "Python.ex_arrowkeys.executor": "Run",
     "Python.ex_autosnake.executor": "Run",
     "Python.ex_colors.executor": "Run",
     "Python.ex_manualsnake.executor": "Run",
-    "Python.ex_printkeys.executor": "Run",
+    "Python.ex_printkeys.executor": "Debug",
     "Python.ex_simplemenu.executor": "Run",
     "Python.ex_snake1.executor": "Run",
     "Python.example.executor": "Run",
     "Python.posix.executor": "Run",
     "Python.python -m build.executor": "Run",
     "Python.python -m twine upload dist/*.executor": "Run",
+    "Python.scratch_37.executor": "Run",
     "Python.test.executor": "Run",
     "Python.types.executor": "Run",
     "Python.virt.executor": "Run",
@@ -87,8 +106,8 @@
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager": "true",
     "RunOnceActivity.git.unshallow": "true",
     "git-widget-placeholder": "master",
-    "last_opened_file_path": "/run/media/jeroen/CCCOMA_X64FRE_EN-GB_DV9/python/libTerm/.local/venvs/x64.linux.cpython-3.12.9/bin/python",
-    "settings.editor.selected.configurable": "preferences.sourceCode.Python"
+    "last_opened_file_path": "/home/jeroen/Development/Code/Python/Projects/libTerm/.venv/bin/python",
+    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
   }
 }]]></component>
   <component name="RecentsManager">
@@ -98,10 +117,34 @@
     </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/Examples" />
+      <recent name="$PROJECT_DIR$/libextra" />
+      <recent name="$PROJECT_DIR$/src/libTerm" />
       <recent name="$PROJECT_DIR$/.local/venvs" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.ex_printkeys">
+  <component name="RunManager" selected="Python.ex_manualsnake">
+    <configuration name="class_menu" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="libTerm" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/libextra" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/libextra/class_menu.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <configuration name="ex_autosnake" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="libTerm" />
       <option name="ENV_FILES" value="" />
@@ -118,7 +161,7 @@
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Examples/ex_autosnake.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="true" />
+      <option name="EMULATE_TERMINAL" value="false" />
       <option name="MODULE_MODE" value="false" />
       <option name="REDIRECT_INPUT" value="false" />
       <option name="INPUT_FILE" value="" />
@@ -162,28 +205,6 @@
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Examples/ex_manualsnake.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="ex_printkeys" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="libTerm" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/Examples" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Examples/ex_printkeys.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="true" />
       <option name="MODULE_MODE" value="false" />
       <option name="REDIRECT_INPUT" value="false" />
@@ -206,7 +227,7 @@
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Examples/ex_simplemenu.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="EMULATE_TERMINAL" value="true" />
       <option name="MODULE_MODE" value="false" />
       <option name="REDIRECT_INPUT" value="false" />
       <option name="INPUT_FILE" value="" />
@@ -234,7 +255,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="virt" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="types" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="libTerm" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -243,11 +264,11 @@
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src/libTerm/term" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src/libTerm" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/libTerm/term/virt.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/libTerm/types.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -258,11 +279,11 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.ex_printkeys" />
-        <item itemvalue="Python.ex_simplemenu" />
         <item itemvalue="Python.ex_manualsnake" />
-        <item itemvalue="Python.virt" />
+        <item itemvalue="Python.types" />
         <item itemvalue="Python.ex_autosnake" />
+        <item itemvalue="Python.ex_simplemenu" />
+        <item itemvalue="Python.class_menu" />
       </list>
     </recent_temporary>
   </component>
@@ -332,6 +353,16 @@
           <url>file://$PROJECT_DIR$/src/libTerm/term/cursor.py</url>
           <line>105</line>
           <option name="timeStamp" value="3" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/src/libTerm/types.py</url>
+          <line>252</line>
+          <option name="timeStamp" value="4" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/src/libTerm/types.py</url>
+          <line>371</line>
+          <option name="timeStamp" value="6" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
