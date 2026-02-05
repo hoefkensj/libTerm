@@ -1,8 +1,8 @@
 # /usr/bin/env python
 
 import time
-from libTerm import Term, Mode
-from libTerm import Coord, Color
+from libTerm import Term, Mode, Color, Coord
+
 
 class Snake:
 	def __init__(s,t,speed=10):

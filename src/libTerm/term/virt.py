@@ -4,38 +4,81 @@ import os
 import termios
 import atexit
 import sys
-from libTerm.types import Color, Size,mode
+from contextlib import suppress
+from libTerm.types.base import Size
+from libTerm.types.base import Mode
 from libTerm.term.cursor import  Cursor
 from libTerm.term.input import  Stdin
 
 
-class VirtTerm():
+# Indices for termios list.
+IFLAG = 0
+OFLAG = 1
+CFLAG = 2
+LFLAG = 3
+ISPEED = 4
+OSPEED = 5
+CC = 6
+TCSAFLUSH = termios.TCSAFLUSH
+ECHO = termios.ECHO
+ICANON = termios.ICANON
+
+VMIN = 6
+VTIME = 5
+from libTerm.term.posix import Term
+class VirtTermAttrs():
+	def __init__(s,term,**k):
+		s.stored=[0,0,0,0,0,0,[0,0,0,0,0,0,0,0]]
+		s.term=term
+		s.stack=[]
+		s.active=[0,0,0,0,0,0,[0,0,0,0,0,0,0,0]]
+		s.init=list([*s.active])
+		s.stack+= [list(s.active)]
+		s.staged=None
+
+	def stage(s):
+		s.staged=list(s.active)
+	def update(s,new=None):
+		if new is None:
+			new=s.staged
+		s.stack+=[list(s.active)]
+		s.active=new
+		s.staged=None
+	def restore(s):
+		if s.stack:
+			s.staged=s.stack.pop()
+		return s.staged
+
+
+class VirtTerm(Term):
 	MODE = Mode
 
 	def __init__(s, *a, **k):
 		s.pid = os.getpid()
 		s.ppid = os.getpid()
 		s.fd = sys.__stdin__.fileno()
-		s.tty = 0
-
-		s._mode = Mode.NONE
-		s.mode = s.setmode
 		s.attr = None
+		with suppress(io.UnsupportedOperation, OSError):
+			s.tty = os.ttyname(s.fd)
+		s.attr = VirtTermAttrs(term=s)
+
+		s._mode = s.MODE.NONE
+		s._echo = True
 		s.cursor = Cursor(term=s)
 		# s.vcursors  = {0:vCursor(s,s.cursor)}
 		s.size = Size(term=s)
-
 		s.stdin = Stdin(term=s)
 		s.color = TermColors(term=s)
 		s.buffer = TermBuffers(term=s)
+		atexit.register(s.setmode, s.MODE.NORMAL)
 
 	def tcgetattr(s):
-		return termios.tcgetattr(s.fd)
+		return
 
-	def tcsetattr(s, *a,**k):
-		termios.tcsetattr(s.fd, when, attr)
+	def tcsetattr(s, attr, when=TCSAFLUSH):
+		pass
 
-	def setraw(s,  *a,**k):
+	def setraw(s, when=TCSAFLUSH):
 		"""Put terminal into raw mode."""
 		from termios import IGNBRK, BRKINT, IGNPAR, PARMRK, INPCK, ISTRIP, INLCR, IGNCR, ICRNL, IXON, IXANY, IXOFF, OPOST, PARENB, CSIZE, CS8, ECHO, ECHOE, ECHOK, ECHONL, ICANON, IEXTEN, ISIG, NOFLSH, TOSTOP
 		s.attr.stage()
@@ -43,7 +86,7 @@ class VirtTerm():
 		# See chapter 11 "General Terminal Interface"
 		# of POSIX.1-2017 Base Definitions.
 		s.attr.staged[IFLAG] &= ~(IGNBRK | BRKINT | IGNPAR | PARMRK | INPCK | ISTRIP | INLCR | IGNCR | ICRNL | IXON
-							  | IXANY | IXOFF)
+								  | IXANY | IXOFF)
 		# Do not post-process output.
 		s.attr.staged[OFLAG] &= ~OPOST
 		# Disable parity generation and detection; clear character size mask;
@@ -61,7 +104,7 @@ class VirtTerm():
 		s.attr.staged[CC][VTIME] = 0
 		s._update_(when)
 
-	def setcbreak(s, *a,**kwargs):
+	def setcbreak(s, when=TCSAFLUSH):
 		"""Put terminal into cbreak mode."""
 		# this code was lifted from the tty module and adapted for being a method
 		s.attr.stage()
@@ -76,39 +119,46 @@ class VirtTerm():
 		s.attr.staged[CC][VTIME] = 0
 		s._update_(when)
 
-	def echo(s,  *a,**k):
+	@property
+	def echo(s):
+		return s._echo
+
+	@echo.setter
+	def echo(s, enable=False):
 		s.attr.stage()
 		s.attr.staged[3] &= ~ECHO
 		if enable:
 			s.attr.staged[3] |= ECHO
 		s._update_()
 
-	def canonical(s,  *a,**k):
+	def canonical(s, enable=True):
 		s.attr.stage()
 		s.attr.staged[3] &= ~ICANON
 		if enable:
 			s.attr.staged[3] |= ICANON
 		s._update_()
 
-	def setmode(s, *a,**k):
+	@property
+	def mode(s):
+		return s._mode
+
+	@mode.setter
+	def mode(s, mode):
+		s.setmode(mode)
+
+	def setmode(s, mode=Mode.NONE):
 		def Normal():
 			s.cursor.show(True)
-			s.echo(True)
+			s.echo = True
 			s.canonical(True)
 			s.tcsetattr(s.attr.init)
 			s._mode = Mode.NORMAL
 
 		def Ctl():
 			s.cursor.show(False)
-			s.echo(False)
+			s.echo = False
 			s.canonical(False)
 			s._mode = Mode.CONTROL
-		def Input():
-			s.cursor.show(True)
-			s.echo(True)
-			s.canonical(False)
-			s._mode = Mode.INPUT
-
 
 		if isinstance(mode, str):
 			if mode.casefold().startswith('n'):
@@ -120,11 +170,11 @@ class VirtTerm():
 			{1: Normal, 2: Ctl}.get(mode)()
 		return s._mode
 
-	def _update_(s, *a,**k):
+	def _update_(s, when=TCSAFLUSH):
 		s.tcsetattr(s.attr.staged, when)
 		s.attr.update(s.tcgetattr())
 
-	def _ansi_(s,  *a,**k):
+	def _ansi_(s, ansi, parser):
 		s.setcbreak()
 		try:
 			sys.stdout.write(ansi)
@@ -135,5 +185,7 @@ class VirtTerm():
 		return result
 #
 
+#
+
 # Expose a Term symbol so importing `Term` from this module works in tests
-Term = VirtTerm
+

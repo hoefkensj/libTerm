@@ -3,7 +3,7 @@ import re
 from enum import Enum
 from dataclasses import dataclass
 from time import time_ns
-from libTerm.types import Coord,Store
+from libTerm.types.base import Coord,Store
 
 
 @dataclass()
@@ -145,7 +145,8 @@ class Cursor():
 		s.xy=coord
 		return coord
 	def undo(s):
-		current,coord=s.store.selected
+		current=s.store.selected
+		coord=s.store.value
 		print(f'\x1b[s\x1b[1;1H{current}\x1b[u')
 		if coord is not None:
 			s.xy=coord
