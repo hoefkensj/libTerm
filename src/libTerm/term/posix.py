@@ -11,19 +11,9 @@ from contextlib import suppress
 
 
 # Indices for termios list.
-IFLAG = 0
-OFLAG = 1
-CFLAG = 2
-LFLAG = 3
-ISPEED = 4
-OSPEED = 5
-CC = 6
-TCSAFLUSH = termios.TCSAFLUSH
-ECHO = termios.ECHO
-ICANON = termios.ICANON
-
-VMIN = 6
-VTIME = 5
+IFLAG = 0;OFLAG = 1;CFLAG = 2;LFLAG = 3;ISPEED = 4;OSPEED = 5;CC = 6
+TCSAFLUSH = termios.TCSAFLUSH;ECHO = termios.ECHO;ICANON = termios.ICANON
+VMIN = 6;VTIME = 5
 
 
 class TermAttrs():
@@ -37,16 +27,19 @@ class TermAttrs():
 
 	def stage(s):
 		s.staged=list(s.active)
+
 	def update(s,new=None):
 		if new is None:
 			new=s.staged
 		s.stack+=[list(s.active)]
 		s.active=new
 		s.staged=None
+
 	def restore(s):
 		if s.stack:
 			s.staged=s.stack.pop()
 		return s.staged
+
 
 class TermColors():
 	def __init__(s, **k):
@@ -58,6 +51,7 @@ class TermColors():
 		s.fg = Color(192,192,192)
 		s.bg = Color(16, 16, 16)
 		s.init = s._update_()
+
 	@staticmethod
 	def _ansiparser_():
 		buf = ''
@@ -80,24 +74,31 @@ class TermColors():
 			s.__setattr__(ground, result)
 
 		return {'fg': s.fg, 'bg': s.bg}
+
 	def swap(s):
 		swap=(7*(not s._swap))+(27*(s._swap))
 		s._swap= not s._swap
 		return '\x1b[{SWAP}m'.format(SWAP=swap)
+
 	def invert(s):
 		return '\x1b[{SWAP}m'.format(SWAP=7)
+
 	def revert(s):
 		return '\x1b[{SWAP}m'.format(SWAP=27)
+
 
 class TermBuffers:
 	def __init__(s,term):
 		s.term=term
 		s.ansi='\x1b[?1049{hl}'
 		s.current=0
+
 	def default(s):
 		print(s.ansi.format(hl='l'),end='',flush=True)
+
 	def alternate(s):
 		print(s.ansi.format(hl='h'),end='',flush=True)
+
 	def switch(s):
 		if s.current==0:
 			s.alternate()
@@ -105,11 +106,13 @@ class TermBuffers:
 		else:
 			s.default()
 			s.current=0
+
 	def set(s,buffer):
 		if buffer == 1:
 			s.alternate()
 		if buffer == 0:
 			s.default()
+
 
 class Term():
 	MODE=Mode
@@ -132,7 +135,6 @@ class Term():
 		s.color     = TermColors(term=s)
 		s.buffer	= TermBuffers(term=s)
 		atexit.register(s.setmode,s.MODE.NORMAL)
-
 
 	def tcgetattr(s):
 		return termios.tcgetattr(s.fd)

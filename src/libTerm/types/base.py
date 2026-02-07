@@ -72,26 +72,42 @@ class Color:
 		G=4294967296-s.G
 		B=4294967296-s.B
 		return Color(R,G,B,32)
-	# ----- Internal storage -----
+
 	@property
 	def RGB32(self):
+		"""Colors are stored in this format internally"""
 		return self.R, self.G, self.B
 
-	# ----- Truncated outputs -----
+
 	@property
 	def RGB16(self):
+		"""
+		:return: color in 16bit format:
+		"""
 		return tuple(v >> 16 for v in self.RGB32)
 
 	@property
 	def RGB8(self):
+		"""
+
+		:return: color in 8bit format
+		"""
 		return tuple(v >> 24 for v in self.RGB32)
 
 	@property
 	def RGB4(self):
+		"""
+
+		:return: colorin 4bit format
+		"""
 		return tuple(v >> 28 for v in self.RGB32)
 
-	# ----- ANSI decimal output -----
 	def ansi(self, bits: int = 8) -> str:
+		"""
+
+		:param bits: the desired bit depth of the output,ansi default is 8bit (0-255) per channel
+		:return: the color values in  8bit per channel formatted as R;G;B for easy inclusion in ansi escapes
+		"""
 		if bits == 32:
 			rgb = self.RGB32
 		elif bits == 16:
@@ -104,8 +120,13 @@ class Color:
 			raise ValueError("bits must be 4,8,16,32")
 
 		return ";".join(str(v) for v in rgb)
+
 	@property
 	def neg(s):
+		"""
+
+		:return: the negative of the color in 32bit format
+		"""
 		return s.__invert__()
 
 
@@ -116,8 +137,6 @@ class Coord(namedtuple('Coord', ['x', 'y'])):
 	_x: int = field(default=0)
 	_y: int = field(default=0)
 
-
-
 	def __str__(s):
 		return f'\x1b[{s.y + 1};{s.x + 1}H'
 
@@ -126,9 +145,11 @@ class Coord(namedtuple('Coord', ['x', 'y'])):
 
 	def __len__(s):
 		return 2
+
 	def __iter__(s):
 		yield s.x
 		yield s.y
+
 	def __getitem__(s, index):
 		value=None
 		if isinstance(index, int):
@@ -138,6 +159,7 @@ class Coord(namedtuple('Coord', ['x', 'y'])):
 		if value is None:
 			raise KeyError('index must be int 0 or 1 or str "x" or "y" ')
 		return value
+
 	def __add__(s, other):
 		if isinstance(other,Coord):
 			x=s.x+other.x
@@ -202,6 +224,65 @@ class Coord(namedtuple('Coord', ['x', 'y'])):
 	def x(s):
 		return s._x
 
+class Size():
+	def __init__(s, **k):
+		from libTerm import Coord
+
+		s.term = k.get('term')
+		s.getsize = get_terminal_size
+		s.time = None
+		s.last = None
+		s.xy = Coord(1, 1)
+		s._tmp = Coord(1, 1)
+		s.rows = 1
+		s.cols = 1
+
+		s.history = []
+		s.changed = False
+		s.changing = False
+		s.__kwargs__(**k)
+		s.__update__()
+
+	@property
+	def width(s):
+		s.__update__()
+		return s.cols
+
+	@property
+	def height(s):
+		s.__update__()
+		return s.rows
+
+	@property
+	def rc(s):
+		s.__update__()
+		return (s.cols, s.rows)
+
+	def __kwargs__(s, **k):
+		s.term = k.get('term')
+
+	def __update__(s):
+		if s.time is None:
+			s.last = time_ns()
+		size = Coord(*s.getsize())
+		if size != s.xy:
+			if size != s._tmp:
+				s.changing = True
+				s._tmp = size
+				s._tmptime = time_ns()
+			if size == s._tmp:
+				if (time_ns() - s._tmptime) * 1e6 > 500:
+					s.changing = False
+					s.changed = True
+					s.history += [s.xy]
+					s.xy = size
+					s.rows = s.xy.y
+					s.cols = s.xy.x
+				else:
+					s._tmp = size
+		if size == s.xy:
+			s.changed = False
+
 
 class Selector:
 	"""Cyclic Selector,configurable range and step-size
@@ -233,6 +314,7 @@ class Selector:
 		def wrap(v):
 			return ~(~(v + i) * -~-s._rnge) % (s._rnge)
 		return wrap
+
 	@property
 	def range(s):
 		o=s._shift
@@ -257,6 +339,7 @@ class Selector:
 		else:
 			s.step['up']=int(up) or s.step['up']
 		s._update_wrappers()
+
 	def expand(s,size=1):
 		if size>=0:
 			s._rnge+=size
@@ -295,67 +378,11 @@ class Selector:
 		if s.call is not None:
 			s.call(selected)
 		return selected
+
 	def preset(s,val):
 		s._value = s._wr(val)
 
 
-
-class Size():
-	def __init__(s, **k):
-		from libTerm import Coord
-
-		s.term = k.get('term')
-		s.getsize = get_terminal_size
-		s.time = None
-		s.last = None
-		s.xy = Coord(1, 1)
-		s._tmp = Coord(1, 1)
-		s.rows = 1
-		s.cols = 1
-
-		s.history = []
-		s.changed = False
-		s.changing = False
-		s.__kwargs__(**k)
-		s.__update__()
-
-	@property
-	def width(s):
-		s.__update__()
-		return s.cols
-	@property
-	def height(s):
-		s.__update__()
-		return s.rows
-	@property
-	def rc(s):
-		s.__update__()
-		return (s.cols, s.rows)
-
-	def __kwargs__(s, **k):
-		s.term = k.get('term')
-
-	def __update__(s):
-		if s.time is None:
-			s.last = time_ns()
-		size = Coord(*s.getsize())
-		if size != s.xy:
-			if size != s._tmp:
-				s.changing = True
-				s._tmp = size
-				s._tmptime = time_ns()
-			if size == s._tmp:
-				if (time_ns() - s._tmptime) * 1e6 > 500:
-					s.changing = False
-					s.changed = True
-					s.history += [s.xy]
-					s.xy = size
-					s.rows = s.xy.y
-					s.cols = s.xy.x
-				else:
-					s._tmp = size
-		if size == s.xy:
-			s.changed = False
 
 
 class Store():
@@ -419,7 +446,6 @@ class Store():
 			s.update([*pair.keys()][0])
 			return pair
 
-
 	def prev(s):
 		s._selector.prev()
 		if s.selected > 0 :
@@ -445,6 +471,7 @@ class Store():
 	def keys(s):
 		store={k:'' for k in s._keys}
 		return store.keys()
+
 	def values(s):
 		store={**s.store}
 		# store.pop(0)

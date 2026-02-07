@@ -6,7 +6,6 @@ from time import time_ns
 from libTerm.types.base import Coord,Store
 from libTerm.types.enums import Stop
 
-
 @dataclass()
 class Move(str,Enum):
 	abs= '\x1b[{Y};{X}H'
@@ -158,8 +157,6 @@ class Cursor():
 			return current
 		else:
 			return stop
-
-
 
 #TODO: class vCursor(Cursor):
 class VirtCursor():

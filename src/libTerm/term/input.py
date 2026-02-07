@@ -2,8 +2,6 @@
 # !/usr/bin/env python
 from select import select
 import os
-
-
 class Stdin():
 	def __init__(s,**k):
 		# super().__init__()
