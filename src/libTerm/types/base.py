@@ -1,9 +1,10 @@
 #/usr/bin/env python
 from collections import namedtuple
 from dataclasses import dataclass, field
-from enum import IntEnum
 from os import get_terminal_size
 from time import time_ns
+
+from libTerm.types.enums import Stop
 
 
 # class Selector():
@@ -202,35 +203,13 @@ class Coord(namedtuple('Coord', ['x', 'y'])):
 		return s._x
 
 
-class Mode(IntEnum):
-	NONE	= 0
-	none	= 1
-	NRML	= 1
-	nrml	= 1
-	NORMAL  = 1
-	normal  = 1
-	DEFAULT = 1
-	default = 1
-	CTL	 = 2
-	ctl	 = 2
-	CTRL	= 2
-	ctrl	= 2
-	CONTROL = 2
-	control = 2
-	inp     = 3
-	Inp     = 3
-	Input   = 3
-	INP      = 3
-	INPUT      = 3
-
-
 class Selector:
 	"""Cyclic Selector,configurable range and step-size
 		note: a range of (1,10) includes both 1 and 10:
 		10 <- 1 2 3 4 5 6 7 8 9 10 ->1
 	"""
-	def __init__(s,rnge,dn=-1,up=1,start=0,parent=None):
-		s.parent=parent
+	def __init__(s,rnge,dn=-1,up=1,start=0,call=None):
+		s.call=call
 		s.step={}
 		s.step['dn']= None
 		s.step['up']= None
@@ -295,17 +274,15 @@ class Selector:
 	def next(s):
 		s._value = s._up(s._value)
 		selected=s._value+s._shift
-		if s.parent is not None:
-			s.parent.selected=selected
-			s.parent.value=s.parent.store.get(selected)
+		if s.call is not None:
+			s.call(selected)
 		return selected
 
 	def prev(s):
 		s._value = s._dn(s._value)
 		selected=s._value+s._shift
-		if s.parent is not None:
-			s.parent.selected=selected
-			s.parent.value=s.parent.store.get(selected)
+		if s.call is not None:
+			s.call(selected)
 		return selected
 
 	def read(s):
@@ -315,10 +292,11 @@ class Selector:
 		nval=val
 		s._value = s._wr(nval)
 		selected=s._value+s._shift
-		if s.parent is not None:
-			s.parent.selected=selected
-			s.parent.value=s.parent.store.get(selected)
+		if s.call is not None:
+			s.call(selected)
 		return selected
+	def preset(s,val):
+		s._value = s._wr(val)
 
 
 
@@ -381,7 +359,7 @@ class Size():
 
 
 class Store():
-	def __init__(s, **k):
+	def __init__(s,term=None, **k):
 		"""Simple contiguous store backed by a list of values.
 
 		Keys are 1-based integers (1..n). Internally values are stored in
@@ -389,16 +367,33 @@ class Store():
 
 		By default the store has unlimited size; use `setmax` to bound it.
 		"""
-		s.store = {0:None,}
-		s.size=1
-		s.tail=1
-		s.cursor=1
+		s.term=term
+		s.store = {0:Stop.FIRST_OF_STORE,1:Stop.LAST_OF_STORE}
+		s.tail=2
+		s.cursor=s.tail
 		s._max = None
 		s.selected=None
 		s.value=None
-		s._selector=Selector((1,s.size+1),start=1,parent=s)
+		s._selector=Selector((-1,1),start=1,call=s.update)
 		s._selector.write(1)
 		s._keys=[]
+		s.stop=False
+
+	def update(s,value=None):
+		if value == -1 :
+			s.stop=Stop.LAST_OF_STORE
+			s._selector.preset(s.tail)
+
+		elif value == 0:
+			s.stop=Stop.FIRST_OF_STORE
+			s._selector.preset(1)
+		else:
+			s.stop=False
+			s.selected=value or s._selector.read()
+			s.value=s.store.get(s.selected)
+
+	def size(s):
+		return len(s.store)
 
 	def max(s, mx=None):
 		if mx is not None :
@@ -411,40 +406,50 @@ class Store():
 		return s._max
 
 	def save(s, value):
-		s._selector.write(s.tail)
-		if not (s.tail>=s.max()):
-			idx=s.tail
-			s.store[idx]=value
-			s._keys+=[idx]
-			s.size+=1
-			s.tail+=1
-			s._selector.expand()
-			s._selector.write(s.tail)
-			return idx,s.store.get(idx)
 
-	def clear(s):
-		s.store.clear()
-		s.store={0:None,}
-		s.tail = 1
-		s._selector=Selector(s.size)
-		s.read()
-		return
+		if not (s.tail>=s.max()):
+			lastkey=[*s.store.keys()][-1]
+			lastval=s.store[lastkey]
+			pair={s.tail : value}
+			s.store[s.tail]=value
+			s._keys+=[s.tail]
+			s.tail+=1
+			s.store |={s.tail:lastval}
+			s._selector.expand()
+			s.update([*pair.keys()][0])
+			return pair
+
 
 	def prev(s):
 		s._selector.prev()
+		if s.selected > 0 :
+			s.stop = False
+		if s.selected == 0:
+			s.stop = s.store[0].name
+			s._selector.next()
 		return s.selected,s.value
 
 	def next(s):
 		s._selector.next()
-		return s.selected,s.value
+		if s.selected > 0 :
+			s.stop = False
+		if s.selected == -1:
+			s.stop = s.store[-1].name
+			s._selector.prev()
+		return s.selected, s.value
 
 	def __len__(s):
-		result = len(s.store.values()-1)
+		result = len(s.store.values())-2
 		return result
 
 	def keys(s):
-		return s._keys
-
+		store={k:'' for k in s._keys}
+		return store.keys()
+	def values(s):
+		store={**s.store}
+		# store.pop(0)
+		# store.pop(-1)
+		return store.values()
 
 
 

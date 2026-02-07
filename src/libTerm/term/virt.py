@@ -6,7 +6,7 @@ import atexit
 import sys
 from contextlib import suppress
 from libTerm.types.base import Size
-from libTerm.types.base import Mode
+from libTerm import Mode
 from libTerm.term.cursor import  Cursor
 from libTerm.term.input import  Stdin
 

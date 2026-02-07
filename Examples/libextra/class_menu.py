@@ -5,9 +5,9 @@ class Menu:
 		s.term=term
 		s._tpl=['\x1b[{Y};{X}H','{XY}{CONR}{NO}. {COIR}{ITEM}{DESEL}','\x1b[{SEL}38;2;64;128;255{MOD}m']
 		s._items=items
-		s.selector=Selector((1,len(s._items)),start=0)
-		s.selector.select(1)
-		s.selected=s.selector.getselection
+		s.selector=Selector((1,len(s._items)))
+		s.selector.write(1)
+		s.selected=s.selector.read()
 		s.items=['MENU']
 		s.menu=[]
 		s.changed=[]
@@ -33,20 +33,20 @@ class Menu:
 
 		for i,item in enumerate(s.items[1:],start=1):
 			s.menu += [item.format(SEL='0;',MOD='')]
-			if s.selected() == i:
+			if s.selected == i:
 				s.menu[-1]=item.format(SEL='7;',MOD='')
 
 
 	def next(s):
-		s.changed=[s.items[s.selected()].format(SEL='0;',MOD='')]
-		s.selector.next
-		s.changed+=[s.items[s.selected()].format(SEL='7;',MOD='')]
+		s.changed=[s.items[s.selected].format(SEL='0;',MOD='')]
+		s.selector.next()
+		s.changed+=[s.items[s.selected].format(SEL='7;',MOD='')]
 		return s.update()
 
 	def prev(s):
-		s.changed=[s.items[s.selected()].format(SEL='0;',MOD='')]
-		s.selector.prev
-		s.changed+=[s.items[s.selected()].format(SEL='7;',MOD='')]
+		s.changed=[s.items[s.selected].format(SEL='0;',MOD='')]
+		s.selector.prev()
+		s.changed+=[s.items[s.selected].format(SEL='7;',MOD='')]
 		return s.update()
 
 	def update(s):

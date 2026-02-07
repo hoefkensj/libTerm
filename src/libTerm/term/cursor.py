@@ -4,6 +4,7 @@ from enum import Enum
 from dataclasses import dataclass
 from time import time_ns
 from libTerm.types.base import Coord,Store
+from libTerm.types.enums import Stop
 
 
 @dataclass()
@@ -64,7 +65,7 @@ class Cursor():
 		s.move    = Move
 		s.re      = re.compile(r"^.?\x1b\[(?P<Y>\d*);(?P<X>\d*)R", re.VERBOSE)
 		s._xy     = Coord(0,0)
-		s.store   = Store()
+		s.store   = Store(s.term,)
 		s.visible = True
 		s.hidden  = False
 		s.slaves  = []
@@ -79,8 +80,9 @@ class Cursor():
 
 	@xy.setter
 	def xy(s,coord):
-		print('\x1b[{y};{x}H'.format(**coord), end='', flush=True)
-		s.__update__()
+		if isinstance(coord,Coord):
+			print('\x1b[{y};{x}H'.format(**coord), end='', flush=True)
+			s.__update__()
 
 	def stored(s):
 		return s.store.stored
@@ -147,11 +149,15 @@ class Cursor():
 	def undo(s):
 		current=s.store.selected
 		coord=s.store.value
-		print(f'\x1b[s\x1b[1;1H{current}\x1b[u')
-		if coord is not None:
-			s.xy=coord
+
+		stop=s.store.stop
+		print(f'\x1b[s\x1b[5;10H{stop}\x1b[u')
+		if not isinstance(s.store.stop,Stop):
 			s.store.prev()
-		return coord
+			s.xy=coord
+			return current
+		else:
+			return stop
 
 
 
