@@ -1,7 +1,7 @@
 # /usr/bin/env pyhthon
 import time,sys,os
 from libTerm import Term,Color,Coord,Mode,Selector
-from libextra.class_menu import Menu
+from libTerm.libextra.class_menu import Menu
 import asyncio
 
 
