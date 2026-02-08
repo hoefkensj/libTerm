@@ -256,7 +256,7 @@ class Size():
 	@property
 	def rc(s):
 		s.__update__()
-		return (s.cols, s.rows)
+		return Coord(s.rows,s.cols )
 
 	def __kwargs__(s, **k):
 		s.term = k.get('term')

@@ -37,7 +37,7 @@ t.echo=False
 t.cursor.show(False)
 print('\n\n\n\n\n\n\n')
 t.mode=Mode.CONTROL
-vert=t.size.xy.y
+vert=t.size.rc.y
 print(vert)
 snake=Snake(t,speed=100)
 time.sleep(2)
