@@ -4,7 +4,7 @@ from enum import Enum
 from dataclasses import dataclass
 from time import time_ns
 from libTerm.types.base import Coord,Store
-from libTerm.types.enums import Stop
+from libTerm.types.enums import StoreStop as Stop
 
 @dataclass()
 class Move(str,Enum):
@@ -146,17 +146,14 @@ class Cursor():
 		s.xy=coord
 		return coord
 	def undo(s):
-		current=s.store.selected
-		coord=s.store.value
-
-		stop=s.store.stop
-		print(f'\x1b[s\x1b[5;10H{stop}\x1b[u')
-		if not isinstance(s.store.stop,Stop):
-			s.store.prev()
-			s.xy=coord
-			return current
+		if not s.store.stop:
+			current,coord=s.store.prev()
+			stop=s.store.stop
+			s.xy = coord
+			return current,coord
 		else:
-			return stop
+			return s.store.stop
+
 
 #TODO: class vCursor(Cursor):
 class VirtCursor():

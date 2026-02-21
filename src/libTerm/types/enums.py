@@ -1,5 +1,5 @@
-# /usr/bin/env pyhthon
-from enum import IntEnum
+#!/usr/bin/env python
+from enum import IntEnum,StrEnum
 
 
 class Mode(IntEnum):
@@ -24,6 +24,6 @@ class Mode(IntEnum):
 	INPUT      = 3
 
 
-class Stop(IntEnum):
-	FIRST_OF_STORE	= 1
-	LAST_OF_STORE	= -1
+class StoreStop(StrEnum):
+	FIRST_OF_STORE	= "FIRST_OF_STORE"
+	LAST_OF_STORE	= "LAST_OF_STORE"

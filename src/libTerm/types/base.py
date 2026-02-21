@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from os import get_terminal_size
 from time import time_ns
 
-from libTerm.types.enums import Stop
+from libTerm.types.enums import StoreStop
 
 
 # class Selector():
@@ -77,7 +77,6 @@ class Color:
 	def RGB32(self):
 		"""Colors are stored in this format internally"""
 		return self.R, self.G, self.B
-
 
 	@property
 	def RGB16(self):
@@ -167,6 +166,9 @@ class Coord(namedtuple('Coord', ['x', 'y'])):
 		elif isinstance(other,complex):
 			x=s.x+other.real
 			y=s.y+other.imag
+		elif isinstance(other, list|tuple|set):
+			x=s.x+other[0]
+			y=s.y+other[1]
 
 		elif isinstance(other,str):
 			return f'{s.__str__()}{other}'
@@ -199,7 +201,16 @@ class Coord(namedtuple('Coord', ['x', 'y'])):
 
 	def __complex__(s):
 		return complex(real=s.x,imag=s.y)
-
+	def __truediv__(s, other):
+		x=s.x/other
+		y=s.y/other
+		x=int(x) if int(x)==x else x
+		y=int(y) if int(y)==y else y
+		return Coord(x,y)
+	def __floordiv__(s, other):
+		x=s.x//other
+		y=s.y//other
+		return Coord(x,y)
 	@property
 	def real(s):
 		return s.x
@@ -229,7 +240,7 @@ class Size():
 		from libTerm import Coord
 
 		s.term = k.get('term')
-		s.getsize = get_terminal_size
+		s.getsize = lambda:Coord(*list(get_terminal_size()))
 		s.time = None
 		s.last = None
 		s.xy = Coord(1, 1)
@@ -283,107 +294,110 @@ class Size():
 		if size == s.xy:
 			s.changed = False
 
-
 class Selector:
 	"""Cyclic Selector,configurable range and step-size
 		note: a range of (1,10) includes both 1 and 10:
 		10 <- 1 2 3 4 5 6 7 8 9 10 ->1
 	"""
-	def __init__(s,rnge,dn=-1,up=1,start=0,call=None):
-		s.call=call
+	def __init__(s,rnge=(1,10),dn=-1,up=1,start=None,offset=0):
+
+		s._offset=0
 		s.step={}
-		s.step['dn']= None
-		s.step['up']= None
+		s.step_dn= dn
+		s.step_up= up
 		s._shift = 0
-		s._rnge = 0
-		if isinstance(rnge,float|int):
-			rnge=(0,rnge)
-		s.setrange(rnge)
-		s.setstep(dn,up)
-		s._up=s._wrapper(s.step['up'])
-		s._dn=s._wrapper(s.step['dn'])
-		s._wr=s._wrapper(0)
-		s._value = s._wr(start-s._shift)
+		s._start = start
+		s._range_min = 1
+		s._range_max = 1
+		s.range=rnge
+		s.val=start or 1
+		s._wr(start or s._range_min)
 
-	def _update_wrappers(s):
-		s._up=s._wrapper(s.step['up'])
-		s._dn=s._wrapper(s.step['dn'])
-		s._wr=s._wrapper(0)
+	def _wrap(s,val):
+		if s._range_max==s._range_min:
+			val= s._range_max
+		while val > s._range_max:
+			rest=val-s._range_max
+			rest-=1
+			val=s._range_min+rest
+		while val < s._range_min:
+			under=val-s._range_min
+			under+=1
+			val=s._range_max+under
+		assert s._range_min<=val <=s._range_max
+		# print(s._range_min,val,s._range_max)
 
-	def _wrapper(s,i):
-		def wrap(v):
-			return ~(~(v + i) * -~-s._rnge) % (s._rnge)
-		return wrap
+		return val
 
+	def _up(s):
+		s.value=s._wrap(s.value+s.step_up)
+	def _dn(s):
+		s.value=s._wrap(s.value+s.step_dn)
+	def _wr(s,val):
+		s.value=s._wrap(val)
+	def _rd(s):
+		return s.value
 	@property
 	def range(s):
-		o=s._shift
-		r=s._rnge-1
-		rnge=(o,r+o)
+		rnge=(s._range_min,s._range_max)
 		return rnge
+	@range.setter
+	def range(s,rnge):
+		assert isinstance(rnge,float|int|list|tuple|set|range)
+		if isinstance(rnge,float|int):
+			s._range_min=1
+			s._range_max=rnge
+		elif isinstance(rnge,tuple|list|set):
+			s._range_min=rnge[0]
+			s._range_max=rnge[1]
+		elif isinstance(rnge,range):
+			s._range_min = rnge.start()
+			s._range_max = rnge.stop()
+		if s._range_min > s._range_max:
+			s._range_min=s._range_min^s._range_max
+			s._range_max=s._range_min^s._range_max
+			s._range_min=s._range_min^s._range_max
 
-	def setrange(s,span):
-		bot,top=span
-		top+=1
-		s._rnge=top-bot
-		s._shift=bot
-		s._update_wrappers()
+
 
 	def setstep(s,dn=None,up=None):
-		if dn is None and s.step['dn'] is None:
-			s.step['dn']=-1
-		else:
-			s.step['dn']=int(dn) or s.step['dn']
-		if up is None and s.step['up'] is None:
-			s.step['up']=1
-		else:
-			s.step['up']=int(up) or s.step['up']
-		s._update_wrappers()
+		if dn is not None:
+			s.step_dn=dn
+		if up is not None:
+			s.step_up=up
 
 	def expand(s,size=1):
 		if size>=0:
-			s._rnge+=size
+			s._range_max+=size
 		else:
-			s._shift+=size
-		s._update_wrappers()
+			s._range_min+=size
 
 	def contract(s,size=1):
 		if size>=0:
-			s._rnge-=size
+			s._range_max-=size
 		else:
-			s._shift-=size
-		s._update_wrappers()
+			s._range_min-=size
+
 
 	def next(s):
-		s._value = s._up(s._value)
-		selected=s._value+s._shift
-		if s.call is not None:
-			s.call(selected)
-		return selected
+		s._up()
+		return s.value
 
-	def prev(s):
-		s._value = s._dn(s._value)
-		selected=s._value+s._shift
-		if s.call is not None:
-			s.call(selected)
-		return selected
+	def \
+			   prev(s):
+		s._dn()
+		return s.value
 
 	def read(s):
-		return s._value+s._shift
+		return s.value
 
 	def write(s, val):
-		nval=val
-		s._value = s._wr(nval)
-		selected=s._value+s._shift
-		if s.call is not None:
-			s.call(selected)
-		return selected
+		s._wr(val)
+		return s.value
+
 
 	def preset(s,val):
-		s._value = s._wr(val)
-
-
-
+		return lambda :s._wr(val)
 
 class Store():
 	def __init__(s,term=None, **k):
@@ -395,32 +409,22 @@ class Store():
 		By default the store has unlimited size; use `setmax` to bound it.
 		"""
 		s.term=term
-		s.store = {0:Stop.FIRST_OF_STORE,1:Stop.LAST_OF_STORE}
-		s.tail=2
-		s.cursor=s.tail
+		s.store = {0:StoreStop.FIRST_OF_STORE,1:StoreStop.LAST_OF_STORE}
+		s.tail=1
 		s._max = None
 		s.selected=None
-		s.value=None
-		s._selector=Selector((-1,1),start=1,call=s.update)
-		s._selector.write(1)
+		s._value=None
+		s.cursor=1
 		s._keys=[]
 		s.stop=False
 
-	def update(s,value=None):
-		if value == -1 :
-			s.stop=Stop.LAST_OF_STORE
-			s._selector.preset(s.tail)
-
-		elif value == 0:
-			s.stop=Stop.FIRST_OF_STORE
-			s._selector.preset(1)
-		else:
-			s.stop=False
-			s.selected=value or s._selector.read()
-			s.value=s.store.get(s.selected)
+	@property
+	def value(s):
+		s._value=s.store.get(s.cursor)
+		return s._value
 
 	def size(s):
-		return len(s.store)
+		return len(s.store)-2
 
 	def max(s, mx=None):
 		if mx is not None :
@@ -433,30 +437,43 @@ class Store():
 		return s._max
 
 	def save(s, value):
-
 		if not (s.tail>=s.max()):
-			lastkey=[*s.store.keys()][-1]
+			s.cursor=s.tail
+			newkey = s.tail
+			lastkey = [*s.store.keys()][-1]
 			lastval=s.store[lastkey]
-			pair={s.tail : value}
-			s.store[s.tail]=value
-			s._keys+=[s.tail]
+			pair={newkey : value}
+			s.store[newkey]=value
+			s._keys+=[newkey]
 			s.tail+=1
-			s.store |={s.tail:lastval}
-			s._selector.expand()
-			s.update([*pair.keys()][0])
+			s.store[s.tail]=lastval
 			return pair
-
 	def prev(s):
-		s._selector.prev()
-		if s.selected > 0 :
+		def isfirst(val):
+			first=False
+			if val is StoreStop.FIRST_OF_STORE:
+				first=True
+			if s.stop is StoreStop.FIRST_OF_STORE:
+				first=True
+			return first
+		if not isfirst(s.value):
 			s.stop = False
-		if s.selected == 0:
+			s.cursor -= 1
+		else:
+			s.stop=StoreStop.FIRST_OF_STORE
+		return s.cursor,s.value
+
+
+
+
+		if s.cursor==s.tail or s.cursor==0 :
 			s.stop = s.store[0].name
-			s._selector.next()
-		return s.selected,s.value
+
+		return s.cursor,s.value
 
 	def next(s):
 		s._selector.next()
+		s.cursor = s._selector.read()
 		if s.selected > 0 :
 			s.stop = False
 		if s.selected == -1:

@@ -1,4 +1,4 @@
-# /usr/bin/env pyhthon
+#!/usr/bin/env python
 import unittest
 from libTerm import Store
 import time

@@ -1,4 +1,4 @@
-# /usr/bin/env pyhthon
+#!/usr/bin/env python
 # !/usr/bin/env python
 from select import select
 import os
