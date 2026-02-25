@@ -1,143 +1,158 @@
 import sys
 import re
+import asyncio
 from enum import Enum
 from dataclasses import dataclass
 from time import time_ns
+
 from libTerm.types.base import Coord,Store
 from libTerm.types.enums import StoreStop as Stop
+from enum import StrEnum,auto
 
-@dataclass()
-class Move(str,Enum):
-	abs= '\x1b[{Y};{X}H'
-	up= '\x1b[{Y}A'
-	down= '\x1b[{Y}B'
-	right= '\x1b[{X}C'
-	left= '\x1b[{X}D'
-	prev= '\x1b[{Y}E'
-	next= '\x1b[{Y}F'
-	col= '\x1b[{X}G'
 
-	def __str__(s):
-		return s.value
-	def __repr__(s):
-		return repr(s.value)
-	def __call__(s, *a, **k):
-		X=k.get('X')
-		Y=k.get('Y')
-		if 'X' in str(s.value):
-			if X is None:
-				X = 1
-				if (len(a)>0):
-					X=a[0]
 
-		if 'Y' in str(s.value):
-			if Y is None:
-				Y=1
-				if (len(a)==1):
-					if not 'X' in str(s.value):
-						Y=a[0]
-				if (len(a) > 1):
-					Y=a[1]
-		tplvars={'X':X,'Y':Y}
-		print(str(s.value).format(**tplvars),end='',flush=True)
 
-@dataclass()
-class ANSI_Cursor(str, Enum):
-	show = '\x1b[?25h'
-	hide = '\x1b[?25l'
-	scrup= '\x1bM'
-	getxy= '\x1b[6n'
-	# savxy= '7','[s'
-	# rstxy= '8','[u'
+
+
+class Ansi(StrEnum):
+	ESC     = '\x1b'
+	CSI     = ESC+'['
+	OSC     = ESC+']'
+	APC     = ESC+'_'
+	ST      = ESC+'\\'
+	show    = CSI+'?25h'
+	hide    = CSI+'?25l'
+	SCROLL  = ESC+'M'
+	LOC     = CSI+'6n'
+	save    = ESC+'7'+CSI+'s'
+	load    = ESC+'8'+CSI+'u'
 
 	def __str__(s):
 		return s.value
 	def __repr__(s):
 		return repr(s.value)
-	def __call__(s):
-		print(str(s.value), end='', flush=True)
+
+	def __call__(self, *args, **kwargs):
+		print(self.value, end='', flush=True)
+
+
+
+
+class Move(StrEnum):
+	CSI   = Ansi.CSI
+	UP    = CSI+'{N}A'
+	DOWN  = CSI+'{N}B'
+	RIGHT = CSI+'{N}C'
+	PREV  = CSI+'{N}E'
+	LEFT  = CSI+'{N}D'
+	NExT  = CSI+'{N}F'
+	COL   = CSI+'{X}G'
+	ABS   = CSI+'{Y};{X}H'
+
+	def __str__(s):
+		return s()
+	def __repr__(s):
+		return repr(s.value)
+	def __call__(s, *a):
+		CSI=s.CSI
+		if s.value == Move.ABS:
+			X=a[0]
+			Y=a[1]
+			result=s.value.format(CSI=CSI,X=X,Y=Y)
+		else:
+			N = a[0]
+			result=s.value.format(CSI=CSI,N=N)
+		return result
+
+
 
 class Cursor():
 	def __init__(s, term):
 		s.term    = term
-		s.ansi    = ANSI_Cursor
+		s.ansi    = Ansi
 		s.move    = Move
-		s.re      = re.compile(r"^.?\x1b\[(?P<Y>\d*);(?P<X>\d*)R", re.VERBOSE)
+		s._show   = Ansi.show
+		s._hide   = Ansi.hide
+		s._re      = re.compile(r"^.?\x1b\[(?P<Y>\d*);(?P<X>\d*)R", re.VERBOSE)
 		s._xy     = Coord(0,0)
-		s.store   = Store(s.term,)
+		s._xyset  = Coord(0,0)
+		s.store   = Store(s.term)
 		s.visible = True
 		s.hidden  = False
+		s.mock    = False
 		s.slaves  = []
 		#TODO:		s.stamp=time_ns()
 		#TODO:		s.moved=False
-		#TODO:		s._history = [*(None,) * 64]
-		s.init    = s.__update__()
+		#TODO:		s._history = [*(None,) * 64]ASDF
+		s.init    = s.__sync__()
+	def __sync__(s):
+		s.update()
+		s._xy=s.xy
 
 	@property
 	def xy(s):
-		return s.__update__()
+		result=s.update()
+		return result
 
 	@xy.setter
 	def xy(s,coord):
-		if isinstance(coord,Coord):
-			print('\x1b[{y};{x}H'.format(**coord), end='', flush=True)
-			s.__update__()
+		if not isinstance(coord,Coord):
+			coord=Coord(*coord)
+		s.xyset=coord
+		print('\x1b[{y};{x}H'.format(**coord), end='', flush=True)
+
 
 	def stored(s):
-		return s.store.stored
+		return s.store.store
 
-	def __update__(s):
+	def update(s):
 		def Parser():
 			buf = ' '
 			while buf[-1] != "R":
-				buf += sys.stdin.read(1)
-			# reading the actual values, but what if a keystroke appears while reading
-			# from stdin? As dirty work around, getpos() returns if this fails: None
-			try:
-				groups = s.re.search(buf).groupdict()
-				result = Coord(int(groups['X']), int(groups['Y']))
-			except AttributeError:
-				result = None
-			return result
-
-		result = None
-		timeout = {}
-		timeout['limit'] = 500
-		timeout['start'] = time_ns() // 1e6
-		timeout['running'] = 0
-		while not result:
-			result = s.term._ansi_(s.ansi.getxy, Parser)
+				buf += s.term.stdin.raw().decode('UTF-8')
+				if len(buf) > 32:
+					break
+			return buf
+		result = s.term.stdin.ansiresponse(s.ansi.LOC, Parser)
+		try:
+			groups = s._re.search(result).groupdict()
+			matched = Coord(int(groups['X']), int(groups['Y']))
+		except AttributeError:
+			result = None
+		if result is not None:
+			result = matched
+		else:
+			result=s.xyset
 		s._xy =result
 		return result
 
-	def show(s, state=True):
-		if s.hidden and state:
-			s.ansi.show()
-			s.hidden=False
-			s.visible=True
-		if s.visible and not state:
-			s.ansi.hide()
-			s.hidden=True
-			s.visible=False
-
 	def hide(s, state=True):
 		if s.visible and state:
-			s.show(False)
-		if s.hidden and not state:
-			s.show(True)
+			print(s.ansi.hide)
+			s.visible=False
+		elif not s.visible and not state:
+			print(s.ansi.show)
+			s.visible=True
+		return s.visible
+	def show(s,state=True):
+		return s.hide(not state)
+
 
 	@property
 	def x(s):
 		x=s.xy.x
 		return x
-
 	@property
 	def y(s):
 		y=s.xy.y
+
 	def changed(s):
 		ref=s._xy
 		if s.xy !=ref:
-			return True
+			changed=True
+		else:
+			changed=False
+		return changed
 
 	def save(s):
 		return s.store.save(s.xy)

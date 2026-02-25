@@ -1,8 +1,7 @@
 #!/usr/bin/env python
-from mmap import MADV_RANDOM
 
-from libTerm import Selector ,Coord ,Color
-# from libTerm.types.enums import Stop
+
+
 class Menu:
 	def __init__(s,term,items,templates=None,location=None,fgcolor=None,bgcolor=None,choice_colors=None,nums=True,numstart=1):
 		s.CSI='\x1b['

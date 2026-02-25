@@ -1,15 +1,13 @@
 #!/usr/bin/env python
-from libTerm import Term,Coord,Mode,Color
-from time import sleep
-from unicodedata import combining
+def main(term):
+	print(f"{term.color.fg.RGB8=}")
+	print(f"{term.color.bg.RGB8=}")
+	print(f"{term.color.bg.neg.RGB8=}")
+	print(f"{term.color.bg.neg.RGB32=}")
+	print(f"{term.color.fg.RGB4=}")
 
 
-
-from libTerm import Term,Coord,Mode,Color
-
-term=Term()
-
-print(term.color.bg.RGB8)
-print(term.color.bg.neg.RGB8)
-print(term.color.bg.neg.RGB32)
-print(term.color.fg.RGB4)
+if __name__ == "__main__":
+	from libTerm import Term
+	t=Term()
+	main(t)

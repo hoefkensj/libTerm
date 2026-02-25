@@ -5,7 +5,7 @@ import termios
 import atexit
 import sys
 from contextlib import suppress
-from libTerm.types.base import Size
+from libTerm.term.structs import TermSize
 from libTerm import Mode
 from libTerm.term.cursor import  Cursor
 from libTerm.term.input import  Stdin
@@ -66,7 +66,7 @@ class VirtTerm(Term):
 		s._echo = True
 		s.cursor = Cursor(term=s)
 		# s.vcursors  = {0:vCursor(s,s.cursor)}
-		s.size = Size(term=s)
+		s.size = TermSize(term=s)
 		s.stdin = Stdin(term=s)
 		s.color = TermColors(term=s)
 		s.buffer = TermBuffers(term=s)

@@ -4,114 +4,16 @@ import os
 import termios
 import atexit
 import sys
-from libTerm import Color,Mode,Size
-from libTerm.term.cursor import  Cursor
-from libTerm.term.input import  Stdin
 from contextlib import suppress
-
+from libTerm.types import Mode
+from libTerm.term.cursor import Cursor
+from libTerm.term.input import Stdin
+from libTerm.term.structs import TermAttrs, TermBuffers, TermColors, TermSize
 
 # Indices for termios list.
 IFLAG = 0;OFLAG = 1;CFLAG = 2;LFLAG = 3;ISPEED = 4;OSPEED = 5;CC = 6
 TCSAFLUSH = termios.TCSAFLUSH;ECHO = termios.ECHO;ICANON = termios.ICANON
 VMIN = 6;VTIME = 5
-
-
-class TermAttrs():
-	def __init__(s,**k):
-		s.term=k.get('term')
-		s.stack=[]
-		s.active=s.term.tcgetattr()
-		s.init=list([*s.active])
-		s.stack+= [list(s.active)]
-		s.staged=None
-
-	def stage(s):
-		s.staged=list(s.active)
-
-	def update(s,new=None):
-		if new is None:
-			new=s.staged
-		s.stack+=[list(s.active)]
-		s.active=new
-		s.staged=None
-
-	def restore(s):
-		if s.stack:
-			s.staged=s.stack.pop()
-		return s.staged
-
-
-class TermColors():
-	def __init__(s, **k):
-		s.term = k.get('term')
-		s._specs = {'fg': 10, 'bg': 11,'swap':7,'unswap':27}
-		s._ansi_q = '\x1b]{spec};?\a'
-		s._ansi_a = '\x1b[{spec}m'
-		s._swaped=False
-		s.fg = Color(192,192,192)
-		s.bg = Color(16, 16, 16)
-		s.init = s._update_()
-
-	@staticmethod
-	def _ansiparser_():
-		buf = ''
-		try:
-			for i in range(23):
-				buf += sys.stdin.read(1)
-			rgb = buf.split(':')[1].split('/')
-			rgb = [int(i, base=16) for i in rgb]
-			rgb = Color(*rgb, 16)
-		except Exception as E:
-			# print(E)
-			rgb = None
-		return rgb
-
-	def _update_(s):
-		for ground in ['fg','bg']:
-			result = None
-			while not result:
-				result = s.term._ansi_(s._ansi_q.format(spec=s._specs[ground]), s._ansiparser_)
-			s.__setattr__(ground, result)
-
-		return {'fg': s.fg, 'bg': s.bg}
-
-	def swap(s):
-		swap=(7*(not s._swap))+(27*(s._swap))
-		s._swap= not s._swap
-		return '\x1b[{SWAP}m'.format(SWAP=swap)
-
-	def invert(s):
-		return '\x1b[{SWAP}m'.format(SWAP=7)
-
-	def revert(s):
-		return '\x1b[{SWAP}m'.format(SWAP=27)
-
-
-class TermBuffers:
-	def __init__(s,term):
-		s.term=term
-		s.ansi='\x1b[?1049{hl}'
-		s.current=0
-
-	def default(s):
-		print(s.ansi.format(hl='l'),end='',flush=True)
-
-	def alternate(s):
-		print(s.ansi.format(hl='h'),end='',flush=True)
-
-	def switch(s):
-		if s.current==0:
-			s.alternate()
-			s.current=1
-		else:
-			s.default()
-			s.current=0
-
-	def set(s,buffer):
-		if buffer == 1:
-			s.alternate()
-		if buffer == 0:
-			s.default()
 
 
 class Term():
@@ -128,13 +30,49 @@ class Term():
 
 		s._mode     = s.MODE.NONE
 		s._echo		= True
+		s._canon    = True
+		s.stdin		= Stdin(term=s)
 		s.cursor    = Cursor(term=s)
 		# s.vcursors  = {0:vCursor(s,s.cursor)}
-		s.size      = Size(term=s)
-		s.stdin		= Stdin(term=s)
+		s.size      = TermSize(term=s)
 		s.color     = TermColors(term=s)
 		s.buffer	= TermBuffers(term=s)
-		atexit.register(s.setmode,s.MODE.NORMAL)
+		atexit.register(s.setmode,Mode.NORMAL)
+
+
+	@property
+	def echo(s):
+		s._echo=s.attr.active[LFLAG] & ECHO != 0
+		return s._echo
+
+	@property
+	def mode(s):
+		return s._mode
+
+	@property
+	def canonical(s):
+		s._canon = s.attr.active[LFLAG] & ICANON != 0
+		return s._canon
+
+	@echo.setter
+	def echo(s, enable=False):
+		s.attr.stage()
+		s.attr.staged[3] &= ~ECHO
+		if enable:
+			s.attr.staged[3] |= ECHO
+		s._update_()
+
+	@canonical.setter
+	def canonical(s, enable=True):
+		s.attr.stage()
+		s.attr.staged[3] &= ~ICANON
+		if enable:
+			s.attr.staged[3] |= ICANON
+		s._update_()
+
+	@mode.setter
+	def mode(s, mode):
+		s.setmode(mode)
 
 	def tcgetattr(s):
 		return termios.tcgetattr(s.fd)
@@ -182,57 +120,33 @@ class Term():
 		s.attr.staged[CC][VMIN] = 1
 		s.attr.staged[CC][VTIME] = 0
 		s._update_(when)
-	@property
-	def echo(s):
-		return s._echo
 
-	@echo.setter
-	def echo(s,enable=False):
-		s.attr.stage()
-		s.attr.staged[3] &= ~ECHO
-		if enable:
-			s.attr.staged[3] |= ECHO
-		s._update_()
-
-	def canonical(s,enable=True):
-		s.attr.stage()
-		s.attr.staged[3] &= ~ICANON
-		if enable:
-			s.attr.staged[3] |= ICANON
-		s._update_()
-
-	@property
-	def mode(s):
-		return s._mode
-
-	@mode.setter
-	def mode(s,mode):
-		s.setmode(mode)
-
-	def setmode(s, mode=Mode.NONE):
+	def setmode(s, mode=None):
 		def Normal():
 			s.cursor.show(True)
-			s.echo=True
-			s.canonical(True)
+			s.echo = True
+			s.canonical = True
 			s.tcsetattr(s.attr.init)
 			s._mode = Mode.NORMAL
 
 		def Ctl():
 			s.cursor.show(False)
-			s.echo=False
-			s.canonical(False)
+			s.echo = False
+			s.canonical = False
 			s._mode = Mode.CONTROL
 
-		if isinstance(mode,str):
+		if mode is None:
+			mode = s._mode
+		if isinstance(mode, str):
 			if mode.casefold().startswith('n'):
-				mode=Mode.NORMAL
+				mode = Mode.NORMAL
 			elif mode.casefold().startswith('c'):
-				mode=Mode.CONTROL
+				mode = Mode.CONTROL
 
 		if mode is not None and mode != Mode.NONE:
-			{1:Normal,2:Ctl}.get(mode)()
+			{1: Normal, 2: Ctl}.get(mode)()
 		return s._mode
-		
+
 	def _update_(s, when=TCSAFLUSH):
 		s.tcsetattr(s.attr.staged, when)
 		s.attr.update(s.tcgetattr())

@@ -4,7 +4,7 @@ from enum import IntEnum,StrEnum
 
 class Mode(IntEnum):
 	NONE	= 0
-	none	= 1
+	none	= 0
 	NRML	= 1
 	nrml	= 1
 	NORMAL  = 1

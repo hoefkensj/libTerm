@@ -3,7 +3,6 @@ from collections import namedtuple
 from dataclasses import dataclass, field
 from os import get_terminal_size
 from time import time_ns
-
 from libTerm.types.enums import StoreStop
 
 
@@ -40,93 +39,6 @@ from libTerm.types.enums import StoreStop
 # 	@ceiling.setter
 # 	def ceiling(s,value):
 # 		s.n=value
-
-
-@dataclass(frozen=True)
-class Color:
-	R: int = field(default=0, metadata={'range': (0, 4294967296)})
-	G: int = field(default=0, metadata={'range': (0, 4294967296)})
-	B: int = field(default=0, metadata={'range': (0, 4294967296)})
-	BIT: int = field(default=8, metadata={'set': (4, 8, 16, 32)})
-
-	def __post_init__(self):
-		if self.BIT not in (4, 8, 16, 32):
-			raise ValueError(f"BIT must be one of 4,8,16,32. Got {self.BIT}")
-
-		max_val = (1 << self.BIT) - 1
-
-		for ch in ("R", "G", "B"):
-			v = getattr(self, ch)
-			if not isinstance(v, int) or not (0 <= v <= max_val):
-				raise ValueError(f"{ch} must be 0..{max_val} for {self.BIT}-bit input")
-
-		# convert input into internal 32-bit by left-shifting
-		shift = 32 - self.BIT
-		object.__setattr__(self, "R", self.R << shift)
-		object.__setattr__(self, "G", self.G << shift)
-		object.__setattr__(self, "B", self.B << shift)
-		object.__setattr__(self, "BIT", 32)
-
-	def __invert__(s):
-		R=4294967296-s.R
-		G=4294967296-s.G
-		B=4294967296-s.B
-		return Color(R,G,B,32)
-
-	@property
-	def RGB32(self):
-		"""Colors are stored in this format internally"""
-		return self.R, self.G, self.B
-
-	@property
-	def RGB16(self):
-		"""
-		:return: color in 16bit format:
-		"""
-		return tuple(v >> 16 for v in self.RGB32)
-
-	@property
-	def RGB8(self):
-		"""
-
-		:return: color in 8bit format
-		"""
-		return tuple(v >> 24 for v in self.RGB32)
-
-	@property
-	def RGB4(self):
-		"""
-
-		:return: colorin 4bit format
-		"""
-		return tuple(v >> 28 for v in self.RGB32)
-
-	def ansi(self, bits: int = 8) -> str:
-		"""
-
-		:param bits: the desired bit depth of the output,ansi default is 8bit (0-255) per channel
-		:return: the color values in  8bit per channel formatted as R;G;B for easy inclusion in ansi escapes
-		"""
-		if bits == 32:
-			rgb = self.RGB32
-		elif bits == 16:
-			rgb = self.RGB16
-		elif bits == 8:
-			rgb = self.RGB8
-		elif bits == 4:
-			rgb = self.RGB4
-		else:
-			raise ValueError("bits must be 4,8,16,32")
-
-		return ";".join(str(v) for v in rgb)
-
-	@property
-	def neg(s):
-		"""
-
-		:return: the negative of the color in 32bit format
-		"""
-		return s.__invert__()
 
 
 @dataclass(frozen=True)
@@ -235,7 +147,7 @@ class Coord(namedtuple('Coord', ['x', 'y'])):
 	def x(s):
 		return s._x
 
-class Size():
+class TermSize():
 	def __init__(s, **k):
 		from libTerm import Coord
 
@@ -276,7 +188,10 @@ class Size():
 		if s.time is None:
 			s.last = time_ns()
 		size = Coord(*s.getsize())
+		if size == Coord(0, 0):
+			size=Coord(80, 24)
 		if size != s.xy:
+
 			if size != s._tmp:
 				s.changing = True
 				s._tmp = size
@@ -448,37 +363,29 @@ class Store():
 			s.tail+=1
 			s.store[s.tail]=lastval
 			return pair
+
 	def prev(s):
 		def isfirst(val):
-			first=False
-			if val is StoreStop.FIRST_OF_STORE:
-				first=True
-			if s.stop is StoreStop.FIRST_OF_STORE:
-				first=True
-			return first
-		if not isfirst(s.value):
+			return bool((val is StoreStop.FIRST_OF_STORE)+
+						(s.stop is StoreStop.FIRST_OF_STORE))
+
+		if isfirst(s.value):
+			s.stop = StoreStop.FIRST_OF_STORE
+		else:
 			s.stop = False
 			s.cursor -= 1
-		else:
-			s.stop=StoreStop.FIRST_OF_STORE
-		return s.cursor,s.value
-
-
-
-
-		if s.cursor==s.tail or s.cursor==0 :
-			s.stop = s.store[0].name
-
 		return s.cursor,s.value
 
 	def next(s):
-		s._selector.next()
-		s.cursor = s._selector.read()
-		if s.selected > 0 :
+		def islast(val):
+			return bool((val is StoreStop.LAST_OF_STORE) +
+						(s.stop is StoreStop.LAST_OF_STORE))
+
+		if islast(s.value):
+			s.stop=StoreStop.LAST_OF_STORE
+		else:
 			s.stop = False
-		if s.selected == -1:
-			s.stop = s.store[-1].name
-			s._selector.prev()
+			s.cursor += 1
 		return s.selected, s.value
 
 	def __len__(s):
