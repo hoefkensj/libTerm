@@ -1,19 +1,64 @@
 # /usr/bin/env python
-from libTerm import Term,Coord,Mode
+import asyncio
+
+from libTerm import Term
+from libTerm.types import Mode
 import time
 
 from libTerm.types.enums import StoreStop
 
 
+class Example:
+	def __init__(s):
+		s.term-None
+		s.snake=None
+		s.controls=None
+		s.startup()
+	def startup(s):
+		# initialize terminal
+		s.term=Term()
+		s.term.echo = False
+		s.term.cursor.hide()
+		s.term.buffer.alternate()
+		# initialize the Snake:
+		s.snake=Snake(s.term)
+
 class Snake:
 	def __init__(s,t,speed=100):
+		s.state=None
 		s.speed=1 / (speed or 1)
 		s.term=t
-		s.piece='█'
+		s.pieces=['█','▄']
+		s.tail=[]
+		s.task=None
+		s.loop=None
 		s.dir='C'
+		s._started=False
+		s._moving=False
+
+	def dead(s):
+		current = snake.rempiece()
+		if not current == StoreStop.FIRST_OF_STORE:
+			print(f'\x1b[s\x1b7\x1b[{2};1H', repr(s.term.cursor.xy), '\x1b[u\x1b8', end='', flush=True)
+			time.sleep(snake.speed)
+		return 'DEAD'
+
+	@property
+	def piece(s):
+		if s.dir in 'AB':
+			return s.pieces[0]
+		elif s.dir in 'CD':
+			return s.pieces[1]
+		else:
+			return ''
+
 	def addpiece(s):
 		print(f'\x1b[{s.dir}\x1b[D{s.piece}', end='', flush=True)
-		s.term.cursor.save()
+		no,coord=s.term.cursor.save()
+		if coord not in s.tail:
+			s.tail+=[coord]
+		else:
+			s.state=s.dead()
 
 	def rempiece(s):
 		current=s.term.cursor.undo()
@@ -21,12 +66,24 @@ class Snake:
 		if s.term.cursor.store.stop==StoreStop.FIRST_OF_STORE:
 			return StoreStop.FIRST_OF_STORE
 		return current
+	async def move(s):
+		if s._started:
+			while not s._end:
+				s.addpiece()
+				await asyncio.sleep(s.speed)
+			s.cleanup()
 
-term=Term()
-term.echo=False
-term.cursor.show(False)
-print('\n\n\n\n\n\n\n')
-vert=term.size.height
+	def start(s):
+		if s.loop is None:
+			s.loop=asyncio.new_event_loop()
+			asyncio.set_event_loop(s.loop)
+		s.loop=asyncio.get_running_loop()
+		s.task=s.loop.create_task(s.move())
+		s._started=True
+
+
+
+
 cols=term.size.width
 hor=cols//8
 term.mode=Mode.CONTROL
@@ -79,7 +136,7 @@ while True:
 			end=True
 	if seq=='qq' or end:
 		term.buffer.default()
-		exit()
+		break
 	else:
 		if snake.piece != '' and not 'q'in seq:
 			snake.addpiece()

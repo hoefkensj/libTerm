@@ -92,20 +92,23 @@ for key in comps:
 
 
 
-1
-print('half terminal size:',repr(term.size.xy/2))
-print('background color: ' ,'\n\tinternal:',term.color.bg, '\n\t16bit:',term.color.bg.RGB16,'\n\tANSI:',repr(term.color.bg.ansi()))
-print(term.cursor.xy)
-term.mode=Term.MODE.CTRL
-print('press q to resume:')
 # while True:
-# 	if term.stdin.event:
+# 	if term.stdin.check:
 # 		key=term.stdin.read()
-# 		print('\x1b[3;1HKey:\x1b[32m {KEY}\x1b[m'.format(KEY=key),end='',flush=True)
-# 		if key=='q':
-# 			print('continuing')
-# 			break
-# 	time.sleep(0.01)
+# print('half terminal size:',repr(term.size.xy/2))
+# print('background color: ' ,'\n\tinternal:',term.color.bg, '\n\t16bit:',term.color.bg.RGB16,'\n\tANSI:',repr(term.color.bg.ansi()))
+# print(term.cursor.xy)
+# term.mode=Term.MODE.CTRL
+print('press q to resume:')
+while True:
+	from time import sleep
+	if term.stdin.check():
+		key=term.stdin.read()
+		print('\x1b[3;1HKey:\x1b[32m {KEY}\x1b[m'.format(KEY=key),end='',flush=True)
+		if key=='q':
+			print('continuing')
+			break
+	sleep(0.01)
 
 #
 #
@@ -120,6 +123,6 @@ print('press q to resume:')
 # term.cursor.move.abs(X=2,Y=12)
 # print('#',end='',flush=True)
 
-term.mode=Term.MODE.normal
+# term.mode=Term.MODE.normal
 
 

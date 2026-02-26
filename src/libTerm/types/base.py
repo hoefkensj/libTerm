@@ -335,7 +335,9 @@ class Store():
 
 	@property
 	def value(s):
+		# print(s.cursor,repr(s._value))
 		s._value=s.store.get(s.cursor)
+		# print(s.cursor,repr(s._value))
 		return s._value
 
 	def size(s):
@@ -386,7 +388,7 @@ class Store():
 		else:
 			s.stop = False
 			s.cursor += 1
-		return s.selected, s.value
+		return s.cursor, s.value
 
 	def __len__(s):
 		result = len(s.store.values())-2

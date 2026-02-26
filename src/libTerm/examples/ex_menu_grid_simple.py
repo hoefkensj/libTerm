@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import time,sys,os
-from libTerm import Term,Color,Coord,Mode,Selector
+from libTerm import Term
+from libTerm.types import Coord, Mode
 from libTerm.libextra.class_menu import Grid
 import asyncio
 

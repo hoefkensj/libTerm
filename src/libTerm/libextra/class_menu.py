@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-
+from libTerm.types.class_color import Color
+from libTerm.types import Selector
 
 class Menu:
 	def __init__(s,term,items,templates=None,location=None,fgcolor=None,bgcolor=None,choice_colors=None,nums=True,numstart=1):

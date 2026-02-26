@@ -25,7 +25,7 @@ def Controls(term,M):
 		elif key == 'q':
 			term.buffer.default()
 			loop.stop()
-			sys.exit()
+			return
 		elif key == '\n':
 
 			if prev != '':
@@ -56,11 +56,11 @@ def main(items):
 	loop.add_reader(term.fd, Controls(term,menu))
 	loop.run_forever()
 
-if __name__=='__main__':
-	items=[]
-	for i in range(50):
-		items += [chr(randint(65,68))+chr(randint(65,68))]
-	main([*items,*items,*items])
+
+items=[]
+for i in range(50):
+	items += [chr(randint(65,68))+chr(randint(65,68))]
+main([*items,*items,*items])
 
 
 

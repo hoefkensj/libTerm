@@ -97,10 +97,16 @@ class Cursor():
 	@xy.setter
 	def xy(s,coord):
 		if not isinstance(coord,Coord):
-			coord=Coord(*coord)
-		s.xyset=coord
-		print('\x1b[{y};{x}H'.format(**coord), end='', flush=True)
-
+			if isinstance(coord,tuple) and len(coord)==2:
+				coord=Coord(*coord)
+			elif isinstance(coord,set) and len(coord)==2:
+				coord=Coord(*coord)
+			elif isinstance(coord,dict)	and 'x' in coord and 'y' in coord:
+				coord=Coord(coord['x'],coord['y'])
+			else:
+				raise TypeError('Expected a Coord, tuple or set of length 2, got {EXTRA}'.format(EXTRA=coord))
+		s._xyset=coord
+		print(s.move.ABS.format(**coord), end='', flush=True)
 
 	def stored(s):
 		return s.store.store
@@ -118,11 +124,11 @@ class Cursor():
 			groups = s._re.search(result).groupdict()
 			matched = Coord(int(groups['X']), int(groups['Y']))
 		except AttributeError:
-			result = None
-		if result is not None:
+			matched = None
+		if matched is not None:
 			result = matched
 		else:
-			result=s.xyset
+			result=s._xyset
 		s._xy =result
 		return result
 
@@ -134,9 +140,15 @@ class Cursor():
 			print(s.ansi.show)
 			s.visible=True
 		return s.visible
+
 	def show(s,state=True):
 		return s.hide(not state)
 
+	def quicksave(s):
+		return s.ansi.save()
+
+	def quickload(s):
+		return s.ansi.load()
 
 	@property
 	def x(s):
@@ -161,14 +173,19 @@ class Cursor():
 		s.xy=coord
 		return coord
 	def undo(s):
+		prev=s.store.prev()
 		if not s.store.stop:
-			current,coord=s.store.prev()
+			current=prev[0]
+			coord=prev[1]
 			stop=s.store.stop
-			s.xy = coord
-			return current,coord
-		else:
-			return s.store.stop
+			if not (coord is Stop.FIRST_OF_STORE):
+				s.xy=coord
+				result=current,coord
+			else:
+				stop=Stop.FIRST_OF_STORE
+				result=stop
 
+		return result
 
 #TODO: class vCursor(Cursor):
 class VirtCursor():
@@ -247,17 +264,17 @@ class VirtCursor():
 		xy=s.term.cursor.xy
 		y=xy.y
 		x=xy.x
-		while s._edit:
-			if s.term.stdin.event:
-				key = s.term.stdin.read()
-				if key == '\x1b[D':
-					s.xy=Coord(x-1,y)
-				elif key == '\x1b[C':
-					s.xy=Coord(x-1,y)
-				elif key == '\x1b[A':
-					s.xy=Coord(x,y-1)
-				elif key == '\x1b[B':
-					s.xy=Coord(x,y+1)
-				elif key == 'q':
-					sys.exit(0)
-				print(repr(key))
+		# while s._edit:
+		# 	if s.term.stdin.event:
+		# 		key = s.term.stdin.read()
+		# 		if key == '\x1b[D':
+		# 			s.xy=Coord(x-1,y)
+		# 		elif key == '\x1b[C':
+		# 			s.xy=Coord(x-1,y)
+		# 		elif key == '\x1b[A':
+		# 			s.xy=Coord(x,y-1)
+		# 		elif key == '\x1b[B':
+		# 			s.xy=Coord(x,y+1)
+		# 		elif key == 'q':
+		# 			sys.exit(0)
+		# 		print(repr(key))
