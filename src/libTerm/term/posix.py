@@ -1,11 +1,11 @@
 #!/usr/bin/env python
-import io
 import os
 import termios
 import atexit
 import sys
-from contextlib import suppress
+from abc import ABCMeta, abstractmethod
 from libTerm.types import Mode
+from libTerm.types.enums import Ansi
 from libTerm.term.cursor import Cursor
 from libTerm.term.input import Stdin
 from libTerm.term.structs import TermAttrs, TermBuffers, TermColors, TermSize
@@ -16,22 +16,29 @@ TCSAFLUSH = termios.TCSAFLUSH;ECHO = termios.ECHO;ICANON = termios.ICANON
 VMIN = 6;VTIME = 5
 
 
-class Term():
-	MODE=Mode
+class baseTerm(metaclass=ABCMeta):
+	Ansi= Ansi
+	MODE= Mode
+
 	def __init__(s,*a,**k):
 		s.pid       = os.getpid()
-		s.ppid      = os.getpid()
-		s.fd		= sys.__stdin__.fileno()
+		s.ppid      = os.getppid()
+		s.stdfd     = [None, None, None]
+		s.tty       = None
 		s.attr      = None
-		with suppress(io.UnsupportedOperation,OSError):
-			s.fd        = sys.stdin.fileno()
-			s.tty       = os.ttyname(s.fd)
-			s.attr      = TermAttrs(term=s)
+		if s.isatty():
+		# with suppress(io.UnsupportedOperation,OSError):
+			s.stdfd        = [sys.stdin.fileno(),sys.stdout.fileno(),sys.stderr.fileno()]
+			s.tty     	  = os.ttyname(s.stdfd[0])
+		else:
+			sys.__stdin__.fileno()
+		s.attr = TermAttrs(term=s)
 
 		s._mode     = s.MODE.NONE
 		s._echo		= True
 		s._canon    = True
 		s.stdin		= Stdin(term=s)
+		# s.stdout	= Stdout(term=s)
 		s.cursor    = Cursor(term=s)
 		# s.vcursors  = {0:vCursor(s,s.cursor)}
 		s.size      = TermSize(term=s)
@@ -39,20 +46,52 @@ class Term():
 		s.buffer	= TermBuffers(term=s)
 		atexit.register(s.setmode,Mode.NORMAL)
 
+	def isatty(s):
+		s._isatty=[sys.stdin.isatty(),sys.stdout.isatty(),sys.stderr.isatty()]
+		return any(s._isatty)
 
-	@property
-	def echo(s):
-		s._echo=s.attr.active[LFLAG] & ECHO != 0
-		return s._echo
+	@abstractmethod
+	def tcgetattr(s):
+		pass
+
+	@abstractmethod
+	def tcsetattr(s, attr, when):
+		pass
+
+	@abstractmethod
+	def setraw(s, when):
+		"""Put terminal into raw mode."""
+		pass
+
+	@abstractmethod
+	def setcbreak(s, when):
+		"""Put terminal into cbreak mode."""
+		pass
+
+	@abstractmethod
+	def setmode(s, mode):
+		pass
+
+	@abstractmethod
+	def _update_(s, when):
+		pass
+
+	@abstractmethod
+	def _ansi_(s, ansi, parser):
+		pass
 
 	@property
 	def mode(s):
 		return s._mode
 
+	@mode.setter
+	def mode(s, mode):
+		s.setmode(mode)
+
 	@property
-	def canonical(s):
-		s._canon = s.attr.active[LFLAG] & ICANON != 0
-		return s._canon
+	def echo(s):
+		s._echo=s.attr.active[LFLAG] & ECHO != 0
+		return s._echo
 
 	@echo.setter
 	def echo(s, enable=False):
@@ -62,6 +101,11 @@ class Term():
 			s.attr.staged[3] |= ECHO
 		s._update_()
 
+	@property
+	def canonical(s):
+		s._canon = s.attr.active[LFLAG] & ICANON != 0
+		return s._canon
+
 	@canonical.setter
 	def canonical(s, enable=True):
 		s.attr.stage()
@@ -70,15 +114,14 @@ class Term():
 			s.attr.staged[3] |= ICANON
 		s._update_()
 
-	@mode.setter
-	def mode(s, mode):
-		s.setmode(mode)
+
+class Term(baseTerm):
 
 	def tcgetattr(s):
-		return termios.tcgetattr(s.fd)
+		return termios.tcgetattr(s.stdfd[0])
 
 	def tcsetattr(s,attr,when=TCSAFLUSH):
-		termios.tcsetattr(s.fd,when,attr)
+		termios.tcsetattr(s.stdfd[0],when,attr)
 
 	def setraw(s, when=TCSAFLUSH):
 		"""Put terminal into raw mode."""

@@ -8,7 +8,7 @@ print('press qq(double q) to quit!')
 Qs=[]
 while True:
 
-	if T.stdin.check():
+	if T.stdin.event:
 		key=T.stdin.read()
 		print(repr(key))
 		Qs.append(key)

@@ -1,4 +1,4 @@
-#/usr/bin/env python
+#!/usr/bin/env python
 from collections import namedtuple
 from dataclasses import dataclass, field
 from os import get_terminal_size
@@ -110,9 +110,10 @@ class Coord(namedtuple('Coord', ['x', 'y'])):
 		else:
 			raise TypeError(error().format(EXTRA=''))
 		return result
-
 	def __complex__(s):
 		return complex(real=s.x,imag=s.y)
+# TODO:	def __matmul__(self, other):
+
 	def __truediv__(s, other):
 		x=s.x/other
 		y=s.y/other
@@ -354,6 +355,11 @@ class Store():
 		return s._max
 
 	def save(s, value):
+		"""
+
+		:param value:
+		:return: {newkey:value}
+		"""
 		if not (s.tail>=s.max()):
 			s.cursor=s.tail
 			newkey = s.tail

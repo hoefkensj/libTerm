@@ -5,7 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="bc73ff2f-338a-4651-a389-91491c2041b6" name="Changes" comment="added tests , prolly not that usefull as its only testing if stuff exists , and written by copilot">
+      <change afterPath="$PROJECT_DIR$/src/libTerm/libTypes_extra/class_display.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/libTerm/term/output.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/libTerm/types/cursor.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/libTerm/types/parsers.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/libTerm/examples/__main__.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/examples/__main__.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/libTerm/examples/ex_arrowkeys.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/examples/ex_arrowkeys.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/libTerm/examples/ex_basic.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/examples/ex_basic.py" afterDir="false" />
@@ -16,11 +21,17 @@
       <change beforePath="$PROJECT_DIR$/src/libTerm/examples/ex_printkeys.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/examples/ex_printkeys.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/libTerm/examples/ex_snake_automatic.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/examples/ex_snake_automatic.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/libTerm/examples/ex_snake_manual.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/examples/ex_snake_manual.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/libTerm/libextra/class_menu.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/libextra/class_menu.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/libTerm/libextra/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/libTypes_extra/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/libTerm/libextra/class_frame.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/libTypes_extra/class_frame.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/libTerm/libextra/class_menu.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/libTypes_extra/class_menu.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/libTerm/term/cursor.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/term/cursor.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/libTerm/term/input.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/term/input.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/libTerm/term/structs.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/term/structs.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/libTerm/term/posix.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/term/posix.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/libTerm/types/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/types/__init__.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/libTerm/types/base.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/types/base.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/libTerm/types/class_color.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/types/color.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/libTerm/types/enums.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/types/enums.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/test_colors.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_colors.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -31,6 +42,16 @@
     <persistenceIdMap>
       <entry key="_/home/jeroen/Development/Code/Python/Projects/libTerm" value="32XLRp94VBFj5lgNkdim9ARFbbU" />
     </persistenceIdMap>
+  </component>
+  <component name="CopilotUserSelectedChatMode">
+    <option name="chatModeId" value="Agent" />
+  </component>
+  <component name="CopilotUserSelectedModel">
+    <selectedModels>
+      <entry key="edit-panel" value="GPT-5 mini" />
+      <entry key="chat-panel" value="GPT-5 mini" />
+      <entry key="agent-panel" value="GPT-5 mini" />
+    </selectedModels>
   </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
@@ -59,8 +80,11 @@
     <setting file="file://$USER_HOME$/.cache/JetBrains/PyCharmCE2025.1/python_stubs/1055943265/termios.py" root0="SKIP_INSPECTION" />
     <setting file="file://$PROJECT_DIR$/pyproject.toml" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/src/libTerm/__init__.py" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/src/libTerm/examples/__init__.py" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/src/libTerm/examples/ex_arrowkeys.py" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/src/libTerm/examples/ex_menu_list_simple.py" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/src/libTerm/examples/ex_printkeys.py" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/src/libTerm/examples/ex_snake_manual.py" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/src/libTerm/libextra/class_menu.py" root0="SKIP_INSPECTION" />
     <setting file="file://$PROJECT_DIR$/src/libTerm/term/__init__.py" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/src/libTerm/term/mock.py" root0="FORCE_HIGHLIGHTING" />
@@ -72,6 +96,7 @@
     <setting file="file://$PROJECT_DIR$/src/libTerm/types/class_color.py" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/src/libTerm/types/enums.py" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/src/libTerm/types/extra.py" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/tests/test_cursor.py" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/tests/test_store.py" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_HOME_DIR$/plugins/python-ce/helpers/pydev/_pydev_imps/_pydev_execfile.py" root0="SKIP_INSPECTION" />
   </component>
@@ -106,6 +131,7 @@
     "Python tests.Python tests in test_cursor.py.executor": "Run",
     "Python tests.Python tests in test_posix_term.py.executor": "Run",
     "Python tests.Python tests in test_selector.py.executor": "Run",
+    "Python tests.Python tests in test_store.py.executor": "Run",
     "Python tests.Python tests in tests.executor": "Run",
     "Python.__init__ (1).executor": "Run",
     "Python.__init__.executor": "Run",
@@ -114,12 +140,14 @@
     "Python.class_menu (1).executor": "Run",
     "Python.class_menu.executor": "Run",
     "Python.cursor.executor": "Run",
+    "Python.enums.executor": "Run",
     "Python.ex3.executor": "Run",
     "Python.ex_arrowkeys.executor": "Run",
     "Python.ex_autosnake.executor": "Run",
     "Python.ex_basic.executor": "Run",
     "Python.ex_colors.executor": "Run",
     "Python.ex_manualsnake.executor": "Debug",
+    "Python.ex_menu_grid_big.executor": "Run",
     "Python.ex_printkeys.executor": "Debug",
     "Python.ex_simplegrid.executor": "Run",
     "Python.ex_simplemenu.executor": "Run",
@@ -127,6 +155,7 @@
     "Python.ex_snake_automatic.executor": "Run",
     "Python.ex_snake_manual.executor": "Run",
     "Python.example.executor": "Run",
+    "Python.input.executor": "Run",
     "Python.posix.executor": "Run",
     "Python.python -m build.executor": "Run",
     "Python.python -m twine upload dist/*.executor": "Run",
@@ -138,8 +167,8 @@
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager": "true",
     "RunOnceActivity.git.unshallow": "true",
     "git-widget-placeholder": "master",
-    "last_opened_file_path": "/home/jeroen/Development/Code/Python/Projects/libTerm/Examples",
-    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
+    "last_opened_file_path": "/home/jeroen/ProxyAI-3.7.4-241.1.zip",
+    "settings.editor.selected.configurable": "preferences.pluginManager"
   }
 }]]></component>
   <component name="RecentsManager">
@@ -155,7 +184,7 @@
       <recent name="$PROJECT_DIR$/.local/venvs" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.ex_snake_automatic">
+  <component name="RunManager" selected="Python.ex_snake_manual">
     <configuration name="__init__" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
       <module name="libTerm" />
       <option name="ENV_FILES" value="" />
@@ -200,7 +229,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="ex_arrowkeys" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="enums" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="libTerm" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -209,58 +238,14 @@
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src/libTerm/examples" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src/libTerm/types" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/libTerm/examples/ex_arrowkeys.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/libTerm/types/enums.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="ex_autosnake" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="libTerm" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/Examples" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Examples/ex_autosnake.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="ex_basic" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="libTerm" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src/libTerm/examples" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/libTerm/examples/ex_basic.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="true" />
       <option name="MODULE_MODE" value="false" />
       <option name="REDIRECT_INPUT" value="false" />
       <option name="INPUT_FILE" value="" />
@@ -288,7 +273,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="ex_snake_automatic" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="ex_menu_grid_big" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="libTerm" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -301,7 +286,7 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/libTerm/examples/ex_snake_automatic.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/libTerm/examples/ex_menu_grid_big.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -326,7 +311,7 @@
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/libTerm/examples/ex_snake_manual.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="EMULATE_TERMINAL" value="true" />
       <option name="MODULE_MODE" value="false" />
       <option name="REDIRECT_INPUT" value="false" />
       <option name="INPUT_FILE" value="" />
@@ -354,13 +339,50 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
+    <configuration name="input" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="libTerm" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src/libTerm/term" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/libTerm/term/input.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="Python tests in tests" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
+      <module name="libTerm" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/tests" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="_new_additionalArguments" value="&quot;&quot;" />
+      <option name="_new_target" value="&quot;$PROJECT_DIR$/tests&quot;" />
+      <option name="_new_targetType" value="&quot;PATH&quot;" />
+      <method v="2" />
+    </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.ex_snake_automatic" />
         <item itemvalue="Python.ex_snake_manual" />
-        <item itemvalue="Python.ex_basic" />
-        <item itemvalue="Python.ex_arrowkeys" />
-        <item itemvalue="Python.ex_autosnake" />
+        <item itemvalue="Python.enums" />
+        <item itemvalue="Python.ex_menu_grid_big" />
+        <item itemvalue="Python.input" />
+        <item itemvalue="Python tests.Python tests in tests" />
       </list>
     </recent_temporary>
   </component>
@@ -443,8 +465,13 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/src/libTerm/term/cursor.py</url>
-          <line>164</line>
+          <line>140</line>
           <option name="timeStamp" value="11" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/src/libTerm/term/input.py</url>
+          <line>38</line>
+          <option name="timeStamp" value="15" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

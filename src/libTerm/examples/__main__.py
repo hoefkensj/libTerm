@@ -15,5 +15,6 @@ modules = [
 from libTerm import Term
 term = Term()
 for module in modules:
+	print('\x1b[2J')
 	print(f"Running example: {module.__name__}")
 	module.run(term)

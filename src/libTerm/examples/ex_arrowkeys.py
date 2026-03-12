@@ -27,7 +27,7 @@ def main(term):
 	t.mode=Mode.CONTROL
 	# Switch to the alternate buffer, so we don't mess with the main buffer of the terminal,
 	# and we can easily switch back to it when we are done.
-	t.buffer.switch()
+	t.sync.switch()
 	#
 	# Print Templates:
 	tpl_arrowkeys ='\x1b[10G\x1b[0;31m{ANSI}\x1b[m \x1b[20G:\x1b[25G\x1b[0;32m{SYMBOL}\x1b[0;2m\x1b[45G({HEX})'

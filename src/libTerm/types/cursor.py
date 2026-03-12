@@ -1,52 +1,7 @@
-import sys
 import re
-import asyncio
-from enum import Enum
-from dataclasses import dataclass
-from time import time_ns
 
 from libTerm.types.base import Coord,Store
-from libTerm.types.enums import StoreStop as Stop
-from libTerm.types.enums import Ansi
-from enum import StrEnum,auto
-
-
-
-
-
-
-
-
-
-
-class Move(StrEnum):
-	CSI   = Ansi.CSI
-	UP    = CSI+'{N}A'
-	DOWN  = CSI+'{N}B'
-	RIGHT = CSI+'{N}C'
-	PREV  = CSI+'{N}E'
-	LEFT  = CSI+'{N}D'
-	NExT  = CSI+'{N}F'
-	COL   = CSI+'{X}G'
-	ABS   = CSI+'{y};{x}H'
-
-	def __str__(s):
-		return s()
-	def __repr__(s):
-		return repr(s.value)
-	def __call__(s, *a):
-		CSI=s.CSI
-		if s.value == Move.ABS:
-			if not isinstance(a[0],Coord):
-				coord=Coord(a[0],a[1])
-			else:
-				coord=a[0]
-			result=s.value.format(CSI=CSI,**coord)
-		else:
-			N = a[0]
-			result=s.value.format(CSI=CSI,N=N)
-		return result
-
+from libTerm.types.enums import StoreStop as Stop, Ansi, Move
 
 
 class Cursor():
@@ -65,9 +20,8 @@ class Cursor():
 		#TODO:		s.stamp=time_ns()
 		#TODO:		s.moved=False
 		#TODO:		s._history = [*(None,) * 64]ASDF
-		s.init    = s.__syncloc__()
-
-	def __syncloc__(s):
+		s.init    = s.__sync__()
+	def __sync__(s):
 		s.update()
 		s._xy=s.xy
 
@@ -90,14 +44,14 @@ class Cursor():
 			else:
 				raise TypeError('Expected a Coord, tuple or set of length 2, got {EXTRA}'.format(EXTRA=coord))
 		s._xyset=coord
-		print(s.move.ABS(coord), end='', flush=True)
+		print(s.move.ABS.format(**coord), end='', flush=True)
 
 	def stored(s):
 		return s._coordstore.store
 
 	def update(s):
-		from libTerm.types.parsers import LOCparser
-		result = s.term.stdin.query(s.ansi.LOC,LOCparser)
+
+		result = s.term.stdin.query(s.ansi.LOC)
 		try:
 			groups = s._re.search(result).groupdict()
 			matched = Coord(int(groups['X']), int(groups['Y']))
@@ -145,10 +99,6 @@ class Cursor():
 		return changed
 
 	def save(s):
-		"""
-
-		:return: {newkey:value}
-		"""
 		return s._coordstore.save(s.xy)
 	def load(s,n):
 		coord=s._coordstore.select(n)

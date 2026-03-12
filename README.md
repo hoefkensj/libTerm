@@ -238,7 +238,7 @@ term = Term()
 print(term.size.xy)
 
 if term.size.changed:
-    print("Terminal resized!")
+	print("Terminal resized!")
 ```
 
 ---

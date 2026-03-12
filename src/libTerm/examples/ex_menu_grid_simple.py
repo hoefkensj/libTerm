@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 import time,sys,os
 from libTerm import Term
-from libTerm.types import Coord, Mode
-from libTerm.libextra.class_menu import Grid
+from libTerm.types import Mode,Coord,color
+from libTerm.libTypes_extra.class_menu import Grid
 import asyncio
 
 
@@ -23,7 +23,7 @@ def Controls(term,M):
 		elif key == '\t':
 			M.prev()
 		elif key == 'q':
-			term.buffer.default()
+			term.sync.default()
 			loop.stop()
 			sys.exit()
 		elif key == '\n':

@@ -24,7 +24,7 @@ def propadd(props, prop,val,desc):
 	return props
 props=propadd(props,*['.pid',f'{term.pid}','# Process ID of the current process.'])
 props=propadd(props,*['.ppid',f'{term.ppid}','# Process ID of the parent process.Usually the shell that started the program.'])
-props=propadd(props,*['.fd',f'{term.fd}','# File descriptor for the terminal input.'])
+props=propadd(props,*['.stdfd',f'{term.stdfd}','# File descriptor for the terminal input,output,error.'])
 props=propadd(props,*['.tty',f'{term.tty}','# The name of the terminal device.'],)
 props=propadd(props,*['.echo',f'{term.echo}','# Whether the terminal is currently echoing input.'])
 props=propadd(props,*['.canonical',f'{term.canonical}','# Whether the terminal is currently in canonical mode.'])
@@ -80,11 +80,30 @@ for key in comps:
 	print()
 
 
+print('\x1b[1mlibTerm:')
+print('  .Term.Cursor():\x1b[m')
+print('    \x1b[4mProperty','\x1b[20GValue','\x1b[40GDescription\x1b[m')
+props={}
 
+props=propadd(props,*['.term',f'{term.cursor.term}','# Link to the parent(Term()'])
+props=propadd(props,*['.ansi',f'{'\n'.join([str(item) for item in term.cursor.ansi.__members__.items()])}','# Ansi Enums'])
+props=propadd(props,*['.move',f'{term.cursor.move}','# Ansi Move Enums'])
+props=propadd(props,*['.visible',f'{term.cursor.visible}','# Whether the terminal is showing the cursor'])
+props=propadd(props,*['.hidden',f'{term.cursor.hidden}','# Whether the terminal is hiding the cursor'])
+mkup=['\x1b[4G\x1b[36m','\x1b[20G\x1b[33m','\x1b[40G\x1b[37m']
 
+for key in props:
+	col=0
 
-
-
+	for value in props[key]:
+		if not isinstance(props[key][value],list):
+			print('{C}{val}'.format(C=mkup[col],val=props[key][value]),end='',flush=True)
+		else:
+			print('{C}{val}'.format(C=mkup[col], val=props[key][value][0]), end='', flush=True)
+			for line in props[key][value][1:]:
+				print('\n{C}{val}'.format(C=mkup[col],val=line),end='',flush=True)
+		col+=1
+	print()
 
 
 
@@ -102,7 +121,7 @@ for key in comps:
 print('press q to resume:')
 while True:
 	from time import sleep
-	if term.stdin.check():
+	if term.stdin.event:
 		key=term.stdin.read()
 		print('\x1b[3;1HKey:\x1b[32m {KEY}\x1b[m'.format(KEY=key),end='',flush=True)
 		if key=='q':

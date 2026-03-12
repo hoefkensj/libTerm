@@ -2,7 +2,7 @@
 import unittest
 from itertools import product
 
-from libTerm.types.class_color import Color, ColorSet, ColorPalette
+from libTerm.types.color import Color, ColorSet, ColorPalette
 
 
 class TestColors(unittest.TestCase):

@@ -1,15 +1,15 @@
 #!/usr/bin/env python
-from mmap import MADV_RANDOM
 
-from libTerm import Selector ,Coord ,Color
-# from libTerm.types.enums import Stop
+from libTerm.types.color import Color
+from libTerm.types import Selector
+
 class Menu:
-	def __init__(s,term,items,templates=None,location=None,fgcolor=None,bgcolor=None,choice_colors=None,nums=True,numstart=1):
+	def __init__(s,term,items,templates=None,location=None,colors=None,nums=True,numstart=1):
 		s.CSI='\x1b['
 		s.term=term
 		s.loc=location
-		s.fgcol=fgcolor or Color(64,192,192)
-		s.bgcol=f';48;2;{bgcolor.ansi()}' if bgcolor is not None else ''
+		s.fgcol=colors.fg or Color(64,192,192)
+		s.bgcol=f';48;2;{colors.bg.ansi()}' if colors.bg is not None else ''
 		s.nums=nums
 		s.numstart=numstart
 		s._tpl=['\x1b[{Y};{X}H','{XY}{MARKUP}{NO}.','{NO}{XY}\x1b[m{MARKUP}{ITEM}{DESEL}']
@@ -71,7 +71,7 @@ class Menu:
 	def select(s,nr):
 		if nr > s.__len__():
 			nr=s.__len__()
-		s.changed=[s.items[s.selector.read()].format(**s.markup())]
+		s.changed=[s.items[s.selector.read()].format(**s.markup('2'))]
 		s.selector.write(nr)
 		sel=s.selector.read()
 		s.changed+= [s.items[sel].format(**s.markup('7'))]
@@ -98,7 +98,7 @@ class Menu:
 
 
 class Grid(Menu):
-	def __init__(s, term, items, location, direction='vertical', maxwidth=None, maxheight=None, fgcolor=None, bgcolor=None,itempad=6,nums=True,numstart=1):
+	def __init__(s, term, items, location, direction='vertical', maxwidth=None, maxheight=None, colors=None,itempad=6,nums=True,numstart=1):
 		"""
 
 		:param term: instance of libTerm.Term
@@ -118,8 +118,8 @@ class Grid(Menu):
 		s._dir=direction
 		s.cols={}
 		s.rows={}
-		s.fgcol=fgcolor or Color(64,192,192)
-		s.bgcol=f';48;2;{bgcolor.ansi()}' if bgcolor is not None else ''
+		s.fgcol=colors.fg or Color(64,192,192)
+		s.bgcol=f';48;2;{colors.bg.ansi()}' if colors.bg is not None else ''
 		s.selector = Selector((0,len(s._items)))
 		s.selector.write(1)
 		s.stop = False

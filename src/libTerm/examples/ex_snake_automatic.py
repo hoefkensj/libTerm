@@ -10,18 +10,93 @@ from libTerm.types.enums import StoreStop
 
 class Example:
 	def __init__(s):
-		s.term-None
+		s.term=None
 		s.snake=None
 		s.controls=None
+		s.cols=None
+		s.hor=None
+		s.vert=None
+		s.seq=''
+		s.up=False
+		s.down=False
+		s.right=False
+		s.end=False
+		s.loop = None
+		s.task = None
+		s._started = False
 		s.startup()
+		s.start()
+
 	def startup(s):
 		# initialize terminal
 		s.term=Term()
 		s.term.echo = False
 		s.term.cursor.hide()
+		s.term.mode=Mode.CONTROL
 		s.term.buffer.alternate()
+		s.cols=s.term.size.width
+		s.hor=s.cols//8
+		s.vert=s.term.size.rows
+		s.right=True
+		s.down=True
 		# initialize the Snake:
 		s.snake=Snake(s.term)
+
+	def start(s):
+		if s.loop is None:
+			s.loop = asyncio.new_event_loop()
+			asyncio.set_event_loop(s.loop)
+		else:
+			s.loop = asyncio.get_running_loop()
+		s.task = s.loop.create_task(s.snake.move())
+		s._started = True
+
+	def input(s):
+		while True:
+			if s.term.stdin.event:
+				key = s.term.stdin.read()
+				if key == 'q':
+					s.seq += 'q'
+				else:
+					s.snake.start()
+			if not s.seq == 'q':
+				if s.term.cursor.xy.y >= 5 and s.up:
+					s.snake.dir = 'A'
+					if s.term.cursor.xy.y == 5:
+						s.up = False
+						s.right = True
+				if s.term.cursor.xy.y <= s.vert and s.down:
+					s.snake.dir = 'B'
+					if s.term.cursor.xy.y == s.vert:
+						s.down = False
+						s.right = True
+				if s.term.cursor.xy.x % s.hor >= 0 and s.right:
+					s.snake.dir = 'C'
+					if s.term.cursor.xy.x % s.hor == 0:
+						s.right = False
+						s.down = s.term.cursor.xy.y == 5
+						s.up = s.term.cursor.xy.y == s.vert
+				if s.term.cursor.xy.x == s.term.size.width and s.term.cursor.xy.y == 5:
+					s.down = False
+					s.up = False
+					s.right = False
+					s.seq += 'q'
+			elif s.seq == 'q':
+				current = s.snake.rempiece()
+				if not current == StoreStop.FIRST_OF_STORE:
+					print(f'\x1b[s\x1b7\x1b[{2};1H', repr(s.term.cursor.xy), '\x1b[u\x1b8', end='', flush=True)
+					time.sleep(s.snake.speed)
+
+				else:
+					s.end = True
+			elif s.seq == 'qq' or s.end:
+				s.term.sync.default()
+				break
+			else:
+				if s.snake.piece != '' and not 'q' in s.seq:
+					s.snake.addpiece()
+					time.sleep(s.snake.speed)
+
 
 class Snake:
 	def __init__(s,t,speed=100):
@@ -32,15 +107,16 @@ class Snake:
 		s.tail=[]
 		s.task=None
 		s.loop=None
-		s.dir='C'
+		s.dir='B'
 		s._started=False
 		s._moving=False
+		s._end=False
 
 	def dead(s):
-		current = snake.rempiece()
+		current = s.rempiece()
 		if not current == StoreStop.FIRST_OF_STORE:
 			print(f'\x1b[s\x1b7\x1b[{2};1H', repr(s.term.cursor.xy), '\x1b[u\x1b8', end='', flush=True)
-			time.sleep(snake.speed)
+			time.sleep(s.speed)
 		return 'DEAD'
 
 	@property
@@ -53,8 +129,9 @@ class Snake:
 			return ''
 
 	def addpiece(s):
-		print(f'\x1b[{s.dir}\x1b[D{s.piece}', end='', flush=True)
-		no,coord=s.term.cursor.save()
+		print(f'\x1b[{s.dir}{s.piece}', end='', flush=True)
+		pair=s.term.cursor.save()
+		no,coord=list(*pair.items())
 		if coord not in s.tail:
 			s.tail+=[coord]
 		else:
@@ -63,7 +140,7 @@ class Snake:
 	def rempiece(s):
 		current=s.term.cursor.undo()
 		print('\x1b[D ', end='', flush=True)
-		if s.term.cursor.store.stop==StoreStop.FIRST_OF_STORE:
+		if s.term.cursor._coordstore.stop==StoreStop.FIRST_OF_STORE:
 			return StoreStop.FIRST_OF_STORE
 		return current
 	async def move(s):
@@ -73,72 +150,14 @@ class Snake:
 				await asyncio.sleep(s.speed)
 			s.cleanup()
 
-	def start(s):
-		if s.loop is None:
-			s.loop=asyncio.new_event_loop()
-			asyncio.set_event_loop(s.loop)
-		s.loop=asyncio.get_running_loop()
-		s.task=s.loop.create_task(s.move())
-		s._started=True
 
 
 
 
-cols=term.size.width
-hor=cols//8
-term.mode=Mode.CONTROL
-term.buffer.alternate()
+
 
 # time.sleep(5)
-snake=Snake(term)
+
 print('\x1b[J\x1b[1;1HPress one of up,down,left,right to start and  q to quit!')
-seq=''
-end=False
-up = False
-right = False
-down = True
-while True:
-	if term.stdin.event:
-		key=term.stdin.read()
-		if key == 'q':
-			seq += 'q'
-
-	if not seq=='q':
-		if term.cursor.xy.y>=5 and up:
-			snake.dir='A'
-			if term.cursor.xy.y==5:
-				up=False
-				right=True
-		if term.cursor.xy.y<=vert and down:
-			snake.dir='B'
-			if term.cursor.xy.y==vert:
-				down=False
-				right=True
-		if term.cursor.xy.x%hor>=0 and right:
-			snake.dir='C'
-			if term.cursor.xy.x%hor==0:
-				right=False
-				down=term.cursor.xy.y==5
-				up=term.cursor.xy.y==vert
-		if term.cursor.xy.x==term.size.width and term.cursor.xy.y==5:
-			down=False
-			up=False
-			right=False
-			seq+='q'
-
-	elif seq=='q':
-		current=snake.rempiece()
-		if not current==StoreStop.FIRST_OF_STORE:
-			print(f'\x1b[s\x1b7\x1b[{2};1H', repr(term.cursor.xy), '\x1b[u\x1b8', end='', flush=True)
-			time.sleep(snake.speed)
-
-		else:
-			end=True
-	if seq=='qq' or end:
-		term.buffer.default()
-		break
-	else:
-		if snake.piece != '' and not 'q'in seq:
-			snake.addpiece()
-			time.sleep(snake.speed)
+ex=Example()
 

@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 import time,sys,os
 from libTerm import Term
-from libTerm.libextra.class_menu import Menu
+from libTerm.types import Mode,Coord,Color,ColorSet
+from libTerm.libTypes_extra.class_menu import Menu
 import asyncio
 
 
@@ -15,8 +16,8 @@ def Controls(term,M):
 		elif key == '\x1b[A':
 			M.prev()
 		elif key == 'q':
-			term.buffer.default()
-			sys.exit()
+			term.mode=Mode.default
+			end=1
 		elif key == '\n':
 			prev=''
 			print('\x1b[1;1H chosen:',M.choose())
@@ -34,12 +35,13 @@ def main():
 	items = ['xxxx', 'xxxx', 'yyyy', 'dasdf', 'dasdf', 'erwrsdd', 'sdf', 'pppfpf']
 	term = Term()
 	term.buffer.alternate()
+	theme=ColorSet(Color(192,192,0))
 	term.mode = Mode.CONTROL
-	M=Menu(term,items ,location=Coord(10,4),nums=True,fgcolor=Color(192,192,0))
+	M=Menu(term,items ,location=Coord(10,4),nums=True,colors=theme)
 	M.draw()
 	loop = asyncio.new_event_loop()
 	asyncio.set_event_loop(loop)
-	loop.add_reader(term.fd, Controls(term,M))
+	loop.add_reader(term.stdin.fd, Controls(term,M))
 	loop.run_forever()
 
 if __name__=='__main__':
