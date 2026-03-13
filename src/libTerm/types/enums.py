@@ -28,6 +28,12 @@ class StoreStop(StrEnum):
 	FIRST_OF_STORE	= "FIRST_OF_STORE"
 	LAST_OF_STORE	= "LAST_OF_STORE"
 
+class Buffer(StrEnum):
+	DEFAULT = ''
+	ALTERNATE= ''
+
+	def switch(s):
+		pass
 
 
 

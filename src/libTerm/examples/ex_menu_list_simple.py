@@ -44,8 +44,8 @@ def main():
 	loop.add_reader(term.stdin.fd, Controls(term,M))
 	loop.run_forever()
 
-if __name__=='__main__':
-	main()
+
+main()
 
 
 

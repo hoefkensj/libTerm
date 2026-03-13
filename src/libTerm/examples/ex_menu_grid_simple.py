@@ -56,9 +56,9 @@ def main(items):
 	loop.add_reader(term.fd, Controls(term,menu))
 	loop.run_forever()
 
-if __name__=='__main__':
-	items = ['a'*10, 'b'*5, 'c'*12, 'd'*11,'#'*9, 'K'*5, 'V'*10, '@'*15]
-	main([*items,*items,*items])
+
+items = ['a'*10, 'b'*5, 'c'*12, 'd'*11,'#'*9, 'K'*5, 'V'*10, '@'*15]
+main([*items,*items,*items])
 
 
 

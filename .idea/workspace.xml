@@ -5,33 +5,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="bc73ff2f-338a-4651-a389-91491c2041b6" name="Changes" comment="added tests , prolly not that usefull as its only testing if stuff exists , and written by copilot">
-      <change afterPath="$PROJECT_DIR$/src/libTerm/libTypes_extra/class_display.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/libTerm/term/output.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/libTerm/types/cursor.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/libTerm/types/parsers.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/libTerm/examples/__main__.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/examples/__main__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/libTerm/examples/ex_arrowkeys.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/examples/ex_arrowkeys.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/libTerm/examples/ex_basic.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/examples/ex_basic.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/libTerm/examples/ex_colors.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/examples/ex_colors.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/libTerm/examples/ex_menu_grid_big.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/examples/ex_menu_grid_big.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/libTerm/examples/ex_menu_grid_simple.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/examples/ex_menu_grid_simple.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/libTerm/examples/ex_menu_list_simple.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/examples/ex_menu_list_simple.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/libTerm/examples/ex_printkeys.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/examples/ex_printkeys.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/libTerm/examples/ex_snake_automatic.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/examples/ex_snake_automatic.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/libTerm/examples/ex_snake_manual.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/examples/ex_snake_manual.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/libTerm/libextra/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/libTypes_extra/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/libTerm/libextra/class_frame.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/libTypes_extra/class_frame.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/libTerm/libextra/class_menu.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/libTypes_extra/class_menu.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/libTerm/term/cursor.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/term/cursor.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/libTerm/term/input.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/term/input.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/libTerm/term/posix.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/term/posix.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/libTerm/types/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/types/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/libTerm/types/base.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/types/base.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/libTerm/types/class_color.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/types/color.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/libTerm/types/enums.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/types/enums.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/test_colors.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_colors.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -111,66 +89,66 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "Python tests.Python tests for ex_snake1.test_cursor.executor": "Run",
-    "Python tests.Python tests for test_cursor.TestCursor.executor": "Run",
-    "Python tests.Python tests for test_cursor.TestCursor.test_ansi_enum_repr.executor": "Run",
-    "Python tests.Python tests for test_cursor.TestCursor.test_cursor.executor": "Run",
-    "Python tests.Python tests for test_posix_term.TestPosixTerm.executor": "Run",
-    "Python tests.Python tests for test_posix_term.TestPosixTerm.test_cursor.executor": "Run",
-    "Python tests.Python tests for test_posix_term.TestPosixTerm.test_cursor2.executor": "Run",
-    "Python tests.Python tests for test_selector.TestSelector.executor": "Run",
-    "Python tests.Python tests for test_selector.TestSelector.test_base.executor": "Run",
-    "Python tests.Python tests for test_selector.TestSelector.test_step.executor": "Run",
-    "Python tests.Python tests for test_selector.TestSelector.test_zeroone.executor": "Run",
-    "Python tests.Python tests for test_snake1.test_cursor.executor": "Run",
-    "Python tests.Python tests for test_store.TestStore.executor": "Debug",
-    "Python tests.Python tests in ex3.py.executor": "Run",
-    "Python tests.Python tests in test_cursor.py.executor": "Run",
-    "Python tests.Python tests in test_posix_term.py.executor": "Run",
-    "Python tests.Python tests in test_selector.py.executor": "Run",
-    "Python tests.Python tests in test_store.py.executor": "Run",
-    "Python tests.Python tests in tests.executor": "Run",
-    "Python.__init__ (1).executor": "Run",
-    "Python.__init__.executor": "Run",
-    "Python.base.executor": "Run",
-    "Python.class_frame.executor": "Run",
-    "Python.class_menu (1).executor": "Run",
-    "Python.class_menu.executor": "Run",
-    "Python.cursor.executor": "Run",
-    "Python.enums.executor": "Run",
-    "Python.ex3.executor": "Run",
-    "Python.ex_arrowkeys.executor": "Run",
-    "Python.ex_autosnake.executor": "Run",
-    "Python.ex_basic.executor": "Run",
-    "Python.ex_colors.executor": "Run",
-    "Python.ex_manualsnake.executor": "Debug",
-    "Python.ex_menu_grid_big.executor": "Run",
-    "Python.ex_printkeys.executor": "Debug",
-    "Python.ex_simplegrid.executor": "Run",
-    "Python.ex_simplemenu.executor": "Run",
-    "Python.ex_snake1.executor": "Run",
-    "Python.ex_snake_automatic.executor": "Run",
-    "Python.ex_snake_manual.executor": "Run",
-    "Python.example.executor": "Run",
-    "Python.input.executor": "Run",
-    "Python.posix.executor": "Run",
-    "Python.python -m build.executor": "Run",
-    "Python.python -m twine upload dist/*.executor": "Run",
-    "Python.scratch_37.executor": "Run",
-    "Python.test.executor": "Run",
-    "Python.types.executor": "Run",
-    "Python.virt.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "master",
-    "last_opened_file_path": "/home/jeroen/ProxyAI-3.7.4-241.1.zip",
-    "settings.editor.selected.configurable": "preferences.pluginManager"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;Python tests.Python tests for ex_snake1.test_cursor.executor&quot;: &quot;Run&quot;,
+    &quot;Python tests.Python tests for test_cursor.TestCursor.executor&quot;: &quot;Run&quot;,
+    &quot;Python tests.Python tests for test_cursor.TestCursor.test_ansi_enum_repr.executor&quot;: &quot;Run&quot;,
+    &quot;Python tests.Python tests for test_cursor.TestCursor.test_cursor.executor&quot;: &quot;Run&quot;,
+    &quot;Python tests.Python tests for test_posix_term.TestPosixTerm.executor&quot;: &quot;Run&quot;,
+    &quot;Python tests.Python tests for test_posix_term.TestPosixTerm.test_cursor.executor&quot;: &quot;Run&quot;,
+    &quot;Python tests.Python tests for test_posix_term.TestPosixTerm.test_cursor2.executor&quot;: &quot;Run&quot;,
+    &quot;Python tests.Python tests for test_selector.TestSelector.executor&quot;: &quot;Run&quot;,
+    &quot;Python tests.Python tests for test_selector.TestSelector.test_base.executor&quot;: &quot;Run&quot;,
+    &quot;Python tests.Python tests for test_selector.TestSelector.test_step.executor&quot;: &quot;Run&quot;,
+    &quot;Python tests.Python tests for test_selector.TestSelector.test_zeroone.executor&quot;: &quot;Run&quot;,
+    &quot;Python tests.Python tests for test_snake1.test_cursor.executor&quot;: &quot;Run&quot;,
+    &quot;Python tests.Python tests for test_store.TestStore.executor&quot;: &quot;Debug&quot;,
+    &quot;Python tests.Python tests in ex3.py.executor&quot;: &quot;Run&quot;,
+    &quot;Python tests.Python tests in test_cursor.py.executor&quot;: &quot;Run&quot;,
+    &quot;Python tests.Python tests in test_posix_term.py.executor&quot;: &quot;Run&quot;,
+    &quot;Python tests.Python tests in test_selector.py.executor&quot;: &quot;Run&quot;,
+    &quot;Python tests.Python tests in test_store.py.executor&quot;: &quot;Run&quot;,
+    &quot;Python tests.Python tests in tests.executor&quot;: &quot;Run&quot;,
+    &quot;Python.__init__ (1).executor&quot;: &quot;Run&quot;,
+    &quot;Python.__init__.executor&quot;: &quot;Run&quot;,
+    &quot;Python.base.executor&quot;: &quot;Run&quot;,
+    &quot;Python.class_frame.executor&quot;: &quot;Run&quot;,
+    &quot;Python.class_menu (1).executor&quot;: &quot;Run&quot;,
+    &quot;Python.class_menu.executor&quot;: &quot;Run&quot;,
+    &quot;Python.cursor.executor&quot;: &quot;Run&quot;,
+    &quot;Python.enums.executor&quot;: &quot;Run&quot;,
+    &quot;Python.ex3.executor&quot;: &quot;Run&quot;,
+    &quot;Python.ex_arrowkeys.executor&quot;: &quot;Run&quot;,
+    &quot;Python.ex_autosnake.executor&quot;: &quot;Run&quot;,
+    &quot;Python.ex_basic.executor&quot;: &quot;Run&quot;,
+    &quot;Python.ex_colors.executor&quot;: &quot;Run&quot;,
+    &quot;Python.ex_manualsnake.executor&quot;: &quot;Debug&quot;,
+    &quot;Python.ex_menu_grid_big.executor&quot;: &quot;Run&quot;,
+    &quot;Python.ex_printkeys.executor&quot;: &quot;Debug&quot;,
+    &quot;Python.ex_simplegrid.executor&quot;: &quot;Run&quot;,
+    &quot;Python.ex_simplemenu.executor&quot;: &quot;Run&quot;,
+    &quot;Python.ex_snake1.executor&quot;: &quot;Run&quot;,
+    &quot;Python.ex_snake_automatic.executor&quot;: &quot;Run&quot;,
+    &quot;Python.ex_snake_manual.executor&quot;: &quot;Run&quot;,
+    &quot;Python.example.executor&quot;: &quot;Run&quot;,
+    &quot;Python.input.executor&quot;: &quot;Run&quot;,
+    &quot;Python.posix.executor&quot;: &quot;Run&quot;,
+    &quot;Python.python -m build.executor&quot;: &quot;Run&quot;,
+    &quot;Python.python -m twine upload dist/*.executor&quot;: &quot;Run&quot;,
+    &quot;Python.scratch_37.executor&quot;: &quot;Run&quot;,
+    &quot;Python.test.executor&quot;: &quot;Run&quot;,
+    &quot;Python.types.executor&quot;: &quot;Run&quot;,
+    &quot;Python.virt.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/home/jeroen/ProxyAI-3.7.4-241.1.zip&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/Examples" />
@@ -472,6 +450,16 @@
           <url>file://$PROJECT_DIR$/src/libTerm/term/input.py</url>
           <line>38</line>
           <option name="timeStamp" value="15" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/src/libTerm/types/enums.py</url>
+          <line>39</line>
+          <option name="timeStamp" value="17" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/src/libTerm/types/enums.py</url>
+          <line>68</line>
+          <option name="timeStamp" value="18" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
