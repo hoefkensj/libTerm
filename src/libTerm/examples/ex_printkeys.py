@@ -2,8 +2,6 @@
 from libTerm import Term
 from libTerm.types import Mode
 T=Term()
-T.mode=Mode.CONTROL
-T.buffer.alternate()
 print('press qq(double q) to quit!')
 Qs=[]
 while True:
@@ -14,4 +12,4 @@ while True:
 		Qs.append(key)
 	if 'qq' in ''.join(Qs):
 		break
-T.buffer.default()
+T.buffers.default()

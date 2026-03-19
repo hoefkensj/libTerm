@@ -43,10 +43,11 @@ class Bar:
 
 
 class Frame:
-	def __init__(s,ctx,name,location, size):
-		s.ctx  = ctx
-		s.name = name
-		s.loc = location
+	def __init__(s,ctx,name,title=None,location=None, size=None):
+		s.ctx   = ctx
+		s.name  = f'frm_{name}'
+		s.title = title
+		s.loc   = location
 		s.size  = size
 		s.disp  = None
 		s.focus = False

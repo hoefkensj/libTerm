@@ -34,7 +34,7 @@ def Controls(term,M):
 def main():
 	items = ['xxxx', 'xxxx', 'yyyy', 'dasdf', 'dasdf', 'erwrsdd', 'sdf', 'pppfpf']
 	term = Term()
-	term.buffer.alternate()
+	term.buffers.alternate()
 	theme=ColorSet(Color(192,192,0))
 	term.mode = Mode.CONTROL
 	M=Menu(term,items ,location=Coord(10,4),nums=True,colors=theme)

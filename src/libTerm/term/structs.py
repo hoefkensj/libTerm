@@ -4,6 +4,7 @@ from os import get_terminal_size
 from time import time_ns
 
 from libTerm.types import Coord,Color
+from libTerm.types.enums import Ansi,Buffer
 
 
 class TermAttrs():
@@ -80,8 +81,24 @@ class TermColors():
 class TermBuffers:
 	def __init__(s,term):
 		s.term=term
-		s.ansi='\x1b[?1049{hl}'
+		s.default=Ansi.DEFBUF
+		s.alternate=Ansi.ALTBUF
 		s.current=0
+
+
+	@property
+	def buffer(s):
+		return s.current
+	@buffer.setter
+	def buffer(s,buffer):
+		pass
+
+
+	def set_default(s):
+		print(Buffer.DEFAULT,end='',flush=True)
+	def reset(s):
+
+		s.default()
 
 	def default(s):
 		print(s.ansi.format(hl='l'),end='',flush=True)

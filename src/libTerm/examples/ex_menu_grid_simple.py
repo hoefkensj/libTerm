@@ -2,7 +2,7 @@
 import time,sys,os
 from libTerm import Term
 from libTerm.types import Mode,Coord,color
-from libTerm.libTypes_extra.class_menu import Grid
+from libTerm.modules.class_menu import Grid
 import asyncio
 
 

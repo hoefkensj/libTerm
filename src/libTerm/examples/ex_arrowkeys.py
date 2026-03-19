@@ -4,7 +4,7 @@ from libTerm import Term
 from libTerm.types import Mode
 import asyncio
 
-def main(term):
+def main(t):
 	def tohex(stdin):
 		hex = ''
 		for char in stdin:
@@ -18,17 +18,10 @@ def main(term):
 				HEX=tohex(ansi),
 				SYMBOL=arrowkeys[ansi])
 			)
-
-
-
-	# initializing the terminal to be the active terminal:
-	t=term()
 	# setting the terminal to control mode, this will allow us to read the input events and control the output
 	t.mode=Mode.CONTROL
-	# Switch to the alternate buffer, so we don't mess with the main buffer of the terminal,
-	# and we can easily switch back to it when we are done.
-	t.sync.switch()
-	#
+
+		#
 	# Print Templates:
 	tpl_arrowkeys ='\x1b[10G\x1b[0;31m{ANSI}\x1b[m \x1b[20G:\x1b[25G\x1b[0;32m{SYMBOL}\x1b[0;2m\x1b[45G({HEX})'
 	tpl_matched   ='\x1b[9;10H\x1b[1;31m{MATCH}\x1b[25G\x1b[1;32m{KEY}\x1b[m'
@@ -43,9 +36,9 @@ def main(term):
 
 	async def checkinput():
 		loop=asyncio.get_running_loop()
-		event=t.stdin.watch()
+		event=t.stdin.sync
 		while True:
-			await asyncio.wait_for(event())
+			await asyncio.wait_for(event)
 			key = t.stdin.read()
 			print(repr(key))
 			if key in [*arrowkeys.keys()]:
@@ -73,5 +66,10 @@ def main(term):
 			they are less CPU intensive, but that is out of the scope of this example,
 			libTerm is independent of any paradigm you want to use.
 	"""
+
 if __name__=='__main__':
-	main(Term)
+	T=Term()
+	# Switch to the alternate buffer, so we don't mess with the main buffer of the terminal,
+	# and we can easily switch back to it when we are done.
+	T.buffers.alternate()
+	main(T)

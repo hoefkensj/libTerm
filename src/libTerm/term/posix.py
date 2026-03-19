@@ -4,8 +4,7 @@ import termios
 import atexit
 import sys
 from abc import ABCMeta, abstractmethod
-from libTerm.types import Mode
-from libTerm.types.enums import Ansi
+from libTerm.types import Mode,Ansi,Buffer
 from libTerm.term.cursor import Cursor
 from libTerm.term.input import Stdin
 from libTerm.term.structs import TermAttrs, TermBuffers, TermColors, TermSize
@@ -19,6 +18,7 @@ VMIN = 6;VTIME = 5
 class baseTerm(metaclass=ABCMeta):
 	Ansi= Ansi
 	MODE= Mode
+	BUFFER=Buffer
 
 	def __init__(s,*a,**k):
 		s.pid       = os.getpid()
@@ -35,6 +35,7 @@ class baseTerm(metaclass=ABCMeta):
 		s.attr = TermAttrs(term=s)
 
 		s._mode     = s.MODE.NONE
+		s._buffer   = s.BUFFER.NONE
 		s._echo		= True
 		s._canon    = True
 		s.stdin		= Stdin(term=s)
@@ -43,7 +44,7 @@ class baseTerm(metaclass=ABCMeta):
 		# s.vcursors  = {0:vCursor(s,s.cursor)}
 		s.size      = TermSize(term=s)
 		s.color     = TermColors(term=s)
-		s.buffer	= TermBuffers(term=s)
+		s.buffers	= TermBuffers(term=s)
 		atexit.register(s.setmode,Mode.NORMAL)
 
 	def isatty(s):
@@ -89,6 +90,13 @@ class baseTerm(metaclass=ABCMeta):
 		s.setmode(mode)
 
 	@property
+	def buffer(s):
+		return s._buffer
+	@buffer.setter
+	def buffer(s,buffer):
+		s.setbuffer(buffer)
+	@property
+
 	def echo(s):
 		s._echo=s.attr.active[LFLAG] & ECHO != 0
 		return s._echo
@@ -189,6 +197,9 @@ class Term(baseTerm):
 		if mode is not None and mode != Mode.NONE:
 			{1: Normal, 2: Ctl}.get(mode)()
 		return s._mode
+	def setbuffer(s,buffer=None):
+		bufs={1:Ansi.DEFBUF,2:Ansi.ALTBUF}
+
 
 	def _update_(s, when=TCSAFLUSH):
 		s.tcsetattr(s.attr.staged, when)

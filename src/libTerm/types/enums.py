@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 from enum import IntEnum,StrEnum
 
-
 class Mode(IntEnum):
 	NONE	= 0
 	none	= 0
@@ -23,19 +22,38 @@ class Mode(IntEnum):
 	INP      = 3
 	INPUT      = 3
 
-
 class StoreStop(StrEnum):
 	FIRST_OF_STORE	= "FIRST_OF_STORE"
 	LAST_OF_STORE	= "LAST_OF_STORE"
 
-class Buffer(StrEnum):
-	DEFAULT = ''
-	ALTERNATE= ''
-
-	def switch(s):
-		pass
-
-
+class Buffer(IntEnum):
+	NONE     = 0
+	DEFAULT  = 1
+	Default  = 1
+	default  = 1
+	DEF      = 1
+	Def      = 1
+	BUFFER0  = 1
+	Buffer0  = 1
+	buffer0  = 1
+	BUF0     = 1
+	Buf0     = 1
+	buf0     = 1
+	ALTERNATE= 2
+	Alternate= 2
+	alternate= 2
+	ALT      = 2
+	Alt      = 2
+	alt      = 2
+	BUFFER1  = 2
+	Buffer1  = 2
+	buffer1  = 2
+	BUF1     = 2
+	Buf1     = 2
+	buf1     = 2
+	SWITCH   = 3
+	Switch   = 3
+	switch   = 3
 
 class Ansi(StrEnum):
 	ESC     = '\x1b'
@@ -50,6 +68,8 @@ class Ansi(StrEnum):
 	save    = ESC+'7'+CSI+'s'
 	load    = ESC+'8'+CSI+'u'
 	cls     = ESC+'2J'
+	DEFBUF  = CSI+'?1049h'
+	ALTBUF  = CSI+'?1049l'
 
 	def __str__(s):
 		return s.value

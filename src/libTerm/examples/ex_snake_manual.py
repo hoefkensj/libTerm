@@ -30,8 +30,7 @@ from libTerm.types.enums import StoreStop
 class Context:
 	def __init__(s,term,snakespeed=1000):
 		s.term=term
-		s.term.mode = Mode.CONTROL
-		s.term.buffer.alternate()
+
 		s.keyseq=''
 		s.end=False
 		s.started=False
@@ -100,10 +99,13 @@ class Snake:
 
 
 
-
-
-
-term=Term()
+def main():
+	# initialize the Term object:
+	T=Term()
+	# change to control mode
+	T.mode = Mode.CONTROL
+	# swith to alternate buffer
+	T.buffer.alternate()
 ctx=Context(term,snakespeed=10)
 
 ctx.run()

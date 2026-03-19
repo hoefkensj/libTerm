@@ -16,6 +16,7 @@ class Stdin():
 		s._event = select([s.fd], [], [], 0)[0] != []
 		return s._event
 
+
 	@property
 	def count(s):
 		return s._count
