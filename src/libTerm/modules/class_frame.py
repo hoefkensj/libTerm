@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-from libTerm import Term,Coord,Color
+from libTerm import Term
+from libTerm.types import Coord,Color,Mode,Buffer
 class Bar:
 	def __init__(s,ctx=None,parent=None,text='',location=None,width=None,fgcolor=Color(0,0,0),bgcolor=Color(32,128,128),allign='center'):
 		s.ctx=ctx
@@ -61,11 +62,11 @@ class Frame:
 
 	def makeDisplay(s):
 		pass
-from libTerm import Mode
+from libTerm.types import Mode
 from time import sleep
 
 t=Term()
-t.buffer.switch()
+t.buffer=Buffer.ALTERNATE
 t.mode=Mode.control
 
 f=Frame(ctx=None,name='test',location=Coord(5,5),size=Coord(80,15))

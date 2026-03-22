@@ -5,9 +5,9 @@ import atexit
 import sys
 from abc import ABCMeta, abstractmethod
 from libTerm.types import Mode,Ansi,Buffer
-from libTerm.term.cursor import Cursor
+from libTerm.types.cursor import Cursor
 from libTerm.term.input import Stdin
-from libTerm.term.structs import TermAttrs, TermBuffers, TermColors, TermSize
+from libTerm.term.structs import TermAttrs, TermBuffers, TermColors, TermModes,TermSize
 
 # Indices for termios list.
 IFLAG = 0;OFLAG = 1;CFLAG = 2;LFLAG = 3;ISPEED = 4;OSPEED = 5;CC = 6
@@ -16,7 +16,7 @@ VMIN = 6;VTIME = 5
 
 
 class baseTerm(metaclass=ABCMeta):
-	Ansi= Ansi
+	ANSI= Ansi
 	MODE= Mode
 	BUFFER=Buffer
 
@@ -43,9 +43,10 @@ class baseTerm(metaclass=ABCMeta):
 		s.cursor    = Cursor(term=s)
 		# s.vcursors  = {0:vCursor(s,s.cursor)}
 		s.size      = TermSize(term=s)
-		s.color     = TermColors(term=s)
+		s.modes     = TermModes(term=s)
+		s.colors    = TermColors(term=s)
 		s.buffers	= TermBuffers(term=s)
-		atexit.register(s.setmode,Mode.NORMAL)
+		atexit.register(s.modes.set, Mode.NORMAL)
 
 	def isatty(s):
 		s._isatty=[sys.stdin.isatty(),sys.stdout.isatty(),sys.stderr.isatty()]
@@ -70,10 +71,6 @@ class baseTerm(metaclass=ABCMeta):
 		pass
 
 	@abstractmethod
-	def setmode(s, mode):
-		pass
-
-	@abstractmethod
 	def _update_(s, when):
 		pass
 
@@ -83,20 +80,21 @@ class baseTerm(metaclass=ABCMeta):
 
 	@property
 	def mode(s):
-		return s._mode
+		return s.modes.current
 
 	@mode.setter
 	def mode(s, mode):
-		s.setmode(mode)
+		s.modes.set(mode)
 
 	@property
 	def buffer(s):
-		return s._buffer
+		return s.buffers.current
+
 	@buffer.setter
 	def buffer(s,buffer):
-		s.setbuffer(buffer)
-	@property
+		s.buffers.set(buffer)
 
+	@property
 	def echo(s):
 		s._echo=s.attr.active[LFLAG] & ECHO != 0
 		return s._echo
@@ -172,33 +170,7 @@ class Term(baseTerm):
 		s.attr.staged[CC][VTIME] = 0
 		s._update_(when)
 
-	def setmode(s, mode=None):
-		def Normal():
-			s.cursor.show(True)
-			s.echo = True
-			s.canonical = True
-			s.tcsetattr(s.attr.init)
-			s._mode = Mode.NORMAL
 
-		def Ctl():
-			s.cursor.show(False)
-			s.echo = False
-			s.canonical = False
-			s._mode = Mode.CONTROL
-
-		if mode is None:
-			mode = s._mode
-		if isinstance(mode, str):
-			if mode.casefold().startswith('n'):
-				mode = Mode.NORMAL
-			elif mode.casefold().startswith('c'):
-				mode = Mode.CONTROL
-
-		if mode is not None and mode != Mode.NONE:
-			{1: Normal, 2: Ctl}.get(mode)()
-		return s._mode
-	def setbuffer(s,buffer=None):
-		bufs={1:Ansi.DEFBUF,2:Ansi.ALTBUF}
 
 
 	def _update_(s, when=TCSAFLUSH):

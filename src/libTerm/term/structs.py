@@ -4,7 +4,7 @@ from os import get_terminal_size
 from time import time_ns
 
 from libTerm.types import Coord,Color
-from libTerm.types.enums import Ansi,Buffer
+from libTerm.types.enums import Ansi,Buffer,Mode
 
 
 class TermAttrs():
@@ -81,109 +81,144 @@ class TermColors():
 class TermBuffers:
 	def __init__(s,term):
 		s.term=term
-		s.default=Ansi.DEFBUF
-		s.alternate=Ansi.ALTBUF
 		s.current=0
 
+	def bufDefault(s):
+		Ansi.DEFBUF()
+	def bufAlternate(s):
+		Ansi.ALTBUF()
 
 	@property
 	def buffer(s):
 		return s.current
+
 	@buffer.setter
 	def buffer(s,buffer):
-		pass
+		s.set(buffer)
 
-
-	def set_default(s):
-		print(Buffer.DEFAULT,end='',flush=True)
-	def reset(s):
-
-		s.default()
-
-	def default(s):
-		print(s.ansi.format(hl='l'),end='',flush=True)
-
-	def alternate(s):
-		print(s.ansi.format(hl='h'),end='',flush=True)
+	def set(s,buffer=None):
+		if buffer==0:
+			s.bufDefault()
+		elif buffer==Buffer.SWITCH:
+			s.switch()
+		elif buffer==Buffer.DEFAULT:
+			s.bufDefault()
+		elif buffer==Buffer.ALTERNATE:
+			s.bufAlternate()
+		return s.current
 
 	def switch(s):
-		if s.current==0:
-			s.alternate()
-			s.current=1
-		else:
-			s.default()
-			s.current=0
+		if s.current==Buffer.DEFAULT:
+			s.bufAlternate()
+		if s.current==Buffer.ALTERNATE:
+			s.bufDefault()
 
-	def set(s,buffer):
-		if buffer == 1:
-			s.alternate()
-		if buffer == 0:
-			s.default()
+
+
+class TermModes:
+	def __init__(s,term):
+		s.term=term
+		s.current=Mode.NONE
+
+
+	@property
+	def mode(s):
+		return s.current
+	@mode.setter
+	def mode(s,mode):
+		s.set(mode)
+
+	def modeNormal(s):
+		s.term.cursor.show(True)
+		s.term.echo = True
+		s.term.canonical = True
+		s.term.tcsetattr(s.term.attr.init)
+		s.current = Mode.NORMAL
+		s.term._mode = s.current
+
+	def modeCtl(s):
+		s.term.cursor.show(False)
+		s.term.echo = False
+		s.term.canonical = False
+		s.current=Mode.CONTROL
+		s.term._mode = s.current
+
+	def set(s,mode=None):
+
+		if mode is None:
+			mode = s.current
+		elif mode == Mode.NONE:
+			s.modeNormal()
+		elif mode==Mode.NORMAL:
+			s.modeNormal()
+		elif mode==Mode.CONTROL:
+			s.modeCtl()
+		return s.current
 
 
 class TermSize():
-			def __init__(s, **k):
+	def __init__(s, **k):
 
-				s.term = k.get('term')
-				s.time = None
-				s.last = None
-				s.xy = Coord(1, 1)
-				s._tmp = Coord(1, 1)
-				s.rows = 1
-				s.cols = 1
+		s.term = k.get('term')
+		s.time = None
+		s.last = None
+		s.xy = Coord(1, 1)
+		s._tmp = Coord(1, 1)
+		s.rows = 1
+		s.cols = 1
 
-				s.history = []
-				s.changed = False
-				s.changing = False
-				s.__kwargs__(**k)
-				s.__update__()
+		s.history = []
+		s.changed = False
+		s.changing = False
+		s.__kwargs__(**k)
+		s.__update__()
 
-			def getsize(s):
-				try:
-					size = get_terminal_size()
-					return size.columns, size.lines
-				except OSError:
-					return 80, 24
+	def getsize(s):
+		try:
+			size = get_terminal_size()
+			return size.columns, size.lines
+		except OSError:
+			return 80, 24
 
-			@property
-			def width(s):
-				s.__update__()
-				return s.cols
+	@property
+	def width(s):
+		s.__update__()
+		return s.cols
 
-			@property
-			def height(s):
-				s.__update__()
-				return s.rows
+	@property
+	def height(s):
+		s.__update__()
+		return s.rows
 
-			@property
-			def rc(s):
-				s.__update__()
-				return Coord(s.rows,s.cols )
+	@property
+	def rc(s):
+		s.__update__()
+		return Coord(s.rows,s.cols )
 
-			def __kwargs__(s, **k):
-				s.term = k.get('term')
+	def __kwargs__(s, **k):
+		s.term = k.get('term')
 
-			def __update__(s):
-				if s.time is None:
-					s.last = time_ns()
-				size = Coord(*s.getsize())
-				if size == Coord(0, 0):
-					size=Coord(80, 24)
-				if size != s.xy:
+	def __update__(s):
+		if s.time is None:
+			s.last = time_ns()
+		size = Coord(*s.getsize())
+		if size == Coord(0, 0):
+			size=Coord(80, 24)
+		if size != s.xy:
 
-					if size != s._tmp:
-						s.changing = True
-						s._tmp = size
-						s._tmptime = time_ns()
-					if size == s._tmp:
-						if (time_ns() - s._tmptime) * 1e6 > 500:
-							s.changing = False
-							s.changed = True
-							s.history += [s.xy]
-							s.xy = size
-							s.rows = s.xy.y
-							s.cols = s.xy.x
-						else:
-							s._tmp = size
-				if size == s.xy:
-					s.changed = False
+			if size != s._tmp:
+				s.changing = True
+				s._tmp = size
+				s._tmptime = time_ns()
+			if size == s._tmp:
+				if (time_ns() - s._tmptime) * 1e6 > 500:
+					s.changing = False
+					s.changed = True
+					s.history += [s.xy]
+					s.xy = size
+					s.rows = s.xy.y
+					s.cols = s.xy.x
+				else:
+					s._tmp = size
+		if size == s.xy:
+			s.changed = False

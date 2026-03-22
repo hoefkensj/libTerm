@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from libTerm import Term
-from libTerm.types import Mode
+from libTerm.types import Mode,Buffer
 
 
 
@@ -37,12 +37,12 @@ def Props(props):
 	props=propadd(props,*['.tty',f'{term.tty}','# The name of the terminal device.'],)
 	props=propadd(props,*['.echo',f'{term.echo}','# Whether the terminal is currently echoing input.'])
 	props=propadd(props,*['.canonical',f'{term.canonical}','# Whether the terminal is currently in canonical mode.'])
-	props=propadd(props,*['.mode',f'\x1b[31mMode.\x1b[33m{term.MODE(term.mode).name}',[
+	props=propadd(props,*['.mode',f'\x1b[31mMode.\x1b[33m{term.MODE(term.mode).name}', [
 		'# The current mode of the terminal:',
 		'# Value is set with the Mode(Enum) class:',
 		'#   - Mode.NORMAL  : The normal mode  : the terminal behaves as usual.)',
 		'#   - Mode.CONTROL : The control mode : input events are instant and not echo-ed']])
-	return '\n'.join(makeprint([section('libTerm','.'.join(['','Term()']))]))
+	return ''.join(makeprint([section('libTerm','.'.join(['','Term()']))]))
 
 def Comp(comps):
 	def compadd(comps, comp, cls, desc):
@@ -158,5 +158,5 @@ if __name__ == '__main__':
 	term=Term()
 	# Switch to the alternate buffer, so we don't mess with the main buffer of the terminal,
 # and we can easily switch back to it when we are done.
-	term.buffers.alternate()
+	term.buffer=Buffer.ALTERNATE
 	main(term)

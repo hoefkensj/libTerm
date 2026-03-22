@@ -1,7 +1,8 @@
 import re
 
 from libTerm.types.base import Coord,Store
-from libTerm.types.enums import StoreStop as Stop, Ansi, Move
+from libTerm.types.enums import StoreStop as Stop
+from libTerm.types.enums import Ansi,Move
 
 
 class Cursor():

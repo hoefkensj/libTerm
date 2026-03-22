@@ -102,11 +102,14 @@ class Move(StrEnum):
 	def __repr__(s):
 		return repr(s.value)
 	def __call__(s, *a):
+		from libTerm.types import Coord
 		CSI=s.CSI
 		if s.value == Move.ABS:
-			X=a[0]
-			Y=a[1]
-			result=s.value.format(CSI=CSI,X=X,Y=Y)
+			if not isinstance(a[0],Coord):
+				coord=Coord(a[0],a[1])
+			else:
+				coord=a[0]
+			result=s.value.format(CSI=CSI,**coord)
 		else:
 			N = a[0]
 			result=s.value.format(CSI=CSI,N=N)

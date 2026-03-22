@@ -1,17 +1,24 @@
 #!/usr/bin/env python
-from libTerm.examples import ex_basic,ex_arrowkeys,ex_printkeys,ex_colors,ex_menu_list_simple,ex_menu_grid_simple,ex_menu_grid_big,ex_snake_automatic,ex_snake_manual
+import importlib
+import pkgutil
 import time
-modules = [
-		ex_arrowkeys,
-		ex_basic,
-		ex_menu_grid_big,
-		ex_menu_grid_simple,
-		ex_menu_list_simple,
-		ex_colors,
-		ex_printkeys,
-		ex_snake_automatic,
-		ex_snake_manual,
-	]
+from libTerm.term import Term
+
+def discover_modules():
+	"""Return a sorted list of example module names in the libTerm.examples package.
+	Modules starting with an underscore are ignored.
+	"""
+	import libTerm.examples as examples_pkg
+	names = []
+	for finder, name, ispkg in pkgutil.iter_modules(examples_pkg.__path__):
+		if name.startswith('_'):
+			continue
+		# skip package resources and obvious non-example names
+		if name == 'test':
+			continue
+		names.append(name)
+	names.sort()
+	return names
 # class Examples:
 # 	def __init__(s):
 # 		s.ex=[]
@@ -32,25 +39,57 @@ modules = [
 # 			key = term.stdin.read()
 # 			if key in 'NnPpQa':
 
-def runExamples(term):
-	for module in modules:
-		print(module.__name__)
+def runExample(term):
+	mods=[modname for modname in discover_modules()]
+	current=0
+	max=len(mods())
+	def nextmod():
+		nonlocal current
+		current=(current+1)%max
+		return current
+	def run():
+		mod=mods[nextmod()]
+		term.ANSI.cls()
 		time.sleep(1)
-		term.Ansi.cls()
+		print('\x1b[1;1H', mod)
 		time.sleep(1)
-		print(f"Running example: {module.__name__}")
-		time.sleep(1)
-		module.main(term)
+		# import and run the module lazily so modules are only loaded when their turn comes
+		try:
+			module = importlib.import_module(f'libTerm.examples.{mod}')
+			if hasattr(module, 'main'):
+				term.ANSI.cls()
+				module.main(term)
+			else:
+				print(f"module {mod} has no main(), skipping")
+		except Exception as e:
+			print(f"Error importing/running {mod}: {e}")
+	def runnext():
+		key=term.stdin.read()
+
+		if key == '\n':
+			run()
+
+	return runnext
+
+def Control(term):
+	import asyncio
+	loop = asyncio.new_event_loop()
+	asyncio.set_event_loop(loop)
+	loop.add_reader(term.stdin.fd, runExample(term))
+	loop.run_forever()
 
 def main():
 	import atexit
-	from libTerm import Term
 	def ExitProcedure(t):
-		t.Ansi.cls()
-		t.mode = t.MODE.DEFAULT
+		t.ANSI.cls()
+		t.mode = t.MODE.NORMAL
 		t.buffer = t.BUFFER.DEFAULT
 	t=Term()
 	t.mode=t.MODE.CONTROL
 	t.buffer = t.BUFFER.ALTERNATE
-	t.Ansi.cls()
+	t.ANSI.cls()
 	atexit.register(ExitProcedure,t)
+	Control(t)
+
+if __name__=='__main__':
+	main()

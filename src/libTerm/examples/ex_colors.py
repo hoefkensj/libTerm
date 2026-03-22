@@ -7,7 +7,7 @@ def main(term):
 	print(f"Same but 4 bit RGB {term.color.fg.RGB4=}")
 	print(f"BackGround(bg) color in  16Bit RGB {term.color.bg.RGB16=}")
 	print(f"these are Color Objects, they dont color things or do markup they just represent a color,in most common formats" )
-	print(f'red=Color(255,0,0) :  {'red='Color(255,0,0,)=}')
+	print(f'red=Color(255,0,0) :  {Color(255,0,0,)=}')
 
 	print(f"{term.color.bg.neg.RGB8=}")
 	print(f"{term.color.bg.neg.RGB32=}")
@@ -22,34 +22,23 @@ async def qscan(term):
 	while True:
 		await asyncio.wait_for(event)
 		key = t.stdin.read()
-		if key in 'NnPpQa':
+		print('\x1b[3;1HKey:\x1b[32m {KEY}\x1b[m'.format(KEY=key), end='', flush=True)
+		if key == 'q':
+			print('continuing')
+			break
 
-
-
-			key = t.stdin.read()
-			print('\x1b[3;1HKey:\x1b[32m {KEY}\x1b[m'.format(KEY=key), end='', flush=True)
-			if key == 'q':
-				print('continuing')
-				break
-		sleep(0.01)
-
-	async def checkinput():
-
-
-		elif key in 'qQ':
-				break
 
 if __name__ == '__main__':
 	import atexit
 	from libTerm import Term
 	def ExitProcedure(t):
-		t.Ansi.cls()
+		t.ANSI.cls()
 		t.mode = t.MODE.DEFAULT
 		t.buffer = t.BUFFER.DEFAULT
 	t=Term()
 	t.mode=t.MODE.CONTROL
 	t.buffer = t.BUFFER.ALTERNATE
-	t.Ansi.cls()
+	t.ANSI.cls()
 	atexit.register(ExitProcedure,t)
 	main(t)
 

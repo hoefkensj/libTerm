@@ -99,17 +99,25 @@ class Snake:
 
 
 
-def main():
-	# initialize the Term object:
-	T=Term()
-	# change to control mode
-	T.mode = Mode.CONTROL
-	# swith to alternate buffer
-	T.buffer.alternate()
-ctx=Context(term,snakespeed=10)
+def main(term):
 
-ctx.run()
+	ctx=Context(term,snakespeed=10)
 
+	ctx.run()
+
+if __name__ == '__main__':
+	import atexit
+	from libTerm import Term
+	def ExitProcedure(t):
+		t.ANSI.cls()
+		t.mode = t.MODE.DEFAULT
+		t.buffer = t.BUFFER.DEFAULT
+	t=Term()
+	t.mode=t.MODE.CONTROL
+	t.buffer = t.BUFFER.ALTERNATE
+	t.ANSI.cls()
+	atexit.register(ExitProcedure,t)
+	main(t)
 
 
 

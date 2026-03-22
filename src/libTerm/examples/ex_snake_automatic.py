@@ -153,11 +153,25 @@ class Snake:
 
 
 
+def main(term):
+	ex = Example()
+	ex.start()
 
 
+if __name__ == '__main__':
+	import atexit
+	from libTerm import Term
+	def ExitProcedure(t):
+		t.ANSI.cls()
+		t.mode = t.MODE.DEFAULT
+		t.buffer = t.BUFFER.DEFAULT
+	t=Term()
+	t.mode=t.MODE.CONTROL
+	t.buffer = t.BUFFER.ALTERNATE
+	t.ANSI.cls()
+	atexit.register(ExitProcedure,t)
+	main(t)
 
 # time.sleep(5)
 
-print('\x1b[J\x1b[1;1HPress one of up,down,left,right to start and  q to quit!')
-ex=Example()
 

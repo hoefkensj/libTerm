@@ -2,7 +2,7 @@
 import time,sys,os
 from libTerm import Term
 from libTerm.types import Mode,Coord,Color,ColorSet
-from libTerm.libTypes_extra.class_menu import Menu
+from libTerm.modules.class_menu import Menu
 import asyncio
 
 
@@ -17,7 +17,8 @@ def Controls(term,M):
 			M.prev()
 		elif key == 'q':
 			term.mode=Mode.default
-			end=1
+			loop=asyncio.get_running_loop()
+			loop.stop()
 		elif key == '\n':
 			prev=''
 			print('\x1b[1;1H chosen:',M.choose())
@@ -31,12 +32,9 @@ def Controls(term,M):
 # 	return control
 #
 
-def main():
+def main(term):
 	items = ['xxxx', 'xxxx', 'yyyy', 'dasdf', 'dasdf', 'erwrsdd', 'sdf', 'pppfpf']
-	term = Term()
-	term.buffers.alternate()
 	theme=ColorSet(Color(192,192,0))
-	term.mode = Mode.CONTROL
 	M=Menu(term,items ,location=Coord(10,4),nums=True,colors=theme)
 	M.draw()
 	loop = asyncio.new_event_loop()
@@ -44,12 +42,18 @@ def main():
 	loop.add_reader(term.stdin.fd, Controls(term,M))
 	loop.run_forever()
 
-
-main()
-
-
-
-
-
+if __name__ == '__main__':
+	import atexit
+	from libTerm import Term
+	def ExitProcedure(t):
+		t.ANSI.cls()
+		t.mode = t.MODE.DEFAULT
+		t.buffer = t.BUFFER.DEFAULT
+	t=Term()
+	t.mode=t.MODE.CONTROL
+	t.buffer = t.BUFFER.ALTERNATE
+	t.ANSI.cls()
+	atexit.register(ExitProcedure,t)
+	main(t)
 
 

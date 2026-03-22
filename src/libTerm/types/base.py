@@ -61,6 +61,7 @@ class Coord(namedtuple('Coord', ['x', 'y'])):
 		yield s.x
 		yield s.y
 
+
 	def __getitem__(s, index):
 		value=None
 		if isinstance(index, int):
@@ -133,7 +134,7 @@ class Coord(namedtuple('Coord', ['x', 'y'])):
 		return s.y
 
 	def keys(s):
-		return ('x', 'y')
+		return ('X', 'Y')
 
 
 	@property
@@ -147,6 +148,12 @@ class Coord(namedtuple('Coord', ['x', 'y'])):
 	@property
 	def x(s):
 		return s._x
+	@property
+	def X(s):
+		return s.x
+	@property
+	def Y(s):
+		return s.y
 
 class TermSize():
 	def __init__(s, **k):

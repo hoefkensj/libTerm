@@ -24,7 +24,6 @@ def Controls(term,M):
 				prev+=key
 				M.select(int(prev))
 		def end():
-			term.buffer.default()
 			loop.stop()
 			return True
 
@@ -54,11 +53,10 @@ def makeMenu(term,items):
 	M=Grid(term,items ,direction='horizontal', location=Coord(10,10),maxwidth=13,colors=mycolors)
 	M.draw()
 	return M
-def main(items):
-	term = Term()
-	term.buffers.alternate()
-	term.mode = Mode.CONTROL
-
+def main(term):
+	items = []
+	for i in range(50):
+		items += [chr(randint(65, 68)) + chr(randint(65, 68))]
 	menu=makeMenu(term,items)
 	loop = asyncio.new_event_loop()
 	asyncio.set_event_loop(loop)
@@ -66,10 +64,22 @@ def main(items):
 	loop.run_forever()
 
 
-items=[]
-for i in range(50):
-	items += [chr(randint(65,68))+chr(randint(65,68))]
-main([*items,*items,*items])
+
+
+if __name__ == '__main__':
+	import atexit
+	from libTerm import Term
+	def ExitProcedure(t):
+		t.ANSI.cls()
+		t.mode = t.MODE.NORMAL
+		t.buffer = t.BUFFER.DEFAULT
+	t=Term()
+	t.mode=t.MODE.CONTROL
+	t.buffer = t.BUFFER.ALTERNATE
+	t.ANSI.cls()
+	atexit.register(ExitProcedure,t)
+
+	main(t)
 
 
 
