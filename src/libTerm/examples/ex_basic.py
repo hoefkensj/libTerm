@@ -9,6 +9,22 @@ def head():
 def section(root,subs):
 	return '\n\x1b[1m{ROOT}:\n\t{SUBS}:\x1b[m\n\x1b[4mProperty\x1b[20GValue\x1b[40GDescription\x1b[m'
 
+def makeprint(dct,mkup):
+	toprint=[]
+	for key in dct:
+		line=[]
+		col = 0
+		for value in dct[key]:
+			if not isinstance(dct[key][value], list):
+				line += ['{C}{val}'.format(C=mkup[col], val=dct[key][value])]
+			else:
+				line += ['{C}{val}'.format(C=mkup[col], val=dct[key][value][0])]
+				for line in dct[key][value][1:]:
+					line += ['\n{C}{val}'.format(C=mkup[col], val=line)]
+			col += 1
+		toprint += [''.join(line)]
+	return toprint
+
 def Props(props):
 	mkup=['\x1b[4G\x1b[36m','\x1b[20G\x1b[33m','\x1b[40G\x1b[37m']
 	def propadd(props, prop, val, desc):
@@ -18,31 +34,14 @@ def Props(props):
 			'desc': desc
 		}
 		return props
-	def makeprint(toprint):
-		for key in props:
-			col = 0
-			for value in props[key]:
-				if not isinstance(props[key][value], list):
-					toprint += ['{C}{val}'.format(C=mkup[col], val=props[key][value])]
-				else:
-					toprint += ['{C}{val}'.format(C=mkup[col], val=props[key][value][0])]
-					for line in props[key][value][1:]:
-						toprint += ['\n{C}{val}'.format(C=mkup[col], val=line)]
-				col += 1
-				toprint += ['\n']
-		return toprint
 	props=propadd(props,*['.pid',f'{term.pid}','# Process ID of the current process.'])
 	props=propadd(props,*['.ppid',f'{term.ppid}','# Process ID of the parent process.Usually the shell that started the program.'])
 	props=propadd(props,*['.stdfd',f'{term.stdfd}','# File descriptor for the terminal input,output,error.'])
 	props=propadd(props,*['.tty',f'{term.tty}','# The name of the terminal device.'],)
 	props=propadd(props,*['.echo',f'{term.echo}','# Whether the terminal is currently echoing input.'])
 	props=propadd(props,*['.canonical',f'{term.canonical}','# Whether the terminal is currently in canonical mode.'])
-	props=propadd(props,*['.mode',f'\x1b[31mMode.\x1b[33m{term.MODE(term.mode).name}', [
-		'# The current mode of the terminal:',
-		'# Value is set with the Mode(Enum) class:',
-		'#   - Mode.NORMAL  : The normal mode  : the terminal behaves as usual.)',
-		'#   - Mode.CONTROL : The control mode : input events are instant and not echo-ed']])
-	return ''.join(makeprint([section('libTerm','.'.join(['','Term()']))]))
+	props=propadd(props,*['.mode',f'\x1b[31mMode.\x1b[33m{term.MODE(term.mode).name}', '# The current mode of the terminal'])
+	return '\n'.join([section('libTerm','.'.join(['','Term()'])),*makeprint(props,mkup)])
 
 def Comp(comps):
 	def compadd(comps, comp, cls, desc):
@@ -50,31 +49,17 @@ def Comp(comps):
 			'comp': comp,
 			'class': cls,
 			'desc': desc}
-		return comps
+		return compsr
 
 	comps = {}
 	comps = compadd(comps, *['.attr', f'{term.attr.__class__.__name__}', '# Representing The terminal attributes, which can be used to get and set various terminal settings.'])
 	comps = compadd(comps, *['.size', f'{term.size.__class__.__name__}', '# (class) Representing The terminal size, which provides the current width and height of the terminal.'])
 	comps = compadd(comps, *['.cursor', f'{term.cursor.__class__.__name__}', '# (class) Representing The terminal cursor, which can be used to control the position and visibility of the cursor.'])
 	comps = compadd(comps, *['.stdin', f'{term.stdin.__class__.__name__}', '# (class) Representing The terminal standard input, which can be used to read input events from the terminal.'])
-	comps = compadd(comps, *['.color', f'{term.color.__class__.__name__}', '# (class) Representing The terminal color settings: foreground(fg),background(bg) and underline(ul) colors.'])
+	comps = compadd(comps, *['.colors', f'{term.colors.__class__.__name__}', '# (class) Representing The terminal color settings: foreground(fg),background(bg) and underline(ul) colors.'])
 	mkup = ['\x1b[4G\x1b[32m', '\x1b[20G\x1b[31m', '\x1b[40G\x1b[37m']
-	print('\x1b[1mlibTerm\x1b[m:')
-	print('\x1b[1m  .Term():\x1b[m')
-	print('\x1b[4G\x1b[4mComponent', '\x1b[20GClass', '\x1b[40GDescription\x1b[m')
-	# print('\x1b[1mTerm()\x1b[20GlibTerm.term.structs.\x1b[m')
-	for key in comps:
-		col = 0
+	return '\n'.join([section('libTerm','.'.join(['','Term()'])),*makeprint(comps,mkup)])
 
-		for value in comps[key]:
-			if not isinstance(comps[key][value], list):
-				print('{C}{val}'.format(C=mkup[col], val=comps[key][value]), end='', flush=True)
-			else:
-				print('{C}{val}'.format(C=mkup[col], val=comps[key][value][0]), end='', flush=True)
-				for line in comps[key][value][1:]:
-					print('\n{C}{val}'.format(C=mkup[col], val=line), end='', flush=True)
-			col += 1
-		print()
 
 
 def cursor():
@@ -108,8 +93,12 @@ def main(term):
 	term=term
 	# setting the terminal to control mode, this will allow us to read the input events and control the output
 	term.mode=Mode.CONTROL
+	term.buffer=term.BUFFER.ALTERNATE
 	props=Props({})
-	print(props)
+	comps=Comp({})
+	print('\x1b[1H')
+	print(props.format(ROOT='libTerm',SUBS='.Term()'))
+	print(comps.format(ROOT='libTerm',SUBS='.Term()'))
 	print('press q to resume:')
 	while True:
 		from time import sleep

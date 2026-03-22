@@ -21,23 +21,16 @@ class baseTerm(metaclass=ABCMeta):
 	BUFFER=Buffer
 
 	def __init__(s,*a,**k):
+		# Public Properties
 		s.pid       = os.getpid()
 		s.ppid      = os.getppid()
-		s.stdfd     = [None, None, None]
-		s.tty       = None
-		s.attr      = None
-		if s.isatty():
-		# with suppress(io.UnsupportedOperation,OSError):
-			s.stdfd        = [sys.stdin.fileno(),sys.stdout.fileno(),sys.stderr.fileno()]
-			s.tty     	  = os.ttyname(s.stdfd[0])
-		else:
-			sys.__stdin__.fileno()
-		s.attr = TermAttrs(term=s)
-
-		s._mode     = s.MODE.NONE
-		s._buffer   = s.BUFFER.NONE
+		s.stdfd     = [sys.stdin.fileno(),sys.stdout.fileno(),sys.stderr.fileno()]
+		s.tty       = os.ttyname(s.stdfd[0])
+		# Cache/Private Propertie
 		s._echo		= True
 		s._canon    = True
+		# Components
+		s.attr      = TermAttrs(term=s)
 		s.stdin		= Stdin(term=s)
 		# s.stdout	= Stdout(term=s)
 		s.cursor    = Cursor(term=s)
@@ -47,10 +40,6 @@ class baseTerm(metaclass=ABCMeta):
 		s.colors    = TermColors(term=s)
 		s.buffers	= TermBuffers(term=s)
 		atexit.register(s.modes.set, Mode.NORMAL)
-
-	def isatty(s):
-		s._isatty=[sys.stdin.isatty(),sys.stdout.isatty(),sys.stderr.isatty()]
-		return any(s._isatty)
 
 	@abstractmethod
 	def tcgetattr(s):
@@ -169,9 +158,6 @@ class Term(baseTerm):
 		s.attr.staged[CC][VMIN] = 1
 		s.attr.staged[CC][VTIME] = 0
 		s._update_(when)
-
-
-
 
 	def _update_(s, when=TCSAFLUSH):
 		s.tcsetattr(s.attr.staged, when)
