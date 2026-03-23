@@ -81,16 +81,18 @@ class TermColors():
 class TermBuffers:
 	def __init__(s,term):
 		s.term=term
-		s.current=0
+		s._buffer=Buffer.NONE
 
 	def bufDefault(s):
+		s._buffer=Buffer.DEFAULT
 		Ansi.DEFBUF()
 	def bufAlternate(s):
+		s._buffer=Buffer.ALTERNATE
 		Ansi.ALTBUF()
 
 	@property
 	def buffer(s):
-		return s.current
+		return s._buffer
 
 	@buffer.setter
 	def buffer(s,buffer):
@@ -105,12 +107,12 @@ class TermBuffers:
 			s.bufDefault()
 		elif buffer==Buffer.ALTERNATE:
 			s.bufAlternate()
-		return s.current
+		return s._buffer
 
 	def switch(s):
-		if s.current==Buffer.DEFAULT:
+		if s._buffer==Buffer.DEFAULT:
 			s.bufAlternate()
-		if s.current==Buffer.ALTERNATE:
+		if s._buffer==Buffer.ALTERNATE:
 			s.bufDefault()
 
 
@@ -118,8 +120,7 @@ class TermBuffers:
 class TermModes:
 	def __init__(s,term):
 		s.term=term
-		s.current=Mode.NONE
-
+		s.mode=Mode.NONE
 
 	@property
 	def mode(s):

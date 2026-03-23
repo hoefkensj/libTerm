@@ -6,8 +6,12 @@ from libTerm.types import Mode,Buffer
 
 def head():
 	return "\x1b[2J\x1b[1;1H\x1b[1;4mReading State,Properties and Data from the terminal :\x1b[m"
-def section(root,subs):
-	return '\n\x1b[1m{ROOT}:\n\t{SUBS}:\x1b[m\n\x1b[4mProperty\x1b[20GValue\x1b[40GDescription\x1b[m'
+def section(ROOT,KEY,VAL,SUBS):
+	ret=''
+	if ROOT!='':
+		ret+=f'\n\x1b[1m{ROOT}:\n\t{SUBS}:\x1b[m'
+	ret+=f'\n\x1b[4m{KEY}\x1b[20G{VAL}\x1b[40GDescription\x1b[m'
+	return ret
 
 def makeprint(dct,mkup):
 	toprint=[]
@@ -41,7 +45,7 @@ def Props(props):
 	props=propadd(props,*['.echo',f'{term.echo}','# Whether the terminal is currently echoing input.'])
 	props=propadd(props,*['.canonical',f'{term.canonical}','# Whether the terminal is currently in canonical mode.'])
 	props=propadd(props,*['.mode',f'\x1b[31mMode.\x1b[33m{term.MODE(term.mode).name}', '# The current mode of the terminal'])
-	return '\n'.join([section('libTerm','.'.join(['','Term()'])),*makeprint(props,mkup)])
+	return '\n'.join([section(ROOT='libTerm',KEY='Property',VAL='Value',SUBS	='.'.join(['','Term()'])),*makeprint(props,mkup)])
 
 def Comp(comps):
 	def compadd(comps, comp, cls, desc):
@@ -49,16 +53,17 @@ def Comp(comps):
 			'comp': comp,
 			'class': cls,
 			'desc': desc}
-		return compsr
+		return comps
 
 	comps = {}
 	comps = compadd(comps, *['.attr', f'{term.attr.__class__.__name__}', '# Representing The terminal attributes, which can be used to get and set various terminal settings.'])
+	comps = compadd(comps, *['.modes', f'{term.modes.__class__.__name__}', '# Representing Different Modes (combination of attrs) of the terminal'])
 	comps = compadd(comps, *['.size', f'{term.size.__class__.__name__}', '# (class) Representing The terminal size, which provides the current width and height of the terminal.'])
 	comps = compadd(comps, *['.cursor', f'{term.cursor.__class__.__name__}', '# (class) Representing The terminal cursor, which can be used to control the position and visibility of the cursor.'])
 	comps = compadd(comps, *['.stdin', f'{term.stdin.__class__.__name__}', '# (class) Representing The terminal standard input, which can be used to read input events from the terminal.'])
 	comps = compadd(comps, *['.colors', f'{term.colors.__class__.__name__}', '# (class) Representing The terminal color settings: foreground(fg),background(bg) and underline(ul) colors.'])
 	mkup = ['\x1b[4G\x1b[32m', '\x1b[20G\x1b[31m', '\x1b[40G\x1b[37m']
-	return '\n'.join([section('libTerm','.'.join(['','Term()'])),*makeprint(comps,mkup)])
+	return '\n'.join([section(ROOT='',KEY='Component',VAL='Class',SUBS='.'.join(['','Term()'])),*makeprint(comps,mkup)])
 
 
 

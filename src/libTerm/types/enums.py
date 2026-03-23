@@ -68,8 +68,8 @@ class Ansi(StrEnum):
 	save    = ESC+'7'+CSI+'s'
 	load    = ESC+'8'+CSI+'u'
 	cls     = ESC+'2J'
-	DEFBUF  = CSI+'?1049h'
-	ALTBUF  = CSI+'?1049l'
+	DEFBUF  = CSI+'?1049l'
+	ALTBUF  = CSI+'?1049h'
 
 	def __str__(s):
 		return s.value

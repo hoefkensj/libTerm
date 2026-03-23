@@ -77,7 +77,7 @@ class baseTerm(metaclass=ABCMeta):
 
 	@property
 	def buffer(s):
-		return s.buffers.current
+		return s.buffers._buffer
 
 	@buffer.setter
 	def buffer(s,buffer):
