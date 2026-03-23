@@ -159,8 +159,10 @@ class TermModes:
 
 class TermSize():
 	def __init__(s, **k):
+		from libTerm.types import Coord
 
 		s.term = k.get('term')
+		s.getsize = lambda:Coord(*list(get_terminal_size()))
 		s.time = None
 		s.last = None
 		s.xy = Coord(1, 1)
@@ -173,13 +175,6 @@ class TermSize():
 		s.changing = False
 		s.__kwargs__(**k)
 		s.__update__()
-
-	def getsize(s):
-		try:
-			size = get_terminal_size()
-			return size.columns, size.lines
-		except OSError:
-			return 80, 24
 
 	@property
 	def width(s):

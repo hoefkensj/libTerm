@@ -1,4 +1,6 @@
 #!/usr/bin/env python
-from libTerm.types.base import Store, Selector,Coord
-from libTerm.types.color import Color,ColorSet,ColorPalette
-from libTerm.types.enums import StoreStop,Mode,Buffer,Ansi
+from .base import Coord,Store,Selector
+from .color import Color,ColorSet,ColorPalette
+from .cursor import Cursor
+from .enums import Buffer,Mode,Move,Ansi,StoreStop,StrEnum,IntEnum
+from .structs import TermAttrs,TermBuffers,TermColors,TermModes,TermSize

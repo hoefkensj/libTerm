@@ -7,7 +7,7 @@ from abc import ABCMeta, abstractmethod
 from libTerm.types import Mode,Ansi,Buffer
 from libTerm.types.cursor import Cursor
 from libTerm.term.input import Stdin
-from libTerm.term.structs import TermAttrs, TermBuffers, TermColors, TermModes,TermSize
+from libTerm.types import TermAttrs, TermBuffers, TermColors, TermModes,TermSize
 
 # Indices for termios list.
 IFLAG = 0;OFLAG = 1;CFLAG = 2;LFLAG = 3;ISPEED = 4;OSPEED = 5;CC = 6
