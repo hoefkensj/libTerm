@@ -3,7 +3,7 @@ from collections import namedtuple
 from dataclasses import dataclass, field
 from os import get_terminal_size
 from time import time_ns
-from libTerm.types.enums import StoreStop
+from libTerm.components.enums import StoreStop
 
 
 # class Selector():

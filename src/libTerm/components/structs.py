@@ -2,8 +2,8 @@
 import sys
 from os import get_terminal_size
 from time import time_ns
-from libTerm.types.color import Color
-from libTerm.types.enums import Ansi
+from libTerm.components.color import Color
+from libTerm.components.enums import Ansi
 
 class TermAttrs():
 	def __init__(s,**k):
@@ -36,7 +36,9 @@ class TermColors():
 	ANSI=Ansi
 	def __init__(s, **k):
 		s.term = k.get('term')
-		s.grounds={'fg': s.ANSI.COLFG,'bg':s.ANSI.COLBG}
+		s._specs = {'fg': 10, 'bg': 11,'swap':7,'unswap':27}
+		s._ansi_q = '\x1b]{spec};?\a'
+		s._ansi_a = '\x1b[{spec}m'
 		s._swaped=False
 		s.fg = s.COLOR(192,192,192)
 		s.bg = s.COLOR(16, 16, 16)
@@ -50,18 +52,17 @@ class TermColors():
 				buf += sys.stdin.read(1)
 			rgb = buf.split(':')[1].split('/')
 			rgb = [int(i, base=16) for i in rgb]
-			rgb = TermColors.COLOR.Color(*rgb, 16)
+			rgb = TermColors.COLOR(*rgb, 16)
 		except Exception as E:
 			# print(E)
 			rgb = None
 		return rgb
 
 	def _update_(s):
-
-		for ground in s.grounds:
+		for ground in ['fg','bg']:
 			result = None
 			while not result:
-				result = s.term.stdin.query(s.grounds[ground])
+				result = s.term._ansi_(s._ansi_q.format(spec=s._specs[ground]), s._ansiparser_)
 			s.__setattr__(ground, result)
 
 		return {'fg': s.fg, 'bg': s.bg}
@@ -79,7 +80,7 @@ class TermColors():
 
 
 class TermBuffers:
-	from libTerm.types.enums import Buffer,Ansi
+	from libTerm.components.enums import Buffer,Ansi
 	BUFFER=Buffer
 	ANSI=Ansi
 	def __init__(s,term):
@@ -121,7 +122,7 @@ class TermBuffers:
 
 
 class TermModes:
-	from libTerm.types.enums import Mode
+	from libTerm.components.enums import Mode
 	MODE=Mode
 	def __init__(s,term):
 		s.term=term
@@ -163,7 +164,7 @@ class TermModes:
 
 
 class TermSize():
-	from libTerm.types.base import Coord
+	from libTerm.components.base import Coord
 	COORD=Coord
 	def __init__(s, **k):
 

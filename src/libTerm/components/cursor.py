@@ -1,14 +1,14 @@
 import re
 
-from libTerm.types.base import Coord,Store
-from libTerm.types.enums import StoreStop as Stop
-from libTerm.types.enums import Ansi,Move
+from libTerm.components.base import Coord,Store
+from libTerm.components.enums import StoreStop as Stop
+from libTerm.components.enums import Ansi,Move
 
 
 class Cursor():
+	ANSI=Ansi
 	def __init__(s, term):
 		s.term         = term
-		s.ansi         = Ansi
 		s.move         = Move
 		s._re      = re.compile(r"^.?\x1b\[(?P<Y>\d*);(?P<X>\d*)R", re.VERBOSE)
 		s._xy     = Coord(0,0)
@@ -52,7 +52,7 @@ class Cursor():
 
 	def update(s):
 
-		result = s.term.stdin.query(s.ansi.LOC)
+		result = s.term.stdin.query(s.ANSI.LOC)
 		try:
 			groups = s._re.search(result).groupdict()
 			matched = Coord(int(groups['X']), int(groups['Y']))
@@ -67,10 +67,10 @@ class Cursor():
 
 	def hide(s, state=True):
 		if s.visible and state:
-			print(s.ansi.hide)
+			print(s.ANSI.hide)
 			s.visible=False
 		elif not s.visible and not state:
-			print(s.ansi.show)
+			print(s.ANSI.show)
 			s.visible=True
 		return s.visible
 

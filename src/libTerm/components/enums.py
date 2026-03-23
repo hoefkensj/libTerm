@@ -79,12 +79,11 @@ class Ansi(StrEnum):
 		return s.value
 	def __repr__(s):
 		return repr(s.value)
-	def parser(s,stdin):
-		from libTerm.types.parsers import LOCparser,COLparser
+	@property
+	def parser(s):
+		from libTerm.components.tools import LOCparser
 		parsers={
-			'LOC': LOCparser(stdin),
-			'COLFG': COLparser(stdin),
-			'COLBG': COLparser(stdin)
+			'LOC': LOCparser,
 		}
 		return parsers.get(s.name)
 
@@ -108,7 +107,7 @@ class Move(StrEnum):
 	def __repr__(s):
 		return repr(s.value)
 	def __call__(s, *a):
-		from libTerm.types import Coord
+		from libTerm.components import Coord
 		CSI=s.CSI
 		if s.value == Move.ABS:
 			if not isinstance(a[0],Coord):
