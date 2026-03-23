@@ -39,7 +39,7 @@ class baseTerm(metaclass=ABCMeta):
 		s.size      = TermSize(term=s)
 		s.modes     = TermModes(term=s)
 
-		s.colors    = TermColors(term=s)
+		# s.colors    = TermColors(term=s)
 		s.buffers	= TermBuffers(term=s)
 		atexit.register(s.modes.set, s.MODE.NORMAL)
 
