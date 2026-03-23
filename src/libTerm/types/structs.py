@@ -2,10 +2,8 @@
 import sys
 from os import get_terminal_size
 from time import time_ns
-
-from libTerm.types import Coord,Color
-from libTerm.types.enums import Ansi,Buffer,Mode
-
+from libTerm.types.color import Color
+from libTerm.types.enums import Ansi
 
 class TermAttrs():
 	def __init__(s,**k):
@@ -33,14 +31,15 @@ class TermAttrs():
 
 
 class TermColors():
+
+	COLOR=Color
+	ANSI=Ansi
 	def __init__(s, **k):
 		s.term = k.get('term')
-		s._specs = {'fg': 10, 'bg': 11,'swap':7,'unswap':27}
-		s._ansi_q = '\x1b]{spec};?\a'
-		s._ansi_a = '\x1b[{spec}m'
+		s.grounds={'fg': s.ANSI.COLFG,'bg':s.ANSI.COLBG}
 		s._swaped=False
-		s.fg = Color(192,192,192)
-		s.bg = Color(16, 16, 16)
+		s.fg = s.COLOR(192,192,192)
+		s.bg = s.COLOR(16, 16, 16)
 		s.init = s._update_()
 
 	@staticmethod
@@ -51,17 +50,18 @@ class TermColors():
 				buf += sys.stdin.read(1)
 			rgb = buf.split(':')[1].split('/')
 			rgb = [int(i, base=16) for i in rgb]
-			rgb = Color(*rgb, 16)
+			rgb = TermColors.COLOR.Color(*rgb, 16)
 		except Exception as E:
 			# print(E)
 			rgb = None
 		return rgb
 
 	def _update_(s):
-		for ground in ['fg','bg']:
+
+		for ground in s.grounds:
 			result = None
 			while not result:
-				result = s.term._ansi_(s._ansi_q.format(spec=s._specs[ground]), s._ansiparser_)
+				result = s.term.stdin.query(s.grounds[ground])
 			s.__setattr__(ground, result)
 
 		return {'fg': s.fg, 'bg': s.bg}
@@ -79,16 +79,19 @@ class TermColors():
 
 
 class TermBuffers:
+	from libTerm.types.enums import Buffer,Ansi
+	BUFFER=Buffer
+	ANSI=Ansi
 	def __init__(s,term):
 		s.term=term
-		s._buffer=Buffer.NONE
+		s._buffer=s.BUFFER.NONE
 
 	def bufDefault(s):
-		s._buffer=Buffer.DEFAULT
-		Ansi.DEFBUF()
+		s._buffer=s.BUFFER.Buffer.DEFAULT
+		s.ANSI.DEFBUF()
 	def bufAlternate(s):
-		s._buffer=Buffer.ALTERNATE
-		Ansi.ALTBUF()
+		s._buffer=s.BUFFER.ALTERNATE
+		s.ANSI.ALTBUF()
 
 	@property
 	def buffer(s):
@@ -101,26 +104,28 @@ class TermBuffers:
 	def set(s,buffer=None):
 		if buffer==0:
 			s.bufDefault()
-		elif buffer==Buffer.SWITCH:
+		elif buffer==s.BUFFER.SWITCH:
 			s.switch()
-		elif buffer==Buffer.DEFAULT:
+		elif buffer==s.BUFFER.DEFAULT:
 			s.bufDefault()
-		elif buffer==Buffer.ALTERNATE:
+		elif buffer==s.BUFFER.ALTERNATE:
 			s.bufAlternate()
 		return s._buffer
 
 	def switch(s):
-		if s._buffer==Buffer.DEFAULT:
+		if s._buffer==s.BUFFER.DEFAULT:
 			s.bufAlternate()
-		if s._buffer==Buffer.ALTERNATE:
+		if s._buffer==s.BUFFER.ALTERNATE:
 			s.bufDefault()
 
 
 
 class TermModes:
+	from libTerm.types.enums import Mode
+	MODE=Mode
 	def __init__(s,term):
 		s.term=term
-		s.mode=Mode.NONE
+		s.mode=s.MODE.NONE
 
 	@property
 	def mode(s):
@@ -134,39 +139,40 @@ class TermModes:
 		s.term.echo = True
 		s.term.canonical = True
 		s.term.tcsetattr(s.term.attr.init)
-		s.current = Mode.NORMAL
+		s.current = s.MODE.NORMAL
 		s.term._mode = s.current
 
 	def modeCtl(s):
 		s.term.cursor.show(False)
 		s.term.echo = False
 		s.term.canonical = False
-		s.current=Mode.CONTROL
+		s.current=s.MODE.CONTROL
 		s.term._mode = s.current
 
 	def set(s,mode=None):
 
 		if mode is None:
 			mode = s.current
-		elif mode == Mode.NONE:
+		elif mode == s.MODE.NONE:
 			s.modeNormal()
-		elif mode==Mode.NORMAL:
+		elif mode==s.MODE.NORMAL:
 			s.modeNormal()
-		elif mode==Mode.CONTROL:
+		elif mode==s.MODE.CONTROL:
 			s.modeCtl()
 		return s.current
 
 
 class TermSize():
+	from libTerm.types.base import Coord
+	COORD=Coord
 	def __init__(s, **k):
-		from libTerm.types import Coord
 
 		s.term = k.get('term')
-		s.getsize = lambda:Coord(*list(get_terminal_size()))
+		s.getsize = lambda:s.COORD(*list(get_terminal_size()))
 		s.time = None
 		s.last = None
-		s.xy = Coord(1, 1)
-		s._tmp = Coord(1, 1)
+		s.xy = s.COORD(1, 1)
+		s._tmp = s.COORD(1, 1)
 		s.rows = 1
 		s.cols = 1
 
@@ -189,7 +195,7 @@ class TermSize():
 	@property
 	def rc(s):
 		s.__update__()
-		return Coord(s.rows,s.cols )
+		return s.COORD(s.rows,s.cols )
 
 	def __kwargs__(s, **k):
 		s.term = k.get('term')
@@ -197,9 +203,9 @@ class TermSize():
 	def __update__(s):
 		if s.time is None:
 			s.last = time_ns()
-		size = Coord(*s.getsize())
-		if size == Coord(0, 0):
-			size=Coord(80, 24)
+		size = s.COORD(*s.getsize())
+		if size == s.COORD(0, 0):
+			size=s.COORD(80, 24)
 		if size != s.xy:
 
 			if size != s._tmp:

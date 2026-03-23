@@ -70,15 +70,21 @@ class Ansi(StrEnum):
 	cls     = ESC+'2J'
 	DEFBUF  = CSI+'?1049l'
 	ALTBUF  = CSI+'?1049h'
+	COLFG   = OSC+'10;?'
+	COLBG   = OSC+'11;?'
+	COLSWP	= CSI+'7m'
+	COLUNSWP= CSI+'27m'
 
 	def __str__(s):
 		return s.value
 	def __repr__(s):
 		return repr(s.value)
-	def parser(s,term):
-		from libTerm.types.parsers import LOCparser
+	def parser(s,stdin):
+		from libTerm.types.parsers import LOCparser,COLparser
 		parsers={
-			'LOC': LOCparser(term)
+			'LOC': LOCparser(stdin),
+			'COLFG': COLparser(stdin),
+			'COLBG': COLparser(stdin)
 		}
 		return parsers.get(s.name)
 

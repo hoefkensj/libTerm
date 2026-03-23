@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import time,sys,os
 from libTerm import Term
-from libTerm.types import Mode,Coord,color
+from libTerm import Mode,Coord,Color,ColorSet
 from libTerm.modules.class_menu import Grid
 import asyncio
 from random import randint
@@ -47,8 +47,8 @@ def Controls(term,M):
 # 	return control
 #
 def makeMenu(term,items):
-	fg=color.Color(0,196,196)
-	mycolors=color.ColorSet(fg=fg)
+	fg=Color(0,196,196)
+	mycolors=ColorSet(fg=fg)
 
 	M=Grid(term,items ,direction='horizontal', location=Coord(10,10),maxwidth=13,colors=mycolors)
 	M.draw()

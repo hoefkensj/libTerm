@@ -6,6 +6,16 @@
   <component name="ChangeListManager">
     <list default="true" id="bc73ff2f-338a-4651-a389-91491c2041b6" name="Changes" comment="added tests , prolly not that usefull as its only testing if stuff exists , and written by copilot">
       <change beforePath="$PROJECT_DIR$/src/libTerm/examples/ex_basic.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/examples/ex_basic.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/libTerm/examples/ex_menu_grid_big.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/examples/ex_menu_grid_big.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/libTerm/examples/ex_menu_list_simple.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/examples/ex_menu_list_simple.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/libTerm/modules/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/modules/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/libTerm/modules/class_menu.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/modules/class_menu.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/libTerm/term/posix.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/term/posix.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/libTerm/types/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/types/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/libTerm/types/enums.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/types/enums.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/libTerm/types/extra.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/libTerm/types/parsers.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/types/parsers.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/libTerm/types/structs.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/types/structs.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -452,7 +462,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/src/libTerm/types/enums.py</url>
-          <line>83</line>
+          <line>87</line>
           <option name="timeStamp" value="18" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -464,6 +474,11 @@
           <url>file://$PROJECT_DIR$/src/libTerm/libTypes_extra/class_frame.py</url>
           <line>3</line>
           <option name="timeStamp" value="24" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/src/libTerm/examples/ex_basic.py</url>
+          <line>29</line>
+          <option name="timeStamp" value="26" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

@@ -4,10 +4,10 @@ import termios
 import atexit
 import sys
 from abc import ABCMeta, abstractmethod
-from libTerm.types import Mode,Ansi,Buffer
+from libTerm.types.enums import Mode,Ansi,Buffer
 from libTerm.types.cursor import Cursor
 from libTerm.term.input import Stdin
-from libTerm.types import TermAttrs, TermBuffers, TermColors, TermModes,TermSize
+from libTerm.types.structs import TermAttrs, TermBuffers, TermColors, TermModes,TermSize
 
 # Indices for termios list.
 IFLAG = 0;OFLAG = 1;CFLAG = 2;LFLAG = 3;ISPEED = 4;OSPEED = 5;CC = 6
@@ -21,6 +21,7 @@ class baseTerm(metaclass=ABCMeta):
 	BUFFER=Buffer
 
 	def __init__(s,*a,**k):
+
 		# Public Properties
 		s.pid       = os.getpid()
 		s.ppid      = os.getppid()
@@ -37,9 +38,10 @@ class baseTerm(metaclass=ABCMeta):
 		# s.vcursors  = {0:vCursor(s,s.cursor)}
 		s.size      = TermSize(term=s)
 		s.modes     = TermModes(term=s)
+
 		s.colors    = TermColors(term=s)
 		s.buffers	= TermBuffers(term=s)
-		atexit.register(s.modes.set, Mode.NORMAL)
+		atexit.register(s.modes.set, s.MODE.NORMAL)
 
 	@abstractmethod
 	def tcgetattr(s):

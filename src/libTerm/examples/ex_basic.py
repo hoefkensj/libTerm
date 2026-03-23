@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 from libTerm import Term
-from libTerm.types import Mode,Buffer
-
 
 
 def head():
@@ -95,10 +93,8 @@ def cursor():
 
 
 def main(term):
-	term=term
 	# setting the terminal to control mode, this will allow us to read the input events and control the output
-	term.mode=Mode.CONTROL
-	term.buffer=term.BUFFER.ALTERNATE
+	term.mode=term.modes.MODE.CONTROL
 	props=Props({})
 	comps=Comp({})
 	print('\x1b[1H')
@@ -114,13 +110,6 @@ def main(term):
 				print('continuing')
 				break
 		sleep(0.01)
-
-
-
-
-
-
-
 
 
 
@@ -149,8 +138,10 @@ def main(term):
 # term.mode=Term.MODE.normal
 
 if __name__ == '__main__':
+	print('test')
 	term=Term()
+
 	# Switch to the alternate buffer, so we don't mess with the main buffer of the terminal,
 # and we can easily switch back to it when we are done.
-	term.buffer=Buffer.ALTERNATE
+	term.buffer=term.buffers.BUFFER.ALTERNATE
 	main(term)

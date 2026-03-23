@@ -47,13 +47,13 @@ class Stdin():
 	def flush(s):
 		s._buffer = []
 
-	def query(s,ansi,parser=None):
-
+	def query(s,ansi):
+		ansiparser=ansi.parser(s)
 		s.term.setcbreak()
 		try:
 			sys.stdout.write(ansi)
 			sys.stdout.flush()
-			result = ansi.parser(s.term)()
+			result = ansiparser()
 
 		finally:
 			s.term.tcsetattr(s.term.attr.restore())
