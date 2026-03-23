@@ -59,7 +59,7 @@ def Comp(comps):
 	comps = compadd(comps, *['.size', f'{term.size.__class__.__name__}', '# (class) Representing The terminal size, which provides the current width and height of the terminal.'])
 	comps = compadd(comps, *['.cursor', f'{term.cursor.__class__.__name__}', '# (class) Representing The terminal cursor, which can be used to control the position and visibility of the cursor.'])
 	comps = compadd(comps, *['.stdin', f'{term.stdin.__class__.__name__}', '# (class) Representing The terminal standard input, which can be used to read input events from the terminal.'])
-	comps = compadd(comps, *['.colors', f'{term.colors.__class__.__name__}', '# (class) Representing The terminal color settings: foreground(fg),background(bg) and underline(ul) colors.'])
+	# comps = compadd(comps, *['.colors', f'{term.colors.__class__.__name__}', '# (class) Representing The terminal color settings: foreground(fg),background(bg) and underline(ul) colors.'])
 	mkup = ['\x1b[4G\x1b[32m', '\x1b[20G\x1b[31m', '\x1b[40G\x1b[37m']
 	return '\n'.join([section(ROOT='',KEY='Component',VAL='Class',SUBS='.'.join(['','Term()'])),*makeprint(comps,mkup)])
 
@@ -143,5 +143,6 @@ if __name__ == '__main__':
 
 	# Switch to the alternate buffer, so we don't mess with the main buffer of the terminal,
 # and we can easily switch back to it when we are done.
-	term.buffer=term.buffers.BUFFER.ALTERNATE
+	term.buffer=term.BUFFER.ALTERNATE
 	main(term)
+	term.buffer=term.BUFFER.DEFAULT
