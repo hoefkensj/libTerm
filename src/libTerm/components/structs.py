@@ -36,13 +36,11 @@ class TermColors():
 	ANSI=Ansi
 	def __init__(s, **k):
 		s.term = k.get('term')
-		s._specs = {'fg': 10, 'bg': 11,'swap':7,'unswap':27}
-		s._ansi_q = '\x1b]{spec};?\a'
+		s._specs = {'_fg': s.ANSI.COLFG, '_bg': s.ANSI.COLBG,'swap':7,'unswap':27}
 		s._ansi_a = '\x1b[{spec}m'
 		s._swaped=False
-		s.fg = s.COLOR(192,192,192)
-		s.bg = s.COLOR(16, 16, 16)
-		s.init = s._update_()
+		s._fg = s.COLOR(192,192,192)
+		s._bg = s.COLOR(16, 16, 16)
 
 	@staticmethod
 	def _ansiparser_():
@@ -59,10 +57,10 @@ class TermColors():
 		return rgb
 
 	def _update_(s):
-		for ground in ['fg','bg']:
+		for ground in ['_fg','_bg']:
 			result = None
 			while not result:
-				result = s.term._ansi_(s._ansi_q.format(spec=s._specs[ground]), s._ansiparser_)
+				result = s.term.stdin.query(s._specs[ground])
 			s.__setattr__(ground, result)
 
 		return {'fg': s.fg, 'bg': s.bg}
@@ -77,6 +75,30 @@ class TermColors():
 
 	def revert(s):
 		return '\x1b[{SWAP}m'.format(SWAP=27)
+
+	@property
+	def fg(s):
+		s._update_()
+		return s._fg
+	@property
+	def bg(s):
+		s._update_()
+		return s._bg
+	@fg.setter
+	def fg(s,buffer):
+		s.setfg(buffer)
+
+	@bg.setter
+	def bg(s, color):
+		s.setbg(color)
+
+	def setfg(s,color):
+		s._fg=color
+		print(color.ansifg,end='',flush=True)
+
+	def setbg(s,color):
+		s._bg=color
+		print(color.ansibg,end='',flush=True)
 
 
 class TermBuffers:

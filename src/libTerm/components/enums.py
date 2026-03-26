@@ -70,8 +70,8 @@ class Ansi(StrEnum):
 	cls     = ESC+'2J'
 	DEFBUF  = CSI+'?1049l'
 	ALTBUF  = CSI+'?1049h'
-	COLFG   = OSC+'10;?'
-	COLBG   = OSC+'11;?'
+	COLFG   = OSC+'10;?\a'
+	COLBG   = OSC+'11;?\a'
 	COLSWP	= CSI+'7m'
 	COLUNSWP= CSI+'27m'
 
