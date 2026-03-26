@@ -39,7 +39,7 @@ class LineDisplay:
 		s.loc=location
 		s.size=size
 		s.wrap=False
-		s.wrapsym='《》⟪⟫«‹›…»…'
+		s.wrapsyms='⟪«‹… …›»⟫'
 		s._scroll=False
 		s.v_viewrng=ViewRange(0,size.y)
 		s.h_viewrng=ViewRange(0,size.x)
