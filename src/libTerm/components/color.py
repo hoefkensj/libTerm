@@ -35,6 +35,13 @@ class Color:
 		B = max32 - s.B
 		return Color(R, G, B, 32)
 
+	def __add__(s, other):
+		print('called',other)
+		if  isinstance(other, Color):
+			R = s.R + other.R
+			G = s.G + other.G
+			B = s.B + other.B
+		return Color(R, G, B, 32)
 
 	@property
 	def RGB32(s):

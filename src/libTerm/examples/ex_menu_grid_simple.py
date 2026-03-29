@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import time,sys,os
 from libTerm import Term
-from libTerm.types import Mode,Coord,color
+from libTerm import Mode,Coord,Color
 from libTerm.modules.class_menu import Grid
 import asyncio
 
@@ -34,7 +34,6 @@ def Controls(term,M):
 			else:
 				print('\x1b[1;1H chosen:',M.choose())
 		elif key in '0123456789':
-
 			prev+=key
 			M.select(int(prev))
 	return controls

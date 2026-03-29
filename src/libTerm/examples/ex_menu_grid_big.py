@@ -55,7 +55,7 @@ def makeMenu(term,items):
 	return M
 def main(term):
 	items = []
-	for i in range(50):
+	for i in range(250):
 		items += [chr(randint(65, 68)) + chr(randint(65, 68))]
 	menu=makeMenu(term,items)
 	loop = asyncio.new_event_loop()

@@ -21,24 +21,20 @@ class baseTerm(metaclass=ABCMeta):
 	BUFFER=Buffer
 
 	def __init__(s,*a,**k):
-
-		# Public Properties
 		s.pid       = os.getpid()
 		s.ppid      = os.getppid()
-		s.stdfd     = [sys.stdin.fileno(),sys.stdout.fileno(),sys.stderr.fileno()]
+		s.stdfd     = [sys.stdin.fileno(),
+					   sys.stdout.fileno(),
+					   sys.stderr.fileno()]
 		s.tty       = os.ttyname(s.stdfd[0])
-		# Cache/Private Propertie
 		s._echo		= True
 		s._canon    = True
 		# Components
 		s.attr      = TermAttrs(term=s)
 		s.stdin		= Stdin(term=s)
-		# s.stdout	= Stdout(term=s)
 		s.cursor    = Cursor(term=s)
-		# s.vcursors  = {0:vCursor(s,s.cursor)}
 		s.size      = TermSize(term=s)
 		s.modes     = TermModes(term=s)
-
 		s.colors    = TermColors(term=s)
 		s.buffers	= TermBuffers(term=s)
 		atexit.register(s.modes.set, s.MODE.NORMAL)
