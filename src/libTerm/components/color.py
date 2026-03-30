@@ -36,12 +36,28 @@ class Color:
 		return Color(R, G, B, 32)
 
 	def __add__(s, other):
-		print('called',other)
-		if  isinstance(other, Color):
-			R = s.R + other.R
-			G = s.G + other.G
-			B = s.B + other.B
+		if not isinstance(other, Color|list|tuple|int|dict):
+			return NotImplemented
+		if isinstance(other, Color):
+			R = min(s.R + other.R, (1 << 32) - 1   )
+			G = min(s.G + other.G, (1 << 32) - 1   )
+			B = min(s.B + other.B, (1 << 32) - 1   )
+		elif isinstance(other, (list, tuple)):
+			if len(other) != 3:
+				raise ValueError("List or tuple must have exactly 3 elements for R,G,B")
+			R = min(s.R + other[0], (1 << 32) - 1	)
+			G = min(s.G + other[1], (1 << 32) - 1	)
+			B = min(s.B + other[2], (1 << 32) - 1	)
+		elif isinstance(other, int):
+			R = min(s.R + other,    (1 << 32) - 1  )
+			G = min(s.G + other,    (1 << 32) - 1  )
+			B = min(s.B + other,    (1 << 32) - 1  )
+		elif isinstance(other, dict):
+			R = min(s.R + other.get('R', other.get('r',0)), (1 << 32) - 1	)
+			G = min(s.G + other.get('G', other.get('g',0)), (1 << 32) - 1	)
+			B = min(s.B + other.get('B', other.get('b',0)), (1 << 32) - 1	)
 		return Color(R, G, B, 32)
+
 
 	@property
 	def RGB32(s):

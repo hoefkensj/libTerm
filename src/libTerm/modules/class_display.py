@@ -131,12 +131,13 @@ class ViewRange():
 		return f'ViewRange({s.start},{s.stop})'
 
 class Markup():
-	def __init__(s,fg='',bg='',mkup=''):
-		s.fg=fg
-		s.bg=bg
-		s.mkup=mkup
+	def __init__(s,name):
+		s.name=name
+	def set(s,property,value):
+		s.__setattr__(property,value)
 
-
+	def get(s,*props):
+		return '\x1b['+';'.join([s.__getattribute__(prop) for prop in props])+'m'
 class LineDisplay:
 	"""
 	a line display that is framed of in size , and can be used to
@@ -146,7 +147,7 @@ class LineDisplay:
 	charakters can be accessed in scroll mode by moving the viewport right
 
 	"""
-	def __init__(s,location=Coord(1,1),size=Coord(80,5),linenrs=True,mkup_line_fgcolor='',mkup_line_bgcolor='',mkup_suffix=''):
+	def __init__(s,location=Coord(1,1),size=Coord(80,5),linenrs=True,mkup=''):
 		# s.term=term
 		s.loc=location
 		s.size=size
@@ -162,11 +163,8 @@ class LineDisplay:
 		s.data_lines={}
 		s.data_idx=0
 		s.print_buffer={}
-		s.mkup={}
-		s.mkup['FG']=mkup_line_fgcolor
-		s.mkup['BG']=mkup_line_bgcolor
-		s.mkup['MKUP']={}
-		s.mkup['MKUP']['SFX']=Color(64,192,64)
+		s.mkup=mkup
+
 		s.tpl={}
 		s.tpl['LINE']='{XY}{{LNR}}{BG}{FG}{{SEL}}{MKUP} {{LINE}}{RESET}'
 		s.tpl['LNR']='{BG}{FG}{{SEL}}{MKUP}{{NR}}{RESET}'
@@ -195,12 +193,11 @@ class LineDisplay:
 		:return:
 		"""
 		s.addline(line.rstrip("\n"))
-
 		s.update()
 		s.render()
 
 	def initspace(s):
-		s.printrng('y')
+		# s.printrng('y')
 		for l in range(1,s.size.y+1):
 			line = s.tpl['BUFFER'][l]
 			wipe = ' ' * (s.size.x-3)
@@ -222,7 +219,7 @@ class LineDisplay:
 		rng=s.printrng('y')
 		vp=range(rng['start'],rng['stop'])
 		for l,line in enumerate(vp,start=1):
-			bg=s.mkup['BG']+Color(l,l*2,l*3)
+			bg=s.mkup['BG']+Color(l,l*2,l*3).ansibg
 			linefmt=s.tpl['LINE'].format(
 				XY=xy.format(Y=line),
 				RESET=reset,
@@ -328,6 +325,19 @@ class LineDisplay:
 
 from time import sleep
 from random import randint
+
+mkup=Markup('display')
+mkup.set('line',Markup('line'))
+mkup.line.set('fg',mkup_line_fgcolor)
+mkup.line.set('bg',Color(16, 16, 16))
+mkup.set('lnr',Markup('lnr'))
+mkup.lnr.set('fg',mkup_lnr_fgcolor)
+mkup.lnr.set('bg',mkup_lnr_bgcolor)
+mkup.set('sfx',Markup('sfx'))
+mkup.sfx.set('fg',Color(64,192,64))
+
+
+
 disp=LineDisplay(location=Coord(15,5),size=Coord(100,25), linenrs=True)
 for i in range(1,150):
 
