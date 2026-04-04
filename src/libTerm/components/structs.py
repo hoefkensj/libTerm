@@ -1,18 +1,129 @@
  #!/usr/bin/env python
-import sys
+import sys,os,termios
 from os import get_terminal_size
 from time import time_ns
 from libTerm.components.color import Color
 from libTerm.components.enums import Ansi
+# Indices for termios list.
+IFLAG = 0;OFLAG = 1;CFLAG = 2;LFLAG = 3;ISPEED = 4;OSPEED = 5;CC = 6
+TCSAFLUSH = termios.TCSAFLUSH;ECHO = termios.ECHO;ICANON = termios.ICANON
+VMIN = 6;VTIME = 5
+
+from enum import IntEnum
+
+class IOFlag(IntEnum):
+	IFLAG  = 0
+	OFLAG  = 1
+	CFLAG  = 2
+	LFLAG  = 3
+	ISPEED = 4
+	OSPEED = 5
+	CC     = 6
 
 class TermAttrs():
 	def __init__(s,**k):
 		s.term=k.get('term')
 		s.stack=[]
-		s.active=s.term.tcgetattr()
+		s.active=s.get()
 		s.init=list([*s.active])
 		s.stack+= [list(s.active)]
 		s.staged=None
+
+		s.attrs={}
+
+		# for attr in zip(IOFlag.)
+		#
+		#
+		#
+		# IFLAG:1280,
+		# 		 OFLAG:5,
+		# 		 CFLAG:983231,
+		# 		LFLAG:35387,
+		# 		ISPEED:15,
+		# 		 OSPEED:15,
+		# 		  CC:'[b'\x03',
+		# 		   b'\x1c',
+		# 		   b'\x7f',
+		# 		   b'\x15',
+		# 		   b'\x04',
+		# 		   b'\x00',
+		# 		   b'\x01',
+		# 		   b'\x00',
+		# 		   b'\x11',
+		# 		   b'\x13',
+		# 		   b'\x1a',
+		# 		   b'\x00',
+		# 		   b'\x12',
+		# 		   b'\x0f',
+		# 		   b'\x17',
+		# 		   b'\x16',
+		# 		   b'\x00',
+		# 		   b'\x00',
+		# 		   b'\x00',
+		# 		   b'\x00',
+		# 		   b'\x00',
+		# 		   b'\x00',
+		# 		   b'\x00',
+		# 		   b'\x00',
+		# 		   b'\x00',
+		# 		   b'\x00',
+		# 		   b'\x00',
+		# 		   b'\x00',
+		# 		   b'\x00',
+		# 		   b'\x00',
+		# 		   b'\x00',
+		# 		   b'\x00']]}
+
+	def get(s):
+		return termios.tcgetattr(s.term.stdfd[0])
+
+	def set(s,attr,when=TCSAFLUSH):
+		termios.tcsetattr(s.term.stdfd[0],when,attr)
+
+	def setcbreak(s,when=TCSAFLUSH):
+		"""Put terminal into cbreak mode."""
+		# this code was lifted from the tty module and adapted for being a method
+		s.stage()
+		# Do not echo characters; disable canonical input.
+		s.staged[LFLAG] &= ~(ECHO | ICANON)
+		# POSIX.1-2017, 11.1.7 Non-Canonical Mode Input Processing,
+		# Case B: MIN>0, TIME=0
+		# A pending read shall block until MIN (here 1) bytes are received,
+		# or a signal is received.
+		s.staged[CC] = list(s.staged[CC])
+		s.staged[CC][VMIN] = 1
+		s.staged[CC][VTIME] = 0
+		s.set(s.staged, when)
+		s.update(s.get())
+
+	def setraw(s, when=TCSAFLUSH):
+		"""Put terminal into raw mode."""
+		from termios import IGNBRK,BRKINT,IGNPAR,PARMRK,INPCK,ISTRIP,INLCR,IGNCR,ICRNL,IXON,IXANY,IXOFF,OPOST,PARENB,CSIZE,CS8,ECHO,ECHOE,ECHOK,ECHONL,ICANON,IEXTEN,ISIG,NOFLSH,TOSTOP
+		s.stage()
+		# Clear all POSIX.1-2017 input mode flags.
+		# See chapter 11 "General Terminal Interface"
+		# of POSIX.1-2017 Base Definitions.
+		s.staged[IFLAG] &= ~(IGNBRK | BRKINT | IGNPAR | PARMRK | INPCK | ISTRIP | INLCR | IGNCR | ICRNL | IXON | IXANY | IXOFF)
+		# Do not post-process output.
+		s.staged[OFLAG] &= ~OPOST
+		# Disable parity generation and detection; clear character size mask;
+		# let character size be 8 bits.
+		s.staged[CFLAG] &= ~(PARENB | CSIZE)
+		s.staged[CFLAG] |= CS8
+		# Clear all POSIX.1-2017 local mode flags.
+		s.staged[LFLAG] &= ~(ECHO | ECHOE | ECHOK | ECHONL | ICANON | IEXTEN | ISIG | NOFLSH | TOSTOP)
+		# POSIX.1-2017, 11.1.7 Non-Canonical Mode Input Processing,
+		# Case B: MIN>0, TIME=0
+		# A pending read shall block until MIN (here 1) bytes are received,
+		# or a signal is received.
+		s.staged[CC] = list(s.staged[CC])
+		s.staged[CC][VMIN] = 1
+		s.staged[CC][VTIME] = 0
+		s._update_(when)
+
+	def _update_(s, when=TCSAFLUSH):
+		s.set(s.staged, when)
+		s.update(s.get())
 
 	def stage(s):
 		s.staged=list(s.active)
@@ -149,6 +260,7 @@ class TermModes:
 	def __init__(s,term):
 		s.term=term
 		s.mode=s.MODE.NONE
+		s.current=None
 
 	@property
 	def mode(s):
@@ -161,7 +273,7 @@ class TermModes:
 		s.term.cursor.show(True)
 		s.term.echo = True
 		s.term.canonical = True
-		s.term.tcsetattr(s.term.attr.init)
+		s.term.attr.set(s.term.attr.init)
 		s.current = s.MODE.NORMAL
 		s.term._mode = s.current
 

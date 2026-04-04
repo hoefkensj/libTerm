@@ -8,7 +8,7 @@ from contextlib import suppress
 from libTerm.term.structs import TermSize
 from libTerm import Mode
 from libTerm.term.cursor import  Cursor
-from libTerm.term.input import  Stdin
+from libTerm.components.input import  Stdin
 
 
 # Indices for termios list.

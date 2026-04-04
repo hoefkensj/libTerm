@@ -138,6 +138,25 @@ class Markup():
 
 	def get(s,*props):
 		return '\x1b['+';'.join([s.__getattribute__(prop) for prop in props])+'m'
+
+markup=Markup('display')
+markup.line=Markup('line')
+markup.line.default=Markup('default')
+markup.line.default.colors=ColorSet(fg=Color(160,160,160),bg=Color(16,16,16))
+markup.line.default.mkup=''
+markup.line.selected=Markup('selected')
+markup.line.selected.colors=ColorSet(fg=Color(255,255,255),bg=Color(64,192,64))
+markup.line.selected.mkup='\x1b[7m'
+markup.lnr=Markup('lnr')
+markup.lnr.default=Markup('default')
+markup.lnr.default.colors=ColorSet(fg=Color(128,128,128),bg=Color(64,64,64))
+markup.lnr.default.mkup=''
+markup.lnr.selected=Markup('selected')
+markup.lnr.selected.colors=ColorSet(fg=Color(255,255,255),bg=Color(64,192,64))
+markup.lnr.selected.mkup=''
+
+
+
 class LineDisplay:
 	"""
 	a line display that is framed of in size , and can be used to
@@ -147,33 +166,53 @@ class LineDisplay:
 	charakters can be accessed in scroll mode by moving the viewport right
 
 	"""
-	def __init__(s,location=Coord(1,1),size=Coord(80,5),linenrs=True,mkup=''):
-		# s.term=term
-		s.loc=location
-		s.size=size
-		s.linenrs=linenrs
-		s.wrap=False
-		s.wrapsyms='⟪«‹… …›»⟫'
-		s.overflow=False
+	def __init__(s,term,location=Coord(1,1),size=Coord(80,5),linenrs=True):
+		s.term=term
+		s._loc=location
 		s._scroll=False
 		s._shift=False
-		s.v_viewrng=ViewRange(1,s.size.y)
-		s.h_viewrng=ViewRange(0,s.size.x)
+		s._size=size
 
+		s.linenrs=linenrs
+		s.wrapsyms='⟪«‹… …›»⟫'
+		s.overflow=False
+		s.wrap=False
+		s.v_viewrng=ViewRange(1,s.size.y)
+		s.h_viewrng=ViewRange(1,s.size.x)
 		s.data_lines={}
+
 		s.data_idx=0
 		s.print_buffer={}
-		s.mkup=mkup
+		s.mkup=markup
 
 		s.tpl={}
-		s.tpl['LINE']='{XY}{{LNR}}{BG}{FG}{{SEL}}{MKUP} {{LINE}}{RESET}'
-		s.tpl['LNR']='{BG}{FG}{{SEL}}{MKUP}{{NR}}{RESET}'
+		s.tpl['LINE']='{XY}{{LNR}}{BG}{FG}{{SEL}}{MKUP} {{LINE}}{UNSET}'
+		s.tpl['LNR']='{BG}{FG}{{SEL}}{MKUP}{{NR}}{UNSET}'
 		s.tpl['BUFFER']={}
 		s.make_linebuffer()
+
+	@property
+	def location(s):
+		return s._loc
+
+	@property
+	def loc(s):
+		return s._loc
+
+	@location.setter
+	def location(s,val):
+		s._loc=val
+		s.make_linebuffer()
 		s.initspace()
+	@property
+	def size(s):
+		return s._size
 
-
-
+	@size.setter
+	def size(s,val):
+		s._size=val
+		s.make_linebuffer()
+		s.initspace()
 
 	def printrng(s,xy):
 		x={}
@@ -204,13 +243,11 @@ class LineDisplay:
 			gutter=s.tpl['LNR'].format(
 				SEL='',
 				NR='   ',
-				RESET='\x1b[m',
-				FG=s.mkup['FG'],
-				BG=(s.mkup['BG'] + Color(16, 16, 16)).ansibg,
-				MKUP=s.mkup['MKUP']).format(SEL='', NR='   ')
+				UNSET='\x1b[29m',
+				FG=s.mkup.lnr.default.colors.fg.ansifg,
+				BG=s.mkup.lnr.default.colors.bg.ansibg,
+				MKUP=s.mkup.lnr.default.mkup).format(SEL='', NR='    ')
 			print(line['LINE'].format(SEL='',LINE=wipe,LNR=gutter))
-
-
 
 
 	def make_linebuffer(s):
@@ -219,18 +256,18 @@ class LineDisplay:
 		rng=s.printrng('y')
 		vp=range(rng['start'],rng['stop'])
 		for l,line in enumerate(vp,start=1):
-			bg=s.mkup['BG']+Color(l,l*2,l*3).ansibg
+			bg=s.mkup.line.default.colors.bg+Color(l,l*2,l*3)
 			linefmt=s.tpl['LINE'].format(
 				XY=xy.format(Y=line),
-				RESET=reset,
-				FG=s.mkup['FG'],
+				UNSET=reset,
+				FG=s.mkup.line.default.colors.fg.ansifg,
 				BG=bg.ansibg,
-				MKUP=s.mkup['MKUP'])
+				MKUP=s.mkup.line.default.mkup)
 			lnrfmt=s.tpl['LNR'].format(
-				RESET=reset,
-				FG=s.mkup['FG'],
-				BG=(s.mkup['BG']+Color(16,16,16)).ansibg,
-				MKUP=s.mkup['MKUP']
+				UNSET=reset,
+				FG=s.mkup.lnr.default.colors.fg.ansifg,
+				BG=s.mkup.lnr.default.colors.bg.ansibg,
+				MKUP=s.mkup.lnr.default.mkup
 			)
 			s.tpl['BUFFER'][l]={}
 			s.tpl['BUFFER'][l]['LNR']=lnrfmt
@@ -277,14 +314,14 @@ class LineDisplay:
 		def cropped(adjust=0):
 			start  =s.h_viewrng.start
 			stop   =s.h_viewrng.stop+adjust
-			suffix ='…\x1b[m' if len(line)>(s.h_viewrng.size+adjust)else False
+			suffix ='\x1b[38;2;64;192;64m…\x1b[39m' if len(line)>(s.h_viewrng.size+adjust)else False
 			l      =line.ljust(s.h_viewrng.size).rjust(s.h_viewrng.size)[start:stop]
 			crop=line.ljust(s.h_viewrng.size).rjust(s.h_viewrng.size)[stop:]
 			if crop.strip(' ')=='':
 				suffix=' '
 			if start > 1:
 				prefix=' \x1b[38;2;64;192;64m…\x1b[39m'
-				l=prefix+l[2:]
+				l=prefix+l[1:]
 
 			if suffix:
 				l=l[:-2]+suffix
@@ -310,6 +347,8 @@ class LineDisplay:
 				s._scroll = False
 			elif s.v_viewrng.start == 1:
 				v=0
+			elif val ==0:
+				s._scroll= False
 		s.v_viewrng.shift(v)
 		s.update()
 		s.render()
@@ -323,38 +362,3 @@ class LineDisplay:
 
 
 
-from time import sleep
-from random import randint
-
-mkup=Markup('display')
-mkup.set('line',Markup('line'))
-mkup.line.set('fg',mkup_line_fgcolor)
-mkup.line.set('bg',Color(16, 16, 16))
-mkup.set('lnr',Markup('lnr'))
-mkup.lnr.set('fg',mkup_lnr_fgcolor)
-mkup.lnr.set('bg',mkup_lnr_bgcolor)
-mkup.set('sfx',Markup('sfx'))
-mkup.sfx.set('fg',Color(64,192,64))
-
-
-
-disp=LineDisplay(location=Coord(15,5),size=Coord(100,25), linenrs=True)
-for i in range(1,150):
-
-	disp.print(''.join([f'abcdefghijklmnopqrstuvwxyz '[randint(0,26)] for i in range(randint(1,150))]))
-	sleep(0.05)
-	if i==45:
-		sleep(1)
-		for j in range(10):
-			disp.scroll(-1)
-			sleep(0.05)
-		for k in range(45):
-			disp.shift(1)
-			sleep(0.05)
-		for k in range(45):
-			disp.shift(-1)
-			sleep(0.05)
-
-		for j in range(10):
-			disp.scroll(1)
-			sleep(0.05)

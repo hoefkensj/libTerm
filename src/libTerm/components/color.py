@@ -57,6 +57,25 @@ class Color:
 			G = min(s.G + other.get('G', other.get('g',0)), (1 << 32) - 1	)
 			B = min(s.B + other.get('B', other.get('b',0)), (1 << 32) - 1	)
 		return Color(R, G, B, 32)
+	def __mul__(s, other):
+		if not isinstance(other,Color|list|tuple|dict):
+			return NotImplemented
+		if isinstance(other, Color):
+			R = (s.R + other.R) //2
+			G = (s.G + other.G) //2
+			B = (s.B + other.B) //2
+		elif isinstance(other, (list, tuple)):
+			if len(other) != 3:
+				raise ValueError("List or tuple must have exactly 3 elements for R,G,B")
+			R = (s.R + other[0]) //2
+			G = (s.G + other[1]) //2
+			B = (s.B + other[2]) //2
+		elif isinstance(other, dict):
+			R = (s.R + other.get('R', other.get('r',0))) //2
+			G = (s.G + other.get('G', other.get('g',0))) //2
+			B = (s.B + other.get('B', other.get('b',0))) //2
+
+		return Color(R, G, B, 32)
 
 
 	@property

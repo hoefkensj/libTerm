@@ -1,11 +1,9 @@
 # /usr/bin/env python
 import asyncio
-
-from libTerm import Term
-from libTerm.types import Mode
 import time
 
-from libTerm.types.enums import StoreStop
+from libTerm import Mode
+from libTerm.components.enums import StoreStop
 
 
 class Example:

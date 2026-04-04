@@ -16,7 +16,7 @@ def Controls(term,M):
 		elif key == '\x1b[A':
 			M.prev()
 		elif key == 'q':
-			term.mode=Mode.default
+			term.mode=term.MODE.default
 			loop=asyncio.get_running_loop()
 			loop.stop()
 		elif key == '\n':

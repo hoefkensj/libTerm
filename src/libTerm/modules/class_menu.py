@@ -51,8 +51,10 @@ class Menu:
 				ITEM=arg.ljust(s.it_width))
 
 		s.menu=[]
+		s.menu+=['\n'*len(s.items)]
 		for i in s.items:
 			s.menu += [s.items[i].format(**s.markup())]
+
 		s.menu+=s.items[s.selector.read()].format(**s.markup('7'))
 		return s.menu
 

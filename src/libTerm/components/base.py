@@ -40,6 +40,23 @@ from libTerm.components.enums import StoreStop
 # 	def ceiling(s,value):
 # 		s.n=value
 
+def makeCoord(a):
+		if isinstance(a, tuple | set | list):
+			try:
+				c = Coord(*a)
+			except Exception:
+				c = None
+		elif isinstance(a, dict):
+			try:
+				c = Coord(*[*a.values()])
+			except Exception:
+				c=None
+		else:
+			raise TypeError('Expected a Coord, tuple or set of length 2, got {EXTRA}'.format(EXTRA=coord))
+		return c
+
+
+
 
 @dataclass(frozen=True)
 class Coord(namedtuple('Coord', ['x', 'y'])):

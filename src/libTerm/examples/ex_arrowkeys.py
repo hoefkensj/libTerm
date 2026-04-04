@@ -1,7 +1,7 @@
 # /usr/bin/env python
 
 from libTerm import Term
-from libTerm.types import Mode
+from libTerm import Mode
 import asyncio
 
 tpl_arrowkeys = '\x1b[10G\x1b[0;31m{ANSI}\x1b[m \x1b[20G:\x1b[25G\x1b[0;32m{SYMBOL}\x1b[0;2m\x1b[45G({HEX})'
@@ -16,8 +16,8 @@ arrows = {
 
 
 def init():
-	print("\x1b[2J\x1b[1;1H\x1b[1;4mDetecting and Matching arrow keys:\x1b[m")
-	print('-' * 40)
+	print("\x1b[2J\x1b[1;1H\x1b[1mDetecting and Matching arrow keys:\x1b[m")
+	print('-' * 80)
 	print_index()
 	print('\x1b[8;1H\x1b[mPress arrow keys to Test:', '\x1b[9;3HInput:\x1b[20GKey:')
 	print('\x1b[15;1HPress \x1b[31mq\x1b[m to quit')
@@ -58,14 +58,29 @@ def ArrowKeys(key):
 def CheckInput(term):
 	def checkinput():
 		key = term.stdin.read()
-		print(repr(key))
 		ArrowKeys(key)
 	return checkinput
 
 def main(term):
+	init()
+
 	loop = asyncio.new_event_loop()
 	asyncio.set_event_loop(loop)
 	loop.add_reader(term.stdin.fd, CheckInput(term))
 	loop.run_forever()
 
+
+
+if __name__ == '__main__':
+	import atexit
+	def ExitProcedure(t):
+		t.ANSI.cls()
+		t.mode = t.MODE.NORMAL
+		t.buffer = t.BUFFER.DEFAULT
+	t=Term()
+	t.mode=t.MODE.CONTROL
+	t.buffer = t.BUFFER.ALTERNATE
+	t.ANSI.cls()
+	atexit.register(ExitProcedure,t)
+	main(t)
 

@@ -45,7 +45,7 @@ class Bar:
 		return bg
 
 
-class Frame:
+class Block:
 	"""
 	a line display that is framed of in size , and can be used to
 	print lines to. it fills the linebuffer untill full and then
@@ -54,13 +54,12 @@ class Frame:
 	charakters can be accessed in scroll mode by moving the viewport right
 
 	"""
-	def __init__(s,term,name,location=Coord(1,1),size=Coord(80,5),display=None,linenrs=True,border=True):
+	def __init__(s,term,name,location=Coord(1,1),size=Coord(180,15),display=LineDisplay,border=True):
 		s.term=term
 		s.name=name
 		s.loc=location
 		s.size=size
 		s.border=border
-		s.linenrs=linenrs
 		s.focus=True
 		s.boxsyms=' ─━│┃┄┅┆┇┈┉┊┋┌┍┎┏┐┑┒┓└┕┖┗┘┙┚┛├┝┞┟┠┡┢┣┤┥┦┧┨┩┪┫┬┭┮┯┰┱┲┳┴┵┶┷┸┹┺┻┼┽┾┿╀╁╂╃╄╅╆╇╈╉╊╋╌╍╎╏═║╒╓╔╕╖╗╘╙╚╛╜╝╞╟╠╡╢╣╤╥╦╧╨╩╪╫╬╭╮╯╰╱╲╳╴╵╶╷╸╹╺╻╼╽╾╿▀▁▂▃▄▅▆▇█▉▊▋▌▍▎▏▐░▒▓▔▕▖▗▘▙▚▛▜▝▞▟■□▢▣▤▥▦▧▨▩▪▫▬▭▮▯▰▱'
 		s.lines={}
@@ -70,72 +69,25 @@ class Frame:
 		s.tpl['LINE']='{XY}{BG}{FG}{L}{UNSET}{BG}{FG}{C}{UNSET}{BG}{FG}{R}{RESET}'
 		s.tpl['BUFFER']={}
 		# s.initspace()
-		s.TLCR={'L':s.boxsyms[13],'C':s.boxsyms[1]*(s.size.x),'R':s.boxsyms[17]}
-		s.CLCR = {'L': s.boxsyms[3], 'C': s.boxsyms[0] * (s.size.x), 'R': s.boxsyms[3]}
-		s.BLCR = {'L': s.boxsyms[21], 'C': s.boxsyms[1] * (s.size.x ), 'R': s.boxsyms[25]}
-		s.LCR=[s.TLCR,s.CLCR,s.BLCR]
-		s.make_Box(LCR=s.LCR)
+		s.make_Box()
 
 
 
-	def make_Box(s,LCR=None):
-		if LCR is None:
-			TLCR={'T':' ','L':' ','C':' '*(s.size.x),'R':' ',}
-			CLCR={'T':' ','L':' ','C':' '*(s.size.x),'R':' ',}
-			BLCR={'T':' ','L':' ','C':' '*(s.size.x),'R':' ',}
-		else:
-			TLCR=LCR[0]
-			CLCR=LCR[1]
-			BLCR=LCR[2]
+	def make_Box(s):
 
 		if s.border:
-			# tpl='{XY}{BG}{FG}{BOX}{RESET}'
-			#
+
+			LCR={'L':s.boxsyms[13],'C':s.boxsyms[1]*(s.size.x),'R':s.boxsyms[17]}
 			U='\x1b[39m'
-			s.lines[1]=s.tpl['LINE'].format(XY=Coord(s.loc.x,s.loc.y),BG='',FG='',**TLCR,RESET='',UNSET=U)
+			s.lines[1]=s.tpl['LINE'].format(XY=Coord(s.loc.x,s.loc.y),BG='',FG='',**LCR,RESET='',UNSET=U)
 
 			for i in range(1,s.size.y-1):
-				s.lines[1+i]=s.tpl['LINE'].format(XY=Coord(s.loc.x,s.loc.y+i),BG='',FG='',**CLCR,RESET='',UNSET=U)
-			s.lines[i+2]=s.tpl['LINE'].format(XY=Coord(s.loc.x,s.loc.y+s.size.y-1),BG='',FG='',**BLCR,RESET='',UNSET=U)
+				LCR = {'L': s.boxsyms[3], 'C': s.boxsyms[0] * (s.size.x), 'R': s.boxsyms[3]}
+				s.lines[1+i]=s.tpl['LINE'].format(XY=Coord(s.loc.x,s.loc.y+i),BG='',FG='',**LCR,RESET='',UNSET=U)
+			LCR = {'L': s.boxsyms[21], 'C': s.boxsyms[1] * (s.size.x ), 'R': s.boxsyms[25]}
+			s.lines[i+2]=s.tpl['LINE'].format(XY=Coord(s.loc.x,s.loc.y+s.size.y-1),BG='',FG='',**LCR,RESET='',UNSET=U)
 
 	def draw(s):
 		print(''.join(s.lines.values()), end='', flush=True)
-		s.display.initspace()
 
 
-	def addDisplay(s,disp):
-		s.display=disp(s.term,location=s.loc+Coord(2,2),size=s.size+Coord(-2,-2))
-
-
-	def print(s,line):
-		s.display.print(line)
-
-	def redraw(s):
-		s.display.location=s.loc+Coord(2,2)
-		s.display.size=s.size+Coord(-2,-2)
-		s.display.make_linebuffer()
-		s.display.initspace()
-		s.display.update()
-
-	def move(s,location):
-		s.make_Box()
-		s.draw()
-		s.loc=s.loc+location
-		s.make_Box(s.LCR)
-		s.redraw()
-		s.draw()
-	def h_resize(s,val):
-		s.make_Box()
-		s.draw()
-		s.size=Coord(s.size.x+val,s.size.y)
-		s.make_Box(s.LCR)
-		s.redraw()
-		s.draw()
-
-	def v_resize(s,val):
-		s.make_Box()
-		s.draw()
-		s.size=Coord(s.size.x,s.size.y+val)
-		s.make_Box(s.LCR)
-		s.redraw()
-		s.draw()

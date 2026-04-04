@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from libTerm.types import Color
+from libTerm import Color
 def main(term):
 	print("Get terminal colors for the cursor char cell: ")
 	print("Using Term().color: ")

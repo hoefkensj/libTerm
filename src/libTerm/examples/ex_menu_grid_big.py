@@ -7,6 +7,8 @@ import asyncio
 from random import randint
 
 def Controls(term,M):
+	from libTerm.components.enums import Ansi
+	CSI=Ansi.CSI
 	prev=''
 	def controls():
 		nonlocal prev
@@ -30,10 +32,10 @@ def Controls(term,M):
 		loop=asyncio.get_running_loop()
 		key=term.stdin.read()
 		mapping={
-		'\x1b[B':M.down,
-		'\x1b[A':M.up,
-		'\x1b[D':M.left,
-		'\x1b[C':M.right,
+		CSI+'B':M.down,
+		CSI+'A':M.up,
+		CSI+'D':M.left,
+		CSI+'C':M.right,
 		'\t':M.prev,
 		'q': end,
 		'\n': select,

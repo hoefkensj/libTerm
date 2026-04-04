@@ -48,16 +48,16 @@ class Stdin():
 		s._buffer = []
 
 	def query(s,ansi):
-		print(repr(ansi))
+		print(ansi,end='',flush=True)
 		parser=ansi.parser(s)
-		s.term.setcbreak()
+		s.term.attr.setcbreak()
 		try:
 			sys.stdout.write(ansi)
 			sys.stdout.flush()
 			result = parser()
 
 		finally:
-			s.term.tcsetattr(s.term.attr.restore())
+			s.term.attr.set(s.term.attr.restore())
 		return result
 
 

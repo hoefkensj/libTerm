@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 import os
-import sys
 from libTerm.types import mode, Coord
 from libTerm import Color, TermColors
 from libTerm.term.cursor import Cursor
-from libTerm.term.input import Stdin
+from libTerm.components.input import Stdin
 # reuse TermAttrs/TermColors/TermBuffers from posix for compatibility
 from libTerm.term.structs import TermAttrs, TermBuffers
 

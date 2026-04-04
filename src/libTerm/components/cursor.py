@@ -1,6 +1,6 @@
 import re
 
-from libTerm.components.base import Coord,Store
+from libTerm.components.base import Coord,Store,makeCoord
 from libTerm.components.enums import StoreStop as Stop
 from libTerm.components.enums import Ansi,Move
 
@@ -25,6 +25,7 @@ class Cursor():
 	def __sync__(s):
 		s.update()
 		s._xy=s.xy
+		return s._xy
 
 	@property
 	def xy(s):
@@ -32,20 +33,12 @@ class Cursor():
 		return result
 
 	@xy.setter
-	def xy(s,coord):
-		if not isinstance(coord,Coord):
-			if isinstance(coord,tuple|set|list) and len(coord)==2:
-				coord=Coord(*coord)
-			elif isinstance(coord,dict):
-				if  'x' in coord and 'y' in coord:
-					coord=Coord(coord['x'],coord['y'])
-				elif 'col' in coord and 'row' in coord:
-					coord=Coord(coord['col'],coord['row'])
-
-			else:
-				raise TypeError('Expected a Coord, tuple or set of length 2, got {EXTRA}'.format(EXTRA=coord))
+	def xy(s,value):
+		coord=makeCoord(value)
+		print(s.ANSI.move.format(**coord), end='', flush=True)
 		s._xyset=coord
-		print(s.move.ABS.format(**coord), end='', flush=True)
+		s.update()
+		return s.xy
 
 	def stored(s):
 		return s._coordstore.store

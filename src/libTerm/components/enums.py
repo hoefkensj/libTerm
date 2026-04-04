@@ -67,7 +67,7 @@ class Ansi(StrEnum):
 	LOC     = CSI+'6n'
 	save    = ESC+'7'+CSI+'s'
 	load    = ESC+'8'+CSI+'u'
-	cls     = ESC+'2J'
+	cls     = CSI+'2J'
 	DEFBUF  = CSI+'?1049l'
 	ALTBUF  = CSI+'?1049h'
 	COLFG   = OSC+'10;?\a'
@@ -119,5 +119,4 @@ class Move(StrEnum):
 			N = a[0]
 			result=s.value.format(CSI=CSI,N=N)
 		return result
-
 
