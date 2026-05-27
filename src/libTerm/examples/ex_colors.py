@@ -1,13 +1,13 @@
 #!/usr/bin/env python
-from libTerm import Color
+from libTerm import Colors
 def main(term):
 	print("Get terminal colors for the cursor char cell: ")
 	print("Using Term().color: ")
-	print(f"ForeGround(fg) color in 8bit rgb values {term.color.fg.RGB8=}")
+	print(f"ForeGround(fg) color in 8bit rgb values {term.colors.fg.RGB8=}")
 	print(f"Same but 4 bit RGB {term.color.fg.RGB4=}")
 	print(f"BackGround(bg) color in  16Bit RGB {term.color.bg.RGB16=}")
 	print(f"these are Color Objects, they dont color things or do markup they just represent a color,in most common formats" )
-	print(f'red=Color(255,0,0) :  {Color(255,0,0,)=}')
+	print(f'red=Color(255,0,0) :  {Colors.Color(255,0,0,)=}')
 
 	print(f"{term.color.bg.neg.RGB8=}")
 	print(f"{term.color.bg.neg.RGB32=}")

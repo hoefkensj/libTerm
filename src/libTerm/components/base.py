@@ -262,8 +262,7 @@ class Selector:
 		s._up()
 		return s.value
 
-	def \
-			   prev(s):
+	def prev(s):
 		s._dn()
 		return s.value
 
@@ -312,6 +311,8 @@ class Store():
 			if not isinstance(mx, int) or mx < 1:
 				raise ValueError('maximum must be a positive int or None')
 			s._max=mx
+			if len(s.store)-2 >= mx:
+				s.store={k:v for k,v in s.store.items() if k<=mx}
 
 		if s._max is None and mx is None:
 			s._max = 4294967295

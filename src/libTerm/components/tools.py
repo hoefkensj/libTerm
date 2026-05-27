@@ -13,3 +13,17 @@ def LOCparser(stdin):
 
 
 
+def COLparser(stdin):
+	def parser():
+		from libTerm import TermColors
+		buf = ''
+		try:
+			for i in range(23):
+				buf += sys.stdin.read(1)
+			rgb = buf.split(':')[1].split('/')
+			rgb = [int(i, base=16) for i in rgb]
+			rgb = TermColors.COLOR(*rgb, 16)
+		except Exception as E:
+			# print(E)
+			rgb = None
+		return rgb

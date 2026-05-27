@@ -1,48 +1,7 @@
 #!/usr/bin/env python
 from libTerm import Term
-from libTerm import Coord,Color,Buffer
+from libTerm import Coord,Color,Buffer,Ansi
 from libTerm.modules.class_display import LineDisplay
-
-class Bar:
-	def __init__(s,ctx=None,parent=None,text='',location=None,width=None,fgcolor=Color(0,0,0),bgcolor=Color(32,128,128),allign='center'):
-		s.ctx=ctx
-		s.parent=parent
-		s.tpl='\x1b[{X1OFF}G\x1b[{FOC};48;2;{BGC}m\x1b[K{TEXT}\x1b[{X2OFF}G\x1b[m\x1b[K'
-		s.loc=location+Coord(1,1) if location is not None else parent.loc+Coord(1,0)
-		s.width=width-2
-		s.fgcolor=fgcolor
-		s.bgcolor=bgcolor
-		s._allign='center'
-		s.focus=s.parent.focus
-		s.ftext=''
-		s.utext=''
-		s.fbg=''
-		s.ubg=''
-		s.textstring=text
-		s.settext(markup='1')
-		s.bg()
-
-
-
-	def textallign(s,allign='center'):
-		center = s.width // 2
-		allign = center - ((len(s.textstring) ) // 2)
-		start = s.loc.x + allign
-		return start
-	def settext(s,string=None,markup=''):
-		start=s.textallign()
-		s.ftext = f'\x1b[{start}G\x1b[1;38;2;{s.fgcolor.ansi()}m{s.textstring}'
-		s.utext = f'\x1b[{start}G\x1b[2;38;2;{s.fgcolor.ansi()}m{s.textstring}'
-	def bg(s):
-		s.fbg=s.tpl.format(FOC='1', BGC=s.bgcolor.ansi(), X1OFF=s.loc.x, X2OFF=s.loc.x + s.width, TEXT=s.ftext)
-		s.ubg=s.tpl.format(FOC='1;2', BGC=s.bgcolor.ansi(), X1OFF=s.loc.x, X2OFF=s.loc.x + s.width, TEXT=s.utext)
-	def __str__(s):
-		if s.focus:
-			bg=f'\x1b[{s.loc.y};{s.loc.x}H'+s.fbg
-		else:
-
-			bg=f'\x1b[{s.loc.y};{s.loc.x}H'+s.ubg
-		return bg
 
 
 class Frame:
@@ -54,88 +13,153 @@ class Frame:
 	charakters can be accessed in scroll mode by moving the viewport right
 
 	"""
-	def __init__(s,term,name,location=Coord(1,1),size=Coord(80,5),display=None,linenrs=True,border=True):
+	def __init__(s,term=None,name=None,location=Coord(1,1),size=Coord(80,5),display=None,linenrs=True,border=True):
 		s.term=term
 		s.name=name
-		s.loc=location
-		s.size=size
+		s.title=name.lstrip('frm_')
+		s.subtitle=''
+		s._loc=location
+		s._size=size
 		s.border=border
 		s.linenrs=linenrs
-		s.focus=True
-		s.boxsyms=' ─━│┃┄┅┆┇┈┉┊┋┌┍┎┏┐┑┒┓└┕┖┗┘┙┚┛├┝┞┟┠┡┢┣┤┥┦┧┨┩┪┫┬┭┮┯┰┱┲┳┴┵┶┷┸┹┺┻┼┽┾┿╀╁╂╃╄╅╆╇╈╉╊╋╌╍╎╏═║╒╓╔╕╖╗╘╙╚╛╜╝╞╟╠╡╢╣╤╥╦╧╨╩╪╫╬╭╮╯╰╱╲╳╴╵╶╷╸╹╺╻╼╽╾╿▀▁▂▃▄▅▆▇█▉▊▋▌▍▎▏▐░▒▓▔▕▖▗▘▙▚▛▜▝▞▟■□▢▣▤▥▦▧▨▩▪▫▬▭▮▯▰▱'
+		s._focus=False
+		s._hidden=False
+		s.boxsyms=' ─━│┃┄┅┆┇┈┉┊┋┌┍┎┏┐┑┒┓└┕┖┗┘┙┚┛├┝┞┟┠┡┢┣┤┥┦┧┨┩┪┫┬┭┮┯┰┱┲┳┴┵┶┷┸┹┺┻┼┽┾┿╀╁╂╃╄╅╆╇╈╉╊╋╌╍╎╏═║╒╓╔╕╖╗╘╙╚╛╜╝╞╟╠╡╢╣╤╥╦╧╨╩╪╫╬╭╮╯╰╱╲╳╴╵╶╷╸╹╺╻╼╽╾╿▀▁▂▃▄▅▆▇█▉▊▋▌▍▎▏▐░▒▓▔▕ ▖▗▘▙▚▛▜▝▞▟■□▢▣▤▥▦▧▨▩▪▫▬▭▮▯▰▱'
 		s.lines={}
-		s.displaytype=display
+		s._clear=''
 		s.display=None
+		s.displays={}
 		s.tpl={}
 		s.tpl['LINE']='{XY}{BG}{FG}{L}{UNSET}{BG}{FG}{C}{UNSET}{BG}{FG}{R}{RESET}'
 		s.tpl['BUFFER']={}
 		# s.initspace()
-		s.TLCR={'L':s.boxsyms[13],'C':s.boxsyms[1]*(s.size.x),'R':s.boxsyms[17]}
+		s.TLCR={'L':s.boxsyms[110],'C':s.boxsyms[17]+s.title+s.boxsyms[13]+s.boxsyms[1]*(s.size.x-2-len(s.title)),'R':s.boxsyms[111]}
 		s.CLCR = {'L': s.boxsyms[3], 'C': s.boxsyms[0] * (s.size.x), 'R': s.boxsyms[3]}
-		s.BLCR = {'L': s.boxsyms[21], 'C': s.boxsyms[1] * (s.size.x ), 'R': s.boxsyms[25]}
+		s.BLCR = {'L': s.boxsyms[113], 'C': s.boxsyms[1] * (s.size.x ), 'R': s.boxsyms[112]}
 		s.LCR=[s.TLCR,s.CLCR,s.BLCR]
-		s.make_Box(LCR=s.LCR)
 
 
+	def focus(s,val=None):
+		if val is None:
+			val=not s._focus
+		s._focus=val
+		s.redraw()
 
-	def make_Box(s,LCR=None):
-		if LCR is None:
+	def show(s,val=None):
+		if val is None:
+			val=not s._hidden
+		else:
+			val=not val
+		s._hidden=val
+		s.draw()
+
+	def makeFrame(s,LCR=None):
+		def makeClear():
 			TLCR={'T':' ','L':' ','C':' '*(s.size.x),'R':' ',}
 			CLCR={'T':' ','L':' ','C':' '*(s.size.x),'R':' ',}
 			BLCR={'T':' ','L':' ','C':' '*(s.size.x),'R':' ',}
-		else:
-			TLCR=LCR[0]
-			CLCR=LCR[1]
-			BLCR=LCR[2]
+			opts = {'BG': '', 'FG': '', 'RESET': '\x1b[m', 'UNSET': Ansi.UNSET}
+			s._clear =s.tpl['LINE'].format(XY=Coord(s.location.x,s.location.y),**TLCR,**opts)
+			for i in range(1,s.size.y-1):
+				s._clear+=s.tpl['LINE'].format(XY=Coord(s.location.x,s.location.y+i),**CLCR,**opts)
+			s._clear+=s.tpl['LINE'].format(XY=Coord(s.location.x,s.location.y+s.size.y-1),**BLCR,**opts)
 
+
+		makeClear()
+
+		TLCR=s.LCR[0]
+		CLCR=s.LCR[1]
+		BLCR=s.LCR[2]
+		opts = {'BG': '', 'FG': '', 'RESET': '\x1b[m', 'UNSET': Ansi.UNSET}
 		if s.border:
 			# tpl='{XY}{BG}{FG}{BOX}{RESET}'
-			#
-			U='\x1b[39m'
-			s.lines[1]=s.tpl['LINE'].format(XY=Coord(s.loc.x,s.loc.y),BG='',FG='',**TLCR,RESET='',UNSET=U)
 
+			if s._focus:
+				opts['FG']='\x1b[1m'
+			else:
+				opts['BG']=''
+
+
+			s.lines[1] =s.tpl['LINE'].format(XY=Coord(s.location.x,s.location.y),**TLCR,**opts)
 			for i in range(1,s.size.y-1):
-				s.lines[1+i]=s.tpl['LINE'].format(XY=Coord(s.loc.x,s.loc.y+i),BG='',FG='',**CLCR,RESET='',UNSET=U)
-			s.lines[i+2]=s.tpl['LINE'].format(XY=Coord(s.loc.x,s.loc.y+s.size.y-1),BG='',FG='',**BLCR,RESET='',UNSET=U)
+				s.lines[1+i]=s.tpl['LINE'].format(XY=Coord(s.location.x,s.location.y+i),**CLCR,**opts)
+			s.lines[s.size.y+1] = s.tpl['LINE'].format(XY=Coord(s.location.x, s.location.y + s.size.y - 1), **BLCR, **opts)
+
+	@property
+	def location(s):
+		return s._loc
+	@location.setter
+	def location(s,value):
+		s._loc=value
+		for disp in s.displays:
+			s.displays[disp].location=s._loc+Coord(2,2)
+	@property
+	def size(s):
+		return s._size
+
+	@size.setter
+	def size(s,value):
+		s._size=value
+		for disp in s.displays:
+			s.displays[disp].size=s._size+Coord(2,2)
 
 	def draw(s):
-		print(''.join(s.lines.values()), end='', flush=True)
-		s.display.initspace()
+		s.makeFrame(LCR=s.LCR)
+		if not s._hidden:
+			print(''.join(s.lines.values()), end='', flush=True)
+			for disp in s.displays:
+				s.displays[disp].draw()
+
+	def redraw(s):
+		if not s._hidden:
+			s.clear()
+			s.makeFrame()
+			s.draw()
 
 
-	def addDisplay(s,disp):
-		s.display=disp(s.term,location=s.loc+Coord(2,2),size=s.size+Coord(-2,-2))
+	def addDisplay(s,name,disp):
+		did=len(s.displays)+1
+		s.displays[did]=disp(s.term,name,location=s.location+Coord(2,2),size=s.size+Coord(-2,-2))
+		return did
 
+	def selectDisplay(s,n=1):
+		s.display=s.displays.get(n)
+		s.display.show(True)
+		s.display.draw()
+
+	def addMenu(s,menu,**opts):
+		# fg = Color(0, 196, 196)
+		# mycolors = ColorSet(fg=fg)
+		s.display=menu(s.term, location=s.location+Coord(2,2), **opts)
+		s.display.draw()
+		s.displays[1]=s.display
 
 	def print(s,line):
 		s.display.print(line)
-
-	def redraw(s):
-		s.display.location=s.loc+Coord(2,2)
-		s.display.size=s.size+Coord(-2,-2)
-		s.display.make_linebuffer()
-		s.display.initspace()
-		s.display.update()
+	def clear(s):
+		print(s._clear, end='', flush=True)
 
 	def move(s,location):
-		s.make_Box()
-		s.draw()
-		s.loc=s.loc+location
-		s.make_Box(s.LCR)
-		s.redraw()
+		s.clear()
+		s.location=s.location+location
+		s.makeFrame()
 		s.draw()
 	def h_resize(s,val):
-		s.make_Box()
-		s.draw()
+		s.clear()
 		s.size=Coord(s.size.x+val,s.size.y)
-		s.make_Box(s.LCR)
-		s.redraw()
+		s.makeFrame()
 		s.draw()
 
 	def v_resize(s,val):
-		s.make_Box()
+		s.clear()
+		s.size = Coord(s.size.x, s.size.y + val)
+		s.makeFrame()
 		s.draw()
-		s.size=Coord(s.size.x,s.size.y+val)
-		s.make_Box(s.LCR)
-		s.redraw()
-		s.draw()
+
+
+class FrameSet:
+
+	def newFrame(s,term=None,name=None,location=Coord(1,1),size=Coord(80,5),display=None,linenrs=True,border=True):
+		framename='frm_'+name.lstrip('frm_')
+		s.__setattr__(framename,Frame())
+

@@ -1,56 +1,68 @@
 #!/usr/bin/env python
 import time,sys,os
 from libTerm import Term
-from libTerm import Mode,Coord,Color
+from libTerm import Mode,Coord,Color,ColorSet
 from libTerm.modules.class_menu import Grid
 import asyncio
-
+from random import randint
 
 def Controls(term,M):
+	from libTerm.components.enums import Ansi
+	CSI=Ansi.CSI
 	prev=''
 	def controls():
 		nonlocal prev
-		loop=asyncio.get_running_loop()
-		key=term.stdin.read()
-		if key == '\x1b[B':
-			M.down()
-		elif key == '\x1b[A':
-			M.up()
-		elif key == '\x1b[D':
-			M.left()
-		elif key == '\x1b[C':
-			M.right()
-		elif key == '\t':
-			M.prev()
-		elif key == 'q':
-			term.sync.default()
-			loop.stop()
-			sys.exit()
-		elif key == '\n':
 
+		def select():
+			nonlocal prev
 			if prev != '':
 				M.select(int(prev))
 				prev=''
 			else:
 				print('\x1b[1;1H chosen:',M.choose())
-		elif key in '0123456789':
-			prev+=key
-			M.select(int(prev))
+		def numeric():
+			nonlocal prev
+			if key in '0123456789':
+				prev+=key
+				M.select(int(prev))
+		def end():
+			loop.stop()
+			return True
+
+		loop=asyncio.get_running_loop()
+		key=term.stdin.read()
+		mapping={
+		CSI+'B':M.down,
+		CSI+'A':M.up,
+		CSI+'D':M.left,
+		CSI+'C':M.right,
+		'\t':M.prev,
+		'q': end,
+		'\n': select,
+		}
+		action=mapping.get(key,numeric)
+		done=action()
+		if done:
+			return
 	return controls
 
 # 	return control
 #
 def makeMenu(term,items):
-	M=Grid(term,items ,location=Coord(10,10),maxheight=5)
+	fg=Color(0,196,196)
+	mycolors=ColorSet(fg=fg)
+	M=Grid(term,items ,location=Coord(10,10),maxheight=5,colors=mycolors)
 	M.draw()
 	return M
+
+
 def main(term):
 	items = ['a'*10, 'b'*5, 'c'*12, 'd'*11,'#'*9, 'K'*5, 'V'*10, '@'*15]
 
 	menu=makeMenu(term,items)
 	loop = asyncio.new_event_loop()
 	asyncio.set_event_loop(loop)
-	loop.add_reader(term.fd, Controls(term,menu))
+	loop.add_reader(term.stdin.fd, Controls(term,menu))
 	loop.run_forever()
 
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from libTerm import Coord,Color,ColorSet,ColorPalette
+from libTerm import Coord,Colors
 from libTerm import Term
 from libTerm.components import enums
 
@@ -139,6 +139,8 @@ class Markup():
 	def get(s,*props):
 		return '\x1b['+';'.join([s.__getattribute__(prop) for prop in props])+'m'
 
+ColorSet=Colors.Set
+Color=Colors.Color
 markup=Markup('display')
 markup.line=Markup('line')
 markup.line.default=Markup('default')
@@ -166,13 +168,14 @@ class LineDisplay:
 	charakters can be accessed in scroll mode by moving the viewport right
 
 	"""
-	def __init__(s,term,location=Coord(1,1),size=Coord(80,5),linenrs=True):
+	def __init__(s,term,name,location=Coord(1,1),size=Coord(80,5),linenrs=True):
 		s.term=term
+		s.name=name
 		s._loc=location
 		s._scroll=False
 		s._shift=False
 		s._size=size
-
+		s._hidden=False
 		s.linenrs=linenrs
 		s.wrapsyms='⟪«‹… …›»⟫'
 		s.overflow=False
@@ -202,8 +205,8 @@ class LineDisplay:
 	@location.setter
 	def location(s,val):
 		s._loc=val
-		s.make_linebuffer()
-		s.initspace()
+		s.updateview()
+
 	@property
 	def size(s):
 		return s._size
@@ -211,8 +214,7 @@ class LineDisplay:
 	@size.setter
 	def size(s,val):
 		s._size=val
-		s.make_linebuffer()
-		s.initspace()
+		s.updateview()
 
 	def printrng(s,xy):
 		x={}
@@ -237,18 +239,31 @@ class LineDisplay:
 
 	def initspace(s):
 		# s.printrng('y')
-		for l in range(1,s.size.y+1):
-			line = s.tpl['BUFFER'][l]
-			wipe = ' ' * (s.size.x-3)
-			gutter=s.tpl['LNR'].format(
-				SEL='',
-				NR='   ',
-				UNSET='\x1b[29m',
-				FG=s.mkup.lnr.default.colors.fg.ansifg,
-				BG=s.mkup.lnr.default.colors.bg.ansibg,
-				MKUP=s.mkup.lnr.default.mkup).format(SEL='', NR='    ')
-			print(line['LINE'].format(SEL='',LINE=wipe,LNR=gutter))
+		if s._hidden is False:
+			for l in range(1,s.size.y+1):
+				line = s.tpl['BUFFER'][l]
+				wipe = ' ' * (s.size.x-3)
+				gutter=s.tpl['LNR'].format(
+					SEL='',
+					NR='   ',
+					UNSET='\x1b[29m',
+					FG=s.mkup.lnr.default.colors.fg.ansifg,
+					BG=s.mkup.lnr.default.colors.bg.ansibg,
+					MKUP=s.mkup.lnr.default.mkup).format(SEL='', NR='    ')
+				print(line['LINE'].format(SEL='',LINE=wipe,LNR=gutter))
 
+	def updateview(s):
+		s.make_linebuffer()
+		s.initspace()
+		s.render()
+
+	def show(s,val=None):
+		if val is None:
+			val=not s._hidden
+		else:
+			val=not val
+		s._hidden=val
+		s.updateview()
 
 	def make_linebuffer(s):
 		xy = f'\x1b[{{Y}};{s.loc.x}H'
@@ -307,8 +322,9 @@ class LineDisplay:
 		prints the buffer to stdout
 		:return:
 		"""
-		for idx in s.print_buffer:
-			print(s.print_buffer[idx])
+		if not s._hidden:
+			for idx in s.print_buffer:
+				print(s.print_buffer[idx])
 
 	def crop(s,line):
 		def cropped(adjust=0):
@@ -325,6 +341,8 @@ class LineDisplay:
 
 			if suffix:
 				l=l[:-2]+suffix
+			if len(l)<s.h_viewrng.size+adjust:
+				l+=' '*(s.h_viewrng.size+adjust-len(l))
 
 			return l
 		return cropped
@@ -360,5 +378,9 @@ class LineDisplay:
 		s.update()
 		s.render()
 
+	def draw(s):
+		if not s._hidden:
+			s.initspace()
+			s.updateview()
 
 

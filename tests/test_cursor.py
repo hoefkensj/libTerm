@@ -2,7 +2,7 @@
 import sys
 import unittest
 from libTerm import Term
-from libTerm.types import Coord
+from libTerm import Coord
 import ast
 
 

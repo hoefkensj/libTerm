@@ -74,6 +74,7 @@ class Ansi(StrEnum):
 	COLBG   = OSC+'11;?\a'
 	COLSWP	= CSI+'7m'
 	COLUNSWP= CSI+'27m'
+	UNSET   = CSI+'39m'
 
 	def __str__(s):
 		return s.value
@@ -81,11 +82,16 @@ class Ansi(StrEnum):
 		return repr(s.value)
 	@property
 	def parser(s):
-		from libTerm.components.tools import LOCparser
+		from libTerm.components.tools import LOCparser,COLparser
 		parsers={
 			'LOC': LOCparser,
+			'COL': COLparser
 		}
-		return parsers.get(s.name)
+		ret=s.name
+		if 'COL' in s.name:
+			ret='COL'
+
+		return parsers.get(ret)
 
 	def __call__(self, *args, **kwargs):
 		print(self.value, end='', flush=True)

@@ -7,6 +7,7 @@ from libTerm.components.enums import Ansi,Move
 
 class Cursor():
 	ANSI=Ansi
+	MOVE=Move
 	def __init__(s, term):
 		s.term         = term
 		s.move         = Move
@@ -35,7 +36,7 @@ class Cursor():
 	@xy.setter
 	def xy(s,value):
 		coord=makeCoord(value)
-		print(s.ANSI.move.format(**coord), end='', flush=True)
+		print(s.MOVE.ABS.format(**coord), end='', flush=True)
 		s._xyset=coord
 		s.update()
 		return s.xy
@@ -45,7 +46,7 @@ class Cursor():
 
 	def update(s):
 
-		result = s.term.stdin.query(s.ANSI.LOC)
+		result = s.term.tty.query(s.ANSI.LOC)
 		try:
 			groups = s._re.search(result).groupdict()
 			matched = Coord(int(groups['X']), int(groups['Y']))

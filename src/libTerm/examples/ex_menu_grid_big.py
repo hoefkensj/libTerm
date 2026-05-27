@@ -54,7 +54,9 @@ def makeMenu(term,items):
 
 	M=Grid(term,items ,direction='horizontal', location=Coord(10,10),maxwidth=13,colors=mycolors)
 	M.draw()
+
 	return M
+
 def main(term):
 	items = []
 	for i in range(250):
@@ -77,8 +79,11 @@ if __name__ == '__main__':
 		t.buffer = t.BUFFER.DEFAULT
 	t=Term()
 	t.mode=t.MODE.CONTROL
-	t.buffer = t.BUFFER.ALTERNATE
-	t.ANSI.cls()
+	if t.buffer==t.BUFFER.DEFAULT:
+		t.buffer = t.BUFFER.ALTERNATE
+		t.ANSI.cls()
+	# t.buffer = t.BUFFER.ALTERNATE
+	# t.ANSI.cls()
 	atexit.register(ExitProcedure,t)
 
 	main(t)

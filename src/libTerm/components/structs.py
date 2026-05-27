@@ -2,8 +2,9 @@
 import sys,os,termios
 from os import get_terminal_size
 from time import time_ns
-from libTerm.components.color import Color
+from libTerm.components.rgbcolor import RGBColor
 from libTerm.components.enums import Ansi
+from libTerm.components import Input,Output
 # Indices for termios list.
 IFLAG = 0;OFLAG = 1;CFLAG = 2;LFLAG = 3;ISPEED = 4;OSPEED = 5;CC = 6
 TCSAFLUSH = termios.TCSAFLUSH;ECHO = termios.ECHO;ICANON = termios.ICANON
@@ -24,13 +25,12 @@ class TermAttrs():
 	def __init__(s,**k):
 		s.term=k.get('term')
 		s.stack=[]
-		s.active=s.get()
-		s.init=list([*s.active])
-		s.stack+= [list(s.active)]
-		s.staged=None
-
+		s.active=[]
+		s.init=[]
+		s.staged=[]
 		s.attrs={}
-
+		if s.term.tty.isatty:
+			s.__startup__()
 		# for attr in zip(IOFlag.)
 		#
 		#
@@ -73,12 +73,16 @@ class TermAttrs():
 		# 		   b'\x00',
 		# 		   b'\x00',
 		# 		   b'\x00']]}
+	def __startup__(s):
+		s.active=s.get()
+		s.init=list([*s.active])
+		s.stack+= [list(s.active)]
 
 	def get(s):
-		return termios.tcgetattr(s.term.stdfd[0])
+		return termios.tcgetattr(s.term.tty.input.fileno())
 
 	def set(s,attr,when=TCSAFLUSH):
-		termios.tcsetattr(s.term.stdfd[0],when,attr)
+		termios.tcsetattr(s.term.tty.input.fd,when,attr)
 
 	def setcbreak(s,when=TCSAFLUSH):
 		"""Put terminal into cbreak mode."""
@@ -140,18 +144,45 @@ class TermAttrs():
 			s.staged=s.stack.pop()
 		return s.staged
 
+	@property
+	def echo(s):
+		s._echo=s.active[LFLAG] & ECHO != 0
+		return s._echo
+
+	@echo.setter
+	def echo(s, enable=False):
+		s.stage()
+		s.staged[3] &= ~ECHO
+		if enable:
+			s.staged[3] |= ECHO
+		s._update_()
+		s._echo=enable
+
+	@property
+	def canonical(s):
+		s._canon = s.active[LFLAG] & ICANON != 0
+		return s._canon
+
+	@canonical.setter
+	def canonical(s, enable=True):
+		s.stage()
+		s.staged[3] &= ~ICANON
+		if enable:
+			s.staged[3] |= ICANON
+		s._update_()
+		s._canon=enable
 
 class TermColors():
 
-	COLOR=Color
+	COLOR=RGBColor
 	ANSI=Ansi
 	def __init__(s, **k):
 		s.term = k.get('term')
 		s._specs = {'_fg': s.ANSI.COLFG, '_bg': s.ANSI.COLBG,'swap':7,'unswap':27}
 		s._ansi_a = '\x1b[{spec}m'
-		s._swaped=False
-		s._fg = s.COLOR(192,192,192)
-		s._bg = s.COLOR(16, 16, 16)
+		s._swapped=False
+		s._fg = None
+		s._bg = None
 
 	@staticmethod
 	def _ansiparser_():
@@ -171,7 +202,10 @@ class TermColors():
 		for ground in ['_fg','_bg']:
 			result = None
 			while not result:
-				result = s.term.stdin.query(s._specs[ground])
+				try:
+					result = s.term.stdin.query(s._specs[ground])
+				except Exception:
+					pass
 			s.__setattr__(ground, result)
 
 		return {'fg': s.fg, 'bg': s.bg}
@@ -216,9 +250,11 @@ class TermBuffers:
 	from libTerm.components.enums import Buffer,Ansi
 	BUFFER=Buffer
 	ANSI=Ansi
-	def __init__(s,term):
-		s.term=term
-		s._buffer=s.BUFFER.NONE
+	def __init__(s,**k):
+		s.term=k.get('term')
+		s._buffer=None
+		if s.term.tty.isatty:
+			s._buffer=s.BUFFER.NONE
 
 	def bufDefault(s):
 		s._buffer=s.BUFFER.DEFAULT
@@ -252,15 +288,13 @@ class TermBuffers:
 		if s._buffer==s.BUFFER.ALTERNATE:
 			s.bufDefault()
 
-
-
 class TermModes:
 	from libTerm.components.enums import Mode
 	MODE=Mode
 	def __init__(s,term):
 		s.term=term
-		s.mode=s.MODE.NONE
 		s.current=None
+		s.mode=s.MODE.NONE
 
 	@property
 	def mode(s):
@@ -271,30 +305,32 @@ class TermModes:
 
 	def modeNormal(s):
 		s.term.cursor.show(True)
-		s.term.echo = True
-		s.term.canonical = True
+		s.term.attr.echo = True
+		s.term.attr.canonical = True
 		s.term.attr.set(s.term.attr.init)
+		s.term.buffer=s.term.BUFFER.DEFAULT
 		s.current = s.MODE.NORMAL
 		s.term._mode = s.current
 
 	def modeCtl(s):
 		s.term.cursor.show(False)
-		s.term.echo = False
-		s.term.canonical = False
+		s.term.attr.echo = False
+		s.term.attr.canonical = False
 		s.current=s.MODE.CONTROL
 		s.term._mode = s.current
 
 	def set(s,mode=None):
-
-		if mode is None:
-			mode = s.current
-		elif mode == s.MODE.NONE:
-			s.modeNormal()
-		elif mode==s.MODE.NORMAL:
-			s.modeNormal()
-		elif mode==s.MODE.CONTROL:
-			s.modeCtl()
-		return s.current
+		if s.term.tty.output.isatty:
+			if mode is None:
+				mode = s.current
+			elif mode == s.MODE.NONE:
+				pass
+				# s.modeNormal()
+			elif mode==s.MODE.NORMAL:
+				s.modeNormal()
+			elif mode==s.MODE.CONTROL:
+				s.modeCtl()
+			return s.current
 
 
 class TermSize():
@@ -303,7 +339,9 @@ class TermSize():
 	def __init__(s, **k):
 
 		s.term = k.get('term')
-		s.getsize = lambda:s.COORD(*list(get_terminal_size()))
+		s.fixed= k.get('fixed',False)
+		s.fixheight=k.get('rows')
+		s.fixhwidth=k.get('cols')
 		s.time = None
 		s.last = None
 		s.xy = s.COORD(1, 1)
@@ -314,17 +352,26 @@ class TermSize():
 		s.history = []
 		s.changed = False
 		s.changing = False
-		s.__kwargs__(**k)
-		s.__update__()
+		s.__startup__()
+
+	def __startup__(s):
+		if s.term.tty.output.isatty:
+			s.__update__()
+		if s.fixed:
+			s.fixsize=s.COORD(80,24)
+			s.rows=24
+			s.cols=80
 
 	@property
 	def width(s):
-		s.__update__()
+		if not s.fixed:
+			s.__update__()
 		return s.cols
 
 	@property
 	def height(s):
-		s.__update__()
+		if not s.fixed:
+			s.__update__()
 		return s.rows
 
 	@property
@@ -332,8 +379,11 @@ class TermSize():
 		s.__update__()
 		return s.COORD(s.rows,s.cols )
 
-	def __kwargs__(s, **k):
-		s.term = k.get('term')
+	def getsize(s):
+		if s.term.tty.output.isatty:
+			return s.COORD(*list(get_terminal_size()))
+		else:
+			return s.COORD(80, 24)
 
 	def __update__(s):
 		if s.time is None:
@@ -359,3 +409,89 @@ class TermSize():
 					s._tmp = size
 		if size == s.xy:
 			s.changed = False
+
+import pty
+import subprocess
+import time
+
+class VirtTTY:
+	def __init__(s,**k):
+		s.term=k.get('term')
+		s.fdin=None
+		s.fdout=None
+		s.in_name=None
+		s.out_name=None
+		s.proc=None
+		s.makepty()
+		s.spawnshell()
+		s.input=os.fdopen(s.fdin,'rb',0)
+		s.output=os.fdopen(s.fdout,'wb',0)
+
+	def makepty(s):
+		s.fdin, s.fdout = pty.openpty()
+		s.in_name = os.ttyname(s.fdin)
+		s.out_name = os.ttyname(s.fdout)
+
+	def spawnshell(s):
+		s.proc = subprocess.Popen(
+			['/bin/bash'],
+			stdin=s.fdin,
+			stdout=s.fdout,
+			stderr=s.fdout,
+			close_fds=True
+		)
+		# os.close(s.fdout)
+
+
+
+	def close(s):
+		# Terminate the shell
+		os.write(s.fdin, b'exit\n')
+		s.proc.wait()
+		os.close(s.fdin)
+	def cleanup(s):
+		# Clean up
+			os.close(s.fdin)
+			os.close(s.fdout)
+	# print("Shell Output:", output.decode().strip())
+class RealTTY:
+	def __init__(s,**k):
+		s.term = k.get('term')
+		s.fdin = sys.stdin.fileno()
+		s.fdout = sys.stdout.fileno()
+		s.in_name = os.ttyname(s.fdin)
+		s.out_name = os.ttyname(s.fdout)
+		s.input	=	sys.stdin
+		s.output = sys.stdout
+
+
+
+
+class TermTty:
+	def __init__(s,**k):
+		s.term=k.get('term')
+		# s.virtual=VirtTTY(term=s.term)
+		# if s.outistty and s.inistty:
+		# 	s.tty = RealTTY(term=s.term)
+		# else:
+		# 	s.tty = s.virtual
+		s.input = None
+		s.output = None
+		s.stdinput = sys.stdin
+		s.stdoutput =sys.stdout
+		s.input=Input(term=s.term,tty=s)
+		s.output=Output(term=s.term,tty=s)
+
+
+	@property
+	def isatty(s):
+		return s.input.isatty and s.output.isatty
+
+	def query(s,query):
+		s.output.write(query)
+		return s.input.read()
+
+
+
+
+

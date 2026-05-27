@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from libTerm import Term
-from libTerm.types import Buffer
+from libTerm import Buffer
 from time import sleep
 
 

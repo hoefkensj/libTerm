@@ -2,14 +2,36 @@
 # !/usr/bin/env python
 from select import select
 import os,sys
-class Stdin():
+class Input():
 	def __init__(s,**k):
 		# super().__init__()
 		s.term = k.get('term')
-		s.fd=s.term.stdfd[0]
+		s.tty=k.get('tty')
+		s.std=sys.stdin
 		s._buffer = []
 		s._event = True
 		s._count = 0
+
+	def fileno(s):
+		return sys.stdin.fileno()
+	@property
+	def fd(s):
+		return sys.stdin.fileno()
+
+	@property
+	def isatty(s):
+		return os.isatty(s.fd)
+	# @fd.setter
+	# def fd(s,fd):
+	# 	s._fd=fd
+	# 	if s.fd != 0:
+	# 		print("Redirecting stdin to fd",s.fd)
+	# 		s.sysin=sys.stdin.detach()
+	# 		s.input=open(s.fd, mode="w", encoding="utf-8", newline=None, buffering=1, closefd=False)
+	# 	else:
+	# 		sys.stdin=s.sysin
+	# 		s.input=s.sysin
+
 
 	@property
 	def event(s):
@@ -23,7 +45,7 @@ class Stdin():
 
 	def read(s):
 		s.sync()
-		ret = ''.join([i.decode('UTF-8') for i in s._buffer])
+		ret = ''.join([str(i) for i in s._buffer])
 		s.flush()
 		return ret
 	def readraw(s,bits=8):
@@ -31,7 +53,7 @@ class Stdin():
 		return raw
 	def sync(s):
 		while select([s.fd], [], [], 0)[0]:
-			s._buffer += [os.read(s.fd, 8)]
+			s._buffer += [os.read(s.fd, 8).decode('UTF-8')]
 			s._count += 1
 		return s._count
 
@@ -48,12 +70,13 @@ class Stdin():
 		s._buffer = []
 
 	def query(s,ansi):
-		print(ansi,end='',flush=True)
-		parser=ansi.parser(s)
 		s.term.attr.setcbreak()
+		s.term.echo=False
+		# s.term.tty.output.write(ansi)
+		parser=ansi.parser(s)
 		try:
-			sys.stdout.write(ansi)
-			sys.stdout.flush()
+			s.tty.output.write(ansi)
+			s.tty.output.flush()
 			result = parser()
 
 		finally:

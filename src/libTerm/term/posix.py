@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 import termios,os,sys,atexit
+
+from libTerm.components.structs import TermTty
 from libTerm.term.base import baseTerm
-from libTerm.components import TermAttrs,TermBuffers,TermSize,TermModes,TermColors,Cursor,Stdin
+from libTerm.components import TermAttrs,TermBuffers,TermSize,TermModes,TermColors,Cursor
 from libTerm.components import Buffer,Mode,Ansi
 # Indices for termios list.
 IFLAG = 0;OFLAG = 1;CFLAG = 2;LFLAG = 3;ISPEED = 4;OSPEED = 5;CC = 6
@@ -17,14 +19,16 @@ class Term(baseTerm):
 	def __init__(s,*a,**k):
 		s.pid = os.getpid()
 		s.ppid = os.getppid()
-		s.stdfd = [sys.stdin.fileno(),
-				   sys.stdout.fileno(),
-				   sys.stderr.fileno()]
-		s.tty = os.ttyname(s.stdfd[0])
-		s._echo = True
-		s._canon = True
+		s.tty=None
+		s.attr=None
+		s.buffers=None
+		s.colors=None
+		s.cursor=None
+		s.modes=None
+		s.size=None
+
 		# Components
-		s.stdin = Stdin(term=s)
+		s.tty = TermTty(term=s)
 		s.attr = TermAttrs(term=s)
 		s.buffers = TermBuffers(term=s)
 		s.colors = TermColors(term=s)
@@ -32,7 +36,6 @@ class Term(baseTerm):
 		s.modes = TermModes(term=s)
 		s.size = TermSize(term=s)
 		atexit.register(s.modes.set, s.MODE.NORMAL)
-
 
 
 
@@ -50,6 +53,7 @@ class Term(baseTerm):
 	@mode.setter
 	def mode(s, mode):
 		s.modes.set(mode)
+
 	@property
 	def buffer(s):
 		return s.buffers._buffer
@@ -58,31 +62,5 @@ class Term(baseTerm):
 	def buffer(s,buffer):
 		s.buffers.set(buffer)
 
-	@property
-	def echo(s):
-		s._echo=s.attr.active[LFLAG] & ECHO != 0
-		return s._echo
 
-	@echo.setter
-	def echo(s, enable=False):
-		s.attr.stage()
-		s.attr.staged[3] &= ~ECHO
-		if enable:
-			s.attr.staged[3] |= ECHO
-		s._update_()
-		s._echo=enable
-
-	@property
-	def canonical(s):
-		s._canon = s.attr.active[LFLAG] & ICANON != 0
-		return s._canon
-
-	@canonical.setter
-	def canonical(s, enable=True):
-		s.attr.stage()
-		s.attr.staged[3] &= ~ICANON
-		if enable:
-			s.attr.staged[3] |= ICANON
-		s._update_()
-		s._canon=enable
 

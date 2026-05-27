@@ -1,16 +1,19 @@
 #!/usr/bin/env python
 import time,sys,os
+
+
 from libTerm import Term
 from libTerm import Coord,Color,ColorSet
 from libTerm.modules.class_menu import Menu
 import asyncio
 
 
+
 def Controls(term,M):
 	prev=''
 	def controls():
 		nonlocal prev
-		key=term.stdin.read()
+		key=term.tty.input.read()
 		if key == '\x1b[B':
 			M.next()
 		elif key == '\x1b[A':
@@ -39,7 +42,7 @@ def main(term):
 	M.draw()
 	loop = asyncio.new_event_loop()
 	asyncio.set_event_loop(loop)
-	loop.add_reader(term.stdin.fd, Controls(term,M))
+	loop.add_reader(term.tty.input.fd, Controls(term,M))
 	loop.run_forever()
 
 if __name__ == '__main__':
@@ -49,6 +52,7 @@ if __name__ == '__main__':
 		t.ANSI.cls()
 		t.mode = t.MODE.DEFAULT
 		t.buffer = t.BUFFER.DEFAULT
+
 	t=Term()
 	t.mode=t.MODE.CONTROL
 	t.buffer = t.BUFFER.ALTERNATE
