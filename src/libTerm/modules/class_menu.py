@@ -7,16 +7,14 @@ class ChangeSet:
 		s._old=None
 		s._new=None
 		s.markup=markup
-		s.mk_sel=markup.get('sel','27')
-		s.mk_mod=markup.get('mod','')
+
+
 		s.sel=''
 		s.mod=''
-		s.mk_colors=markup.get('colors',{})
+		# s.mk_colors=markup.get('colors',{})
 		s.tpl='\x1b[{SEL};38;2;{FGCOLOR}{BGCOLOR}{MOD}m'
 
 
-	def markup(s):
-		return {'MARKUP':s.tpl.format(SEL=s.sel,MOD=s.mod,**s.mk_colors)}
 	def __str__(s):
 
 		return string
@@ -81,16 +79,37 @@ class MenuBase(metaclass=ABCMeta):
 		s._selector.write(1)
 
 class MenuItem:
-	def __init__(s,name,label=''):
+	def __init__(s,menu,name,no=None,label=''):
+		s.menu=menu
+		s.no=no
 		s.name=name
 		s.label=s.safestring(label)
-		s.callback=lambda : None
+		s.callback=s.defaultcb
+		s.selected=False
+		s.highlt=False
+		s.normal=True
+		s.markup=s.menu.theme
+		s.tpl={}
+		s.tpl['normal']='\x1b[27;{FGCOLOR};{BGCOLOR}{MOD}m{NR}{LABEL}'
+		s.tpl['select']='\x1b[7;{FGCOLOR};{BGCOLOR}{MOD}m{NR}{LABEL}'
+		s.tpl['highlt']='\x1b[1;{FGCOLOR};{BGCOLOR}{MOD}m{NR}{LABEL}'
+
+	def defaultcb(s):
+		return s.no,s.name
 
 	def safestring(s,string):
 		return str(string).replace('{', '{{').replace('}', '}}')
 
-	def __str__(s):
+	def __str__(s,state=None):
+		if state is None:
+			string=s.tpl.get(('normal'*s.normal)+('select'*s.selected)+('highlt'*s.highlt))
+		else :
+			string=s.tpl.get(state)
+		result=string.format(NR=s.no,LABEL=s.label,**s.theme)
 		return s.label
+
+
+
 	def __call__(s):
 		return s.callback()
 
@@ -118,11 +137,11 @@ class Menu(MenuBase):
 
 		s._location=value
 		s.setSelector()
-		s.build()
+		s._build_()
 
-	def markup(s,sel='27',mod=''):
-		tpl='\x1b[{SEL};38;2;{FGCOLOR}{BGCOLOR}{MOD}m'
-		return {'MARKUP':tpl.format(SEL=sel,MOD=mod,**s._markup.ANSI())}
+	# def markup(s,sel='27',mod=''):
+	# 	tpl='\x1b[{SEL};38;2;{FGCOLOR}{BGCOLOR}{MOD}m'
+	# 	return {'MARKUP':tpl.format(SEL=sel,MOD=mod,**s._markup.ANSI())}
 
 	def _build_(s, location=None):
 
@@ -192,14 +211,15 @@ class Menu(MenuBase):
 		s._build_()
 
 	def additem(s,item):
-		s._items+=[s.safestring(item)]
+		no=len(s._items)
+		s._items+=[MenuItem(s,item,item,no=no)]
 		s.setSelector()
 		s._build_()
 
 	def setItems(s,items):
 		s._items=[*items]
 		s.selector = Selector((1, len(s._items)))
-		s._build_(s.location)
+		s._build_()
 
 	def addItem(s,item):
 		items=[*s._items,item]
@@ -248,7 +268,7 @@ class Grid(Menu):
 		s.stop = False
 		s.entries = {}
 		s.menu = []
-		s.changed = ChangeSet(markup=s.markup)
+		s.changed = ChangeSet()
 		s.updated = ''
 		s.init = False
 		s.col={}
@@ -261,7 +281,7 @@ class Grid(Menu):
 		if colors is not None:
 			s.setColors(colors)
 		s.items=items or []
-		s.build()
+		s._build_()
 		s.location=location
 		print('build')
 
@@ -328,8 +348,8 @@ class Grid(Menu):
 					elif 'hor' in s._dir:
 						col+=1
 				for i in s.entries:
-					s.menu+=[s.entries[i].format(**s.markup())]
-				s.menu+=s.entries[s.selector.read()].format(**s.markup('7'))
+					s.menu+=[s.entries[i]]
+				s.menu+=s.entries[s.selector.read()]
 		return s.menu
 	@property
 	def items(s):
@@ -338,7 +358,7 @@ class Grid(Menu):
 	def items(s,value):
 		s._items=[s.safestring(item) for item in value]
 		s.setSelector()
-		s.build()
+		s._build_()
 
 	@property
 	def item(s):
@@ -355,7 +375,7 @@ class Grid(Menu):
 	def additem(s,item):
 		s._items+=[s.safestring(item)]
 		s.setSelector()
-		s.build()
+		s._build_()
 	# @property
 	# def location(s):
 	# 	return s._location

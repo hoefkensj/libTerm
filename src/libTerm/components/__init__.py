@@ -5,7 +5,7 @@ from libTerm.components.cursor import Cursor
 from libTerm.components.enums import StoreStop,Buffer,Mode,Move,Ansi
 from libTerm.components.input import Input
 from libTerm.components.output import Output
-from libTerm.components.structs import TermColors,TermAttrs,TermBuffers,TermModes,TermSize
+from libTerm.components.structs import TermColors,TermAttrs,TermBuffers,TermModes,TermSize,TermControls
 Color=Colors.Color
 ColorSet=Colors.Set
 ColorPalette=Colors.Palette

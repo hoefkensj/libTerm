@@ -2,6 +2,8 @@
 # !/usr/bin/env python
 from select import select
 import os,sys
+import asyncio
+
 class Input():
 	def __init__(s,**k):
 		# super().__init__()
@@ -9,8 +11,17 @@ class Input():
 		s.tty=k.get('tty')
 		s.std=sys.stdin
 		s._buffer = []
+		s._last=''
 		s._event = True
 		s._count = 0
+		s._notify_controls=None
+		s.notify = asyncio.Event()
+		s.loop = None
+
+	def asyncstart(s):
+		s.loop=s.term.loop
+		s.loop.add_reader(s.fd,s._read)
+
 
 	def fileno(s):
 		return sys.stdin.fileno()
@@ -21,16 +32,6 @@ class Input():
 	@property
 	def isatty(s):
 		return os.isatty(s.fd)
-	# @fd.setter
-	# def fd(s,fd):
-	# 	s._fd=fd
-	# 	if s.fd != 0:
-	# 		print("Redirecting stdin to fd",s.fd)
-	# 		s.sysin=sys.stdin.detach()
-	# 		s.input=open(s.fd, mode="w", encoding="utf-8", newline=None, buffering=1, closefd=False)
-	# 	else:
-	# 		sys.stdin=s.sysin
-	# 		s.input=s.sysin
 
 
 	@property
@@ -43,14 +44,27 @@ class Input():
 	def count(s):
 		return s._count
 
+
+	def _read(s):
+
+		ret = ''.join([str(i) for i in s._buffer])
+		s._last+=ret
+
+		s._notify_controls()
+		return ret
+
+
 	def read(s):
 		s.sync()
 		ret = ''.join([str(i) for i in s._buffer])
 		s.flush()
+
 		return ret
+
 	def readraw(s,bits=8):
 		raw=os.read(s.fd, bits)
 		return raw
+
 	def sync(s):
 		while select([s.fd], [], [], 0)[0]:
 			s._buffer += [os.read(s.fd, 8).decode('UTF-8')]
@@ -70,8 +84,9 @@ class Input():
 		s._buffer = []
 
 	def query(s,ansi):
+		s.term.attr.echo=False
 		s.term.attr.setcbreak()
-		s.term.echo=False
+		s.term.modes.set(s.term.MODE.CONTROL)
 		# s.term.tty.output.write(ansi)
 		parser=ansi.parser(s)
 		try:

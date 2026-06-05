@@ -5,6 +5,7 @@ from time import time_ns
 from libTerm.components.rgbcolor import RGBColor
 from libTerm.components.enums import Ansi
 from libTerm.components import Input,Output
+import asyncio
 # Indices for termios list.
 IFLAG = 0;OFLAG = 1;CFLAG = 2;LFLAG = 3;ISPEED = 4;OSPEED = 5;CC = 6
 TCSAFLUSH = termios.TCSAFLUSH;ECHO = termios.ECHO;ICANON = termios.ICANON
@@ -294,7 +295,6 @@ class TermModes:
 	def __init__(s,term):
 		s.term=term
 		s.current=None
-		s.mode=s.MODE.NONE
 
 	@property
 	def mode(s):
@@ -304,7 +304,7 @@ class TermModes:
 		s.set(mode)
 
 	def modeNormal(s):
-		s.term.cursor.show(True)
+		s.term.cursor.show=True
 		s.term.attr.echo = True
 		s.term.attr.canonical = True
 		s.term.attr.set(s.term.attr.init)
@@ -320,7 +320,7 @@ class TermModes:
 		s.term._mode = s.current
 
 	def set(s,mode=None):
-		if s.term.tty.output.isatty:
+		if s.term.tty.isatty:
 			if mode is None:
 				mode = s.current
 			elif mode == s.MODE.NONE:
@@ -495,3 +495,62 @@ class TermTty:
 
 
 
+
+class TermControls:
+	def __init__(s,**k):
+		s.term = k.get('term')
+		s.tty =  s.term.tty
+		s.input= s.tty.input
+		s._registry = {}
+		s._keys = set()
+		s._seqs = set()
+		s.keyin=None
+		s.seqin=''
+		s.loop=None
+		s.event=None
+
+
+	def asyncstart(s):
+		s.loop=s.term.loop
+		s.event=asyncio.Event()
+		s.input._notify_controls=lambda :s.event.set()
+
+
+
+	def regkey(s, key, func):
+		s._registry[key]=func
+		s._keys.add(key)
+
+	def watch(s):
+		while True:
+			s.event.clear()
+			s.event.wait()
+			s.match()
+
+
+
+	def readkey(s):
+		s.keyin = s.term.tty.input.read()
+		s.seqin+=s.keyin
+
+	def match(s):
+		def matchsingle():
+			for matchkey in s._keys:
+				if s.keyin == matchkey:
+					s._registry[matchkey](s.keyin)
+		def matchseq():
+			nonlocal partial
+			for seq in s._seqs:
+				if s.seqin.startswith(seq):
+					partial = True
+					if s.seqin == seq:
+						s._registry[seq](s.keyin)
+						s.seqin=''
+			if not partial:
+				s.seqin=''
+
+		partial = False
+		s.readkey()
+		matchsingle()
+		matchseq()
+		# print('ran match on key:',s.keyin,'seq:',s.seqin)

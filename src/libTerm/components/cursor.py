@@ -12,8 +12,8 @@ class Cursor():
 		s.term         = term
 		s.move         = Move
 		s._re      = re.compile(r"^.?\x1b\[(?P<Y>\d*);(?P<X>\d*)R", re.VERBOSE)
-		s._xy     = Coord(0,0)
-		s._xyset  = Coord(0,0)
+		s._xy     = Coord(1,1)
+		s._xyset  = Coord(1,1)
 		s._coordstore   = Store(s.term)
 		s.visible = True
 		s.hidden  = False
@@ -22,7 +22,6 @@ class Cursor():
 		#TODO:		s.stamp=time_ns()
 		#TODO:		s.moved=False
 		#TODO:		s._history = [*(None,) * 64]ASDF
-		s.init    = s.__sync__()
 	def __sync__(s):
 		s.update()
 		s._xy=s.xy
@@ -67,9 +66,12 @@ class Cursor():
 			print(s.ANSI.show)
 			s.visible=True
 		return s.visible
-
-	def show(s,state=True):
-		return s.hide(not state)
+	@property
+	def show(s):
+		return s.visible
+	@show.setter
+	def show(s,state):
+		s.hide(not state)
 
 	def quicksave(s):
 		return s.ansi.save()

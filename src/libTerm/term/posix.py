@@ -3,7 +3,7 @@ import termios,os,sys,atexit
 
 from libTerm.components.structs import TermTty
 from libTerm.term.base import baseTerm
-from libTerm.components import TermAttrs,TermBuffers,TermSize,TermModes,TermColors,Cursor
+from libTerm.components import TermAttrs,TermBuffers,TermSize,TermModes,TermColors,TermControls,Cursor
 from libTerm.components import Buffer,Mode,Ansi
 # Indices for termios list.
 IFLAG = 0;OFLAG = 1;CFLAG = 2;LFLAG = 3;ISPEED = 4;OSPEED = 5;CC = 6
@@ -26,6 +26,8 @@ class Term(baseTerm):
 		s.cursor=None
 		s.modes=None
 		s.size=None
+		s.loop=None
+
 
 		# Components
 		s.tty = TermTty(term=s)
@@ -34,16 +36,32 @@ class Term(baseTerm):
 		s.colors = TermColors(term=s)
 		s.cursor = Cursor(term=s)
 		s.modes = TermModes(term=s)
+
 		s.size = TermSize(term=s)
-		atexit.register(s.modes.set, s.MODE.NORMAL)
+		s.controls=TermControls(term=s)
+
+		# if k.get('controls', False):
+		# 	s.asyncloop()
+
+		atexit.register(s.__cleanup__)
+
+	def __cleanup__(s):
+		if s.mode is not None:
+			s.modes.set(s.MODE.NORMAL)
+
+	def asyncloop(s):
+		import asyncio
+		try:
+			s.loop=asyncio.get_running_loop()
+		except Exception:
+			s.loop=asyncio.new_event_loop()
+			asyncio.set_event_loop(s.loop)
 
 
+		s.tty.input.asyncstart()
+		s.controls.asyncstart()
 
-
-
-	def _update_(s, when=TCSAFLUSH):
-		s.attr.set(s.attr.staged, when)
-		s.attr.update(s.attr.get())
+		# s.controls._watch = asyncio.create_task(s.controls.watch())
 
 
 	@property
@@ -61,6 +79,5 @@ class Term(baseTerm):
 	@buffer.setter
 	def buffer(s,buffer):
 		s.buffers.set(buffer)
-
 
 

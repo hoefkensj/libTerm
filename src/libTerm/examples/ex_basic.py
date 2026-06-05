@@ -43,8 +43,8 @@ def LIBTERM(term):
 		props=propadd(props,*['.ppid',f'{term.ppid}','# Process ID of the parent process.Usually the shell that started the program.'])
 		props=propadd(props,*['.mode',f'\x1b[31mMode.\x1b[33m{term.MODE(term.mode).name}', '# The current mode of the terminal'])
 		props=propadd(props,*['.buffer',f'\x1b[31mBuffer.\x1b[33m{term.BUFFER(term.buffer).name}', '# The current Buffer of the terminal'])
-		props=propadd(props,*['.echo',f'{term.echo}','# Whether the terminal is currently echoing input.'])
-		props=propadd(props,*['.canonical',f'{term.canonical}','# Whether the terminal is currently in canonical mode.'])
+		# props=propadd(props,*['.echo',f'{term.echo}','# Whether the terminal is currently echoing input.'])
+		# props=propadd(props,*['.canonical',f'{term.canonical}','# Whether the terminal is currently in canonical mode.'])
 		return '\n'.join([section(ROOT='libTerm',KEY='Property',VAL='Value',SUBS	='.'.join(['','Term()'])),*makeprint(props,mkup)])
 
 	def Comp(comps):
@@ -56,9 +56,9 @@ def LIBTERM(term):
 			return comps
 
 		comps = {}
-		comps = compadd(comps, *['.pts',f'{term.pts.__class__.__name__}','# The Terminal device.'])
-		comps = compadd(comps, *['.stdin', f'{term.stdin.__class__.__name__}', '# (class) Representing The terminal standard input, which can be used to read input events from the terminal.'])
-		comps = compadd(comps, *['.stdout',f'{term.stdout.__class__.__name__}','# (class) Representing The terminal standard output of the terminal'])
+		# comps = compadd(comps, *['.pts',f'{term.pts.__class__.__name__}','# The Terminal device.'])
+		# comps = compadd(comps, *['.stdin', f'{term.stdin.__class__.__name__}', '# (class) Representing The terminal standard input, which can be used to read input events from the terminal.'])
+		# comps = compadd(comps, *['.stdout',f'{term.stdout.__class__.__name__}','# (class) Representing The terminal standard output of the terminal'])
 		comps = compadd(comps, *['.attr', f'{term.attr.__class__.__name__}', '# Representing The terminal attributes, which can be used to get and set various terminal settings.'])
 		comps = compadd(comps, *['.modes', f'{term.modes.__class__.__name__}', '# Representing Different Modes (combination of attrs) of the terminal'])
 		comps = compadd(comps, *['.size', f'{term.size.__class__.__name__}', '# (class) Representing The terminal size, which provides the current width and height of the terminal.'])
@@ -105,21 +105,59 @@ def CheckInputKey(term,key,cb=None):
 
 def RegKey(term,key,cb=None):
 	def match():
-		pressedkey = term.stdin.read()
+		pressedkey = term.tty.stdin.read()
 		if pressedkey== key:
 			cb()
 	matchkey=key
 	loop=asyncio.get_event_loop()
 	loop.add_reader(term.tty.input.fileno(),match)
 
+class Controls:
+	CSI=Term.ANSI.CSI
+	prev=''
+	def __init__(s,term):
+		s.term=term
+		s.keymap={
+		}
+		s.keys=set()
+		s.start()
 
+	def register(s,name,key,cb):
+		s.keymap[name]={}
+		s.keymap[name]['key']=key
+		s.keymap[name]['cb']=cb
+		s.keys^=set(key)
+	def __call__(s):
+		key=s.term.stdin.read()
+		print('\x1b[3;1HKey:\x1b[32m {KEY}\x1b[m'.format(KEY=repr(key)),end='',flush=True)
+		if key==s.CSI+'B':
+			print('Down')
+		elif key==s.CSI+'A':
+			print('Up')
+		elif key==s.CSI+'C':
+			print('Right')
+		elif key==s.CSI+'D':
+			print('Left')
+		elif key=='\t':
+			print('Tab')
+		elif key=='\n':
+			print('Enter')
+		elif key=='q':
+			if s.cb is not None:
+				s.cb()
+	def start(s):
+		s.loop=asyncio.get_event_loop()
+	def watch(s):
+		s.loop.add_reader(s.term.tty.input.fileno(),s)
 
 
 def main(term):
 	import asyncio
 	loop = asyncio.new_event_loop()
 	asyncio.set_event_loop(loop)
-	loop.add_reader(term.tty.input.fileno(), CheckInputKey(term,'q',cb=fnNext))
+	ctrl=Controls(term)
+	ctrl.register('next'	,'q',fnNext	)
+	ctrl.start()
 
 	# setting the terminal to control mode, this will allow us to read the input events and control the output
 	term.mode=term.MODE.CONTROL
@@ -127,7 +165,6 @@ def main(term):
 
 	print(props.format(ROOT='libTerm'))
 	print(comps.format(ROOT='libTerm'))
-	RegKey(term,'q',cb=fnNext)
 	print('press q to resume:')
 
 	loop.run_forever()
@@ -174,7 +211,7 @@ if __name__ == '__main__':
 	t=Term()
 	print('pre2')
 	# t.ANSI.cls()
-	atexit.register(ExitProcedure,t)
+	# atexit.register(ExitProcedure,t)
 	# print('pre4')
 	main(t)
 	print('post 1')

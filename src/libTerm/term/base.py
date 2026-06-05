@@ -28,9 +28,6 @@ class baseTerm(metaclass=ABCMeta):
 
 
 
-	@abstractmethod
-	def _update_(s, when):
-		pass
 
 
 	@property

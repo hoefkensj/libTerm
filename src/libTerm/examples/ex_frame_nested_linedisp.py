@@ -17,17 +17,19 @@ def Controls(ctx):
 	def control():
 		key=ctx.term.tty.input.read()
 		print('\x1b[3;1H'+repr(key),end='', flush=True)
-		if   key==CSI+'B':			ctx.frame.display.scroll(+1)
-		elif key==CSI+'A':			ctx.frame.display.scroll(-1)
-		elif key==CSI+'C':			ctx.frame.display.shift(+1)
-		elif key==CSI+'D':			ctx.frame.display.shift(-1)
+		if  ctx.frame.display is not None:
+			if   key==CSI+'B':			ctx.frame.display.scroll(+1)
+			elif key==CSI+'A':			ctx.frame.display.scroll(-1)
+			elif key==CSI+'C':			ctx.frame.display.shift(+1)
+			elif key==CSI+'D':			ctx.frame.display.shift(-1)
+			elif key==CSI+'F':			ctx.frame.display.scroll(0)
+
 		elif key==CSI+'1;5C':		ctx.frame.move(Coord(1,0))
 		elif key==CSI+'1;5D':		ctx.frame.move(Coord(-1,0))
 		elif key==CSI+'1;5A':		ctx.frame.move(Coord(0,-1))
 		elif key==CSI+'1;5B':		ctx.frame.move(Coord(0,1))
 		elif key=='\t'      :       ctx.focusnext()
 
-		elif key==CSI+'F':			ctx.frame.display.scroll(0)
 		elif key=='+'    :			ctx.frame.h_resize(1)
 		elif key=='-'    :			ctx.frame.h_resize(-1)
 
@@ -104,7 +106,7 @@ def main(term):
 	secondframe.draw()
 	secondframe.display.show(True)
 	ctx.initloop()
-	ctx.addControls(Controls)
+	# ctx.addControls(Controls)
 
 
 	ctx.loop.create_task(DEMODATA(secondframe))
@@ -124,7 +126,7 @@ if __name__ == '__main__':
 		t.buffer = t.BUFFER.DEFAULT
 	# print('done')
 
-	t=Term()
+	t=Term(controls=True)
 	# print('done')
 
 	t.mode=t.MODE.CONTROL
