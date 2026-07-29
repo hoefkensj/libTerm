@@ -43,7 +43,7 @@ class Context:
 				s.end()
 
 
-		key = s.term.stdin.read()
+		key = s.term.tty.input.read()
 		if key == 'q':
 			qq()
 			s.snake.die()
@@ -62,7 +62,7 @@ class Context:
 		asyncio.set_event_loop(s.loop)
 
 	def addcontol(s):
-		s.loop.add_reader(s.term.stdin.fd, s.controls)
+		s.loop.add_reader(s.term.tty.input.fd, s.controls)
 
 	def initsnake(s):
 		s.snake=Snake(s, s.term, s.speed)

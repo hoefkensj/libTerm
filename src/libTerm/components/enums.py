@@ -27,7 +27,7 @@ class StoreStop(StrEnum):
 	LAST_OF_STORE	= "LAST_OF_STORE"
 
 class Buffer(IntEnum):
-	NONE     = 0
+	NONE     = -1
 	DEFAULT  = 1
 	Default  = 1
 	default  = 1

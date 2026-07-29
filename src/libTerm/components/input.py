@@ -6,51 +6,63 @@ import asyncio
 
 class Input():
 	def __init__(s,**k):
-		# super().__init__()
+		super().__init__()
 		s.term = k.get('term')
 		s.tty=k.get('tty')
 		s.std=sys.stdin
 		s._buffer = []
 		s._last=''
-		s._event = True
+		s._syncevent = False
+		s._asyncevent = False
+		s._event= False
 		s._count = 0
-		s._notify_controls=None
 		s.notify = asyncio.Event()
 		s.loop = None
 
 	def asyncstart(s):
-		s.loop=s.term.loop
+		s.loop=asyncio.get_running_loop()
 		s.loop.add_reader(s.fd,s._read)
 
 
 	def fileno(s):
-		return sys.stdin.fileno()
+		return s.std.fileno()
+
 	@property
 	def fd(s):
-		return sys.stdin.fileno()
+		return s.fileno()
 
 	@property
 	def isatty(s):
 		return os.isatty(s.fd)
 
-
+	@property
+	def syncevent(s):
+		s._syncevent = select([s.fd], [], [], 0)[0] != []
+		return s._syncevent
 	@property
 	def event(s):
-		s._event = select([s.fd], [], [], 0)[0] != []
-		return s._event
+		if s.syncevent:
+			s._event=True
+		elif s._asyncevent:
+			s._event=True
+			s._asyncevent=False
+		else:
+			s._event=False
+		ret=s._event
+		s._event=False
+		return ret
 
 
 	@property
 	def count(s):
 		return s._count
 
-
 	def _read(s):
 
 		ret = ''.join([str(i) for i in s._buffer])
 		s._last+=ret
+		s._asyncevent=True
 
-		s._notify_controls()
 		return ret
 
 
@@ -86,7 +98,7 @@ class Input():
 	def query(s,ansi):
 		s.term.attr.echo=False
 		s.term.attr.setcbreak()
-		s.term.modes.set(s.term.MODE.CONTROL)
+		s.term.mode=s.term.MODE.CONTROL
 		# s.term.tty.output.write(ansi)
 		parser=ansi.parser(s)
 		try:

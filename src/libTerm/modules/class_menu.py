@@ -37,108 +37,326 @@ from abc import ABCMeta, abstractmethod
 
 
 
+class Formatting:
+	def __init__(s):
+		s.pad_pre=''
+		s.pad_sep=''
+		s.pad_post=''
+		s.pad_nr=''
+		s.pad_label=''
+		s.sep_nrlabel=''
+		s.sep_item=''
+		s.sep_row=''
+		s.sep_col=''
+		s.tpl_item='{MOD}{MKUP}{PADPRE}{NR}{SEP}{PADSEP}{LABEL}{PADPOST}{NOMKUP}'
+		s.mnu_maxwidth=None
+		s.mnu_maxhitems=None
+		s.mnu_maxheight=None
+		s.mnu_maxvitems=None
+		s.mnu_direction='horizontal'
+		s.mku_colorItem=ColorSet(fg=Color(64,192,192),bg=None)
+		s.mku_colorNr=ColorSet(fg=Color(64,192,192),bg=None)
 
+	@property
+	def fg(s):
+		return s.mku_colorItem.fg
+	@fg.setter
+	def fg(s,color):
+		s.mku_colorItem.fg=color
+
+	def __len__(s):
+		return sum([len(getattr(s,at)) for at in dir(s) if at.startswith('pad') or at.startswith('sep')])
+
+class MenuItem:
+	def __init__(s,menu,name,id=None,nr=None,label=None,**k):
+		s.menu=menu
+		s.id=id or s.menu.newid()
+		s.nr = nr or s.id
+		s._fmt=k.get('fmt',Formatting())
+		s.tplitem='{LOC}'+s._fmt.tpl_item
+		s._label=None
+		s.name=name
+		s.label=label or name
+		s._show=True
+		s.state=0
+		s.callback=[s.defaultcb]
+		s.markup=s.menu._theme
+		s.location=None
+		s.string=''
+
+
+	def width(s, part):
+		return s.menu._maxw.get(part)
+
+	def fmt(s,part):
+		return getattr(s.menu._fmt,part)
+	def choose(s):
+		s.highlight()
+		s()
+		s.menu.choice=s
+		s.menu.draw()
+
+	def highlight(s):
+		s.selected=False
+		s.normal=False
+		s.highlt=True
+		s.state=2
+		s.menu.update()
+	def deselect(s):
+		s.state=0
+		s.menu.update()
+	def select(s):
+		s.state=1
+		s.menu.update()
+
+	@property
+	def label(s):
+		return s.safestring()
+
+	@label.setter
+	def label(s,value):
+		s._label=value
+	def hide(s,state=True):
+		s._show=not state
+	def show(s,state):
+		s._show=state
+	def defaultcb(s):
+		return s.nr,s.name
+
+	def safestring(s):
+		return str(s._label).replace('{', '{{').replace('}', '}}')
+
+	def __len__(s):
+		return len(str(s))
+
+	def __str__(s):
+		if s._show:
+			nr=str(s.nr).rjust(s.width('num'))
+			label=s.label.ljust(s.width('label')+len(s.fmt('pad_label')))
+			mkup='\x1b[38;2;{FG}m'.format(FG=s._fmt.mku_colorItem.fg.ansi())
+			sep=s.fmt('sep_nrlabel')
+			padsep=s.fmt('pad_sep')
+			padpre=s.fmt('pad_pre')
+			padpost=s.fmt('pad_post')
+		elif not s._show:
+			nr=''
+			label=''
+			mkup=''
+			sep=''
+			padsep=''
+			padpre=''
+			padpost=''
+		else:
+			nr=' '*len(str(s.nr).rjust(s.width('num')))
+			label=' '*len(s.label.ljust(s.width('label')+len(s.fmt('pad_label'))))
+			mkup='\x1b[m'
+
+
+
+		val={
+		'MKUP'    : mkup,
+		'LOC'     : str(s.location),
+		'PADSEP'  : padsep,
+		'PADPRE'  : padpre,
+		'PADPOST' : padpost,
+		'SEP'     : sep,
+		'MOD'     : '\x1b[1;7m' if s.state==1 else '\x1b[m',
+		'NOMKUP'  : '\x1b[0m'
+		}
+		s.string= s.tplitem.format(NR=nr,LABEL=label,**val)
+		return s.string
+
+	def __call__(s):
+		for call in s.callback:
+			call()
 
 class MenuBase(metaclass=ABCMeta):
-	def __init__(s,*a,**k):
-		s._init=False
-		s._term=None
-		s._location=None
-		s._items=None
+	def __init__(s,parent,*a,**k):
+		s.parent=parent
+		s.name=k.get('name')
+		s.term=k.get('term')
+		s.state=None
+		s.flag={'redraw': False,'stop':False, 'init':True,'show':True}
+
+		s._fmt=k.get('fmt',Formatting())
+		s._location = k.get('location')
+		s._size=None
+		s._direction=k.get('direction')
+		s._size=None
+
+		s._idlist=[]
+		s._lastid=None
+
+		s._items={}
 		s._item=None
-		s._markup=None
-		s._selector=None
+		s._entries={}
+		s._choice=None
+		s._selitem=None
+		s._linecount=0
+		s.linecount=lambda : s._linecount
+
+		s.selector=Selector(1, len(s._idlist))
 		s._num_enable=k.get('nums',True)
 		s._num_start=k.get('numstart',1)
-		s._tpls={}
-		s._tpls['location']='\x1b[{Y};{X}H'
-		s._tpls['num']='{XY}{MARKUP}{NO}.'
-		s._tpls['item']='{NO}{XY}\x1b[m{MARKUP}{ITEM}{DESEL}'
 		s._maxw={'num':0,'label':0,'item':0}
 		s._setw={'num':0,'label':0,'item':0}
 		s._flag_stop=False
-		s._entries={}
 		s._menu=[]
-		s._changed=None
-		s._updated=''
+		s._changed=[]
+		s._update=None
 		s._theme=None
-		s._initialize_(*a,**k)
+		s._build_()
 
-	def _initialize_(s,*a,**k):
-		s._term=k.get('term',k.get('t'))
-		s._location=k.get('location',k.get('loc'))
-		s._markup=ColorSet(fg=k.get('fg',Color(64,192,192)),bg=k.get('bg',None))
-		s._num_start=k.get('numstart')
-		s._items=[s.safestring(i) for i in k.get('items')]
-		s.setSelector()
-		s._build_(s.location)
-	def safestring(s,string):
-		return str(string).replace('{', '{{').replace('}', '}}')
-	def setSelector(s):
-		s._selector=Selector((0, len(s._items)))
-		s._selector.write(1)
+	def read(s):
+		return s.selector.read()
 
-class MenuItem:
-	def __init__(s,menu,name,no=None,label=''):
-		s.menu=menu
-		s.no=no
-		s.name=name
-		s.label=s.safestring(label)
-		s.callback=s.defaultcb
-		s.selected=False
-		s.highlt=False
-		s.normal=True
-		s.markup=s.menu.theme
-		s.tpl={}
-		s.tpl['normal']='\x1b[27;{FGCOLOR};{BGCOLOR}{MOD}m{NR}{LABEL}'
-		s.tpl['select']='\x1b[7;{FGCOLOR};{BGCOLOR}{MOD}m{NR}{LABEL}'
-		s.tpl['highlt']='\x1b[1;{FGCOLOR};{BGCOLOR}{MOD}m{NR}{LABEL}'
-
-	def defaultcb(s):
-		return s.no,s.name
-
-	def safestring(s,string):
-		return str(string).replace('{', '{{').replace('}', '}}')
-
-	def __str__(s,state=None):
-		if state is None:
-			string=s.tpl.get(('normal'*s.normal)+('select'*s.selected)+('highlt'*s.highlt))
-		else :
-			string=s.tpl.get(state)
-		result=string.format(NR=s.no,LABEL=s.label,**s.theme)
-		return s.label
+	@abstractmethod
+	def _build_(self): ...
 
 
+	def newid(s,id=None):
+		if id is not None:
+			s._lastid= id - 1 if id - 1 > s._lastid else s._lastid
+		if s._lastid is None:
+			s._lastid=len(s._items)
+		thisid= s._lastid + 1
+		s._lastid=thisid
+		s._idlist+=[thisid]
+		return thisid
 
-	def __call__(s):
-		return s.callback()
+	def addItem(s,item):
+		id=s.newid()
+		menuitem=MenuItem(s,item,id=id,fmt=s._fmt)
+		lenlabel=len(menuitem.safestring())
+		s._maxw['label']=max([s._maxw['label'],lenlabel])
+		s._maxw['num']=len(str(len(s)))
 
-
-
-class Menu(MenuBase):
-	def __init__(s,term,items,templates=None,location=None,colors=None,nums=True,numstart=1):
-		super().__init__(term=term,items=items,location=location,colors=colors,numstart=numstart,nums=nums)
-		s._build_(location)
+		s._maxw['item']=sum([s._maxw['label'],s._maxw['num'],len(s._fmt)])
+		s._items[id]=menuitem
+		s.selector.expand(1)
+		if s.state is not None:
+			s.flag['redraw']=True
+			# s._build_()
+			# s.draw()
 	@property
-	def selected(s):
-		v=s.selector.read()
-		return v
-	def __len__(s):
-		return len(s.items)
+	def item(s):
+		return s._item
+
+	@item.setter
+	def item(s,item):
+		s._item=item
+		s._item.select()
+
+	def show(s,state=True):
+		s.flag['show']=state
+		for item in s._entries:
+			s._entries[item].show()
+
+	def select(s,nr):
+		if  s.__len__() != 0:
+			if nr > s.__len__():
+				nr=s.__len__()
+			old=s._entries[s.read()]
+			old.deselect()
+			s.selector.write(nr)
+			s.item=s._entries[s.read()]
+			s.item.select()
+			s._changed+=[old,s.item]
+		s.draw()
+
+	def prev(s):
+		old=s._entries[s.read()]
+		old.deselect()
+		s.selector.prev()
+		s.item=s._entries[s.read()]
+		s._changed+=[old,s.item]
+		s.draw()
+
+
+	def next(s):
+		old=s._entries[s.read()]
+		old.deselect()
+		s.selector.next()
+		s.item = s._entries[s.read()]
+		s._changed += [old, s.item]
+		s._changed+=[old,s.item]
+		s.draw()
+	@property
+	def size(s):
+		if s.parent is not None:
+			s._size=s.parent._size
+		return s._size
 
 	@property
 	def location(s):
-		return s._location
+		if s.parent is not None:
+			s._location=s.parent.location+Coord(1,1)
+		loc=s._location
+		if loc is None:
+			loc=s.term.cursor.xy
+		return loc
 	@location.setter
 	def location(s,value):
-		if value is	None:
-			value=Coord(1,1)
-
-
 		s._location=value
-		s.setSelector()
-		s._build_()
+	@property
+	def direction(s):
+		return s._direction
+	@direction.setter
+	def direction(s,value):
+		s._direction=value
 
+	def draw(s):
+		draw=[]
+		update=s.update()
+		if  update is not None:
+			draw+=[update]
+			s._update=None
+		if s.flag.get('redraw',False) :
+			s.flag['redraw']=False
+			s._build_()
+			draw+=[s.menu]
+		if s.flag.get('init'):
+			s.flag['init']=False
+			s._build_()
+			draw+=[s.menu]
+		for d in draw[::-1]:
+			print(d)
+		s.state=1
+
+	def choose(s):
+		item=s.item
+		item.deselect()
+		item.choose()
+		s.changed = [item]
+		s.draw()
+		return [s.selector.read(),item]
+
+	def update(s):
+		s._update=None
+		if s._changed:
+			update = ''.join([str(i) for i in s._changed])
+			s._changed=[]
+			if update:
+				s._update=update
+		return s._update
+
+	def __len__(s):
+		return len(s._idlist)
+
+	def __str__(s):
+		return s.menu
+
+	@property
+	def menu(s):
+		return ''.join(s._menu)
+
+class Menu(MenuBase):
+	def __init__(s,term,items,templates=None,location=None,colors=None,nums=True,numstart=1,**k):
+		super().__init__(parent=None,term=term,items=items,location=location,colors=colors,numstart=numstart,nums=nums,**k)
+		s._build_(location)
+
+	def __len__(s):
+		return len(s.items)
 	# def markup(s,sel='27',mod=''):
 	# 	tpl='\x1b[{SEL};38;2;{FGCOLOR}{BGCOLOR}{MOD}m'
 	# 	return {'MARKUP':tpl.format(SEL=sel,MOD=mod,**s._markup.ANSI())}
@@ -158,72 +376,32 @@ class Menu(MenuBase):
 				NO=num if  s._num_enable else '',
 				ITEM=arg.ljust(s._maxw['item']).rjust(s._maxw['item']))
 
-		s.menu=[]
-		s.menu+=['\n\n'*len(s._entries)+f'\x1b[{len(s._entries)}A']
-		s.menu+=[f'\x1b[{len(s._entries)}D']
-		for j,k in enumerate(s.items):
+		s._menu=[]
+		s._menu+=['\n\n'*len(s._entries)+f'\x1b[{len(s._entries)}A']
+		s._menu+=[f'\x1b[{len(s._entries)}D']
+		for j,k in enumerate(s._items):
 			s.menu += [s._entries[j+1].format(**s.markup())]
 
-		s.menu+=s._entries[s._selector.read()].format(**s.markup('7'))
+		s._menu+=s._entries[s.selector.read()].format(**s.markup('7'))
 		return s.menu
-
-	def next(s):
-		change=ChangeSet()
-		s.changed.add(s.items[s.selector.read()])
-		s.selector.next()
-		s.changed.add(s.items[s.selector.read()])
-		return s.update()
-
-	def prev(s):
-		s.changed.add(s.items[s.selector.read()])
-		s.selector.prev()
-		s.changed.add(s.items[s.selector.read()])
-		return s.update()
-
-	def select(s,nr):
-		if nr > s.__len__():
-			nr=s.__len__()
-		s.changed.add(s.items[s.selector.read()])
-		s.selector.write(nr)
-		sel=s.selector.read()
-		s.changed.add(s.items[s.selector.read()])
-		return s.update()
+	# def next(s):
+	# 	change=ChangeSet()
+	# 	s.changed.add(s.items[s.selector.read()])
+	# 	s.selector.next()
+	# 	s.changed.add(s.items[s.selector.read()])
+	# 	return s.update()
+	#
+	# def prev(s):
+	# 	s.changed.add(s.items[s.selector.read()])
+	# 	s.selector.prev()
+	# 	s.changed.add(s.items[s.selector.read()])
+	# 	return s.update()
 
 	def update(s):
 		print(s.changed ,end='',flush=True)
-		return s.updated
+		return s.update
 
-	def choose(s,markup=';27;1;38;2;0;255;255'):
-		itemtpl=s.items[s.selector.read() ]
-		item=s._items[s.selector.read()-1]
-		s.changed = [itemtpl.format(**s.markup(sel='',mod=markup))]
-		s.update()
-		return [s.selector.read(),item]
 
-	@property
-	def items(s):
-		return s._items
-
-	@items.setter
-	def items(s,value):
-		s._items=[s.safestring(item) for item in value]
-		s.setSelector()
-		s._build_()
-
-	def additem(s,item):
-		no=len(s._items)
-		s._items+=[MenuItem(s,item,item,no=no)]
-		s.setSelector()
-		s._build_()
-
-	def setItems(s,items):
-		s._items=[*items]
-		s.selector = Selector((1, len(s._items)))
-		s._build_()
-
-	def addItem(s,item):
-		items=[*s._items,item]
-		s.setItems(items)
 	def delItem(s,item):
 		items=[*s._items.remove(item)]
 		s.setItems(items)
@@ -233,13 +411,37 @@ class Menu(MenuBase):
 		print(''.join(s.menu),end='',flush=True)
 	def repr(s):
 		print(''.join(s.menu),end='',flush=True)
-	def __str__(s):
+
 		return ''.join(s.menu)+s.updated
 
+class Row:
+	def __init__(s,id):
+		s.id=id
+		s._show=True
+		s._items=[]
+		s._entries={}
+		s._col={}
 
-class Grid(Menu):
+	def col(s,col):
+		return
+	def hide(s,state=True):
+		s._show=not state
+	def show(s,state=True):
+		s._show=state
 
-	def __init__(s, term,items=None,name=None,  location=None, direction='vertical' ,maxwidth=None, maxheight=None, colors=None,itempad=6,nums=True,numstart=1):
+	def addItem(s,col,iid,item):
+		s._items+=[item]
+		s._entries[iid]=item
+		s._col[col]=iid,item
+	def getItem(s,col):
+		return s._col.get(col)
+	def getCol(s,col):
+		return s._col.get(col)
+	def __str__(s):
+		return ''.join(str(item) for item in s._items)
+class Grid(MenuBase):
+
+	def __init__(s,parent,*a,**k):
 		"""
 
 		:param term: instance of libTerm.Term
@@ -250,132 +452,79 @@ class Grid(Menu):
 		:param fgcolor:
 		:param bgcolor:
 		"""
-		print('grid')
-		s.term = term
-		s.name=name
-		s._tpl=['\x1b[{Y};{X}H','{XY}{CONR}{NO}. {COIR}{ITEM}{DESEL}','{MARKUP}']
-		s._items = None
-		s._maxw=maxwidth or term.size.xy.x
-		s._maxh=maxheight or term.size.xy.y
-		s._pad=itempad
-		s._dir=direction
-		s._location=None
+		super().__init__(parent,*a,**k)
 		s.cols={}
 		s.rows={}
-		s.fgcol=Color(64,192,192)
-		s.bgcol=''
-		s.selector = None
 		s.stop = False
-		s.entries = {}
-		s.menu = []
-		s.changed = ChangeSet()
-		s.updated = ''
 		s.init = False
 		s.col={}
 		s.row={}
 		s.nrows={}
 		s.ncols={}
-		s.it_width=None
-		s.nr_width = None
-		s.colors={'FGCOLOR':s.fgcol.ansi(),'BGCOLOR':s.bgcol}
-		if colors is not None:
-			s.setColors(colors)
-		s.items=items or []
-		s._build_()
-		s.location=location
-		print('build')
 
 	@property
-	def maxw(s):
-		if s._maxw is None and s._items is not None:
-			s._maxw=s.term.size.xy.x // len(s._items)
-		return s._maxw
-	@maxw.setter
-	def maxw(s,value):
-		s._maxw=value
-		s.build()
+	def maxhoritems(s):
+		width=s.size.x
+		maxitems=width//s._maxw['item']
+		return maxitems
 
-
-
-	def setSelector(s):
-		s.selector=Selector((0, len(s._items)))
-		s.selector.write(1)
-
-
-	def safestring(s,string):
-		return str(string).replace('{', '{{').replace('}', '}}')
-
-	def setColors(s,colors):
-		s.fgcol=colors.fg
-		s.bgcol=f';48;2;{colors.bg.ansi()}' if colors.bg is not None else ''
-
-
-
+	# def safestring(s,string):
+	# 	return str(string).replace('{', '{{').replace('}', '}}')
 	def _build_(s):
-		if s._items:
-			s.it_width = max([len(str(n)) for n in s._items] or [s._pad])
-			s.nr_width = len(str(len(s._items)))
-			if s._location is not None and s._items is not None:
-				row=1
-				c=s.it_width+s._pad
-				col=1
-				for i, arg in enumerate(s._items, start=1):
-					if 'vert' in s._dir:
-						if (i % (s._maxh) ==1)*(i!=1):
-							col+=1
-							row=1
-					elif 'hor' in s._dir:
-						if (i % s._maxw == 1)*(i!=1):
-							col=1
-							row+=1
-					s.col[col]=s.col.get(col,{})
-					s.row[row]=s.row.get(row,{})
-					s.entries[i]=s._tpl[1].format(
-						DESEL='\x1b[27m',
-						CONR=s._tpl[2],
-						XY=s._tpl[0].format(Y=s.location.y + row - 1, X=s.location.x + (c * (col-1))),
-						COIR=s._tpl[2],
-						NO=str(i).rjust(s.nr_width),
-						ITEM=arg.ljust(s.it_width).rjust(s.it_width))
-					s.col[col][row]=i,s.entries[i]
-					s.row[row][col]=i,s.entries[i]
-					s.rows[i]=row
-					s.cols[i]=col
-					s.nrows[col]=row
-					s.ncols[row]=col
-					if 'vert' in s._dir:
+		if s._lastid is not None:
+			row=1
+			hide=False
+			c=s._maxw['item']
+			col=1
+
+			for i, iid in enumerate(s._items, start=1):
+				if 'hor' in s.direction:
+					if ((i % s.maxhoritems) ==1)*(i!=1):
+						col=1
 						row+=1
-					elif 'hor' in s._dir:
+						if row>= s.size.y-1:
+							hide=True
+				elif 'vert' in s._direction:
+					if ((i % s.s._fmt.mnu_maxvitems) == 1)*(i!=1):
 						col+=1
-				for i in s.entries:
-					s.menu+=[s.entries[i]]
-				s.menu+=s.entries[s.selector.read()]
-		return s.menu
-	@property
-	def items(s):
-		return s._items
-	@items.setter
-	def items(s,value):
-		s._items=[s.safestring(item) for item in value]
-		s.setSelector()
-		s._build_()
+						row=1
+				s.row[row] = s.row.get(row, Row(id=row))
+				s.row[row].hide(hide)
 
-	@property
-	def item(s):
-		s._item=(s.selector.read(),s._items[s.selector.read()])
-		return s._item
-
-	@item.setter
-	def item(s,value):
-		itemno=s._item[0]
-		s._items[itemno]=s.safestring(value)
+				entry = s._items.get(iid)
+				x=s.location.x + (c * (col-1))
+				y=s.location.y + row - 1
+				entry.location=Coord(x,y)
+				entry.hide(hide)
+				s._linecount=row
 
 
+				s.col[col]=s.col.get(col,{})
+				# s.entries[i]=s._tpl[1].format(
+				# 	DESEL='\x1b[27m',
+				# 	CONR=s._tpl[2],
+				# 	XY=s._tpl[0].format(Y=s.location.y + row - 1, X=s.location.x + (c * (col-1))),
+				#` 	COIR=s._tpl[2],
+				# 	NO=str(i).rjust(s.nr_width),
+				# 	ITEM=arg.ljust(s.it_width).rjust(s.it_width))
+				s._entries[i]=entry
+				s.col[col][row]=i,s._entries[i]
+				s.row[row].addItem(col,i,s._entries[i])
+				s.rows[i]=row
+				s.cols[i]=col
+				s.nrows[col]=row
+				s.ncols[row]=col
+				if 'hor' in s._direction:
+					col+=1
+				elif 'vert' in s._direction:
+					row+=1
+			# for j in s._entries:
+			# 	if s._entries[j]._show:
+			# 		s._menu+=[str(s._entries[j])]
+			# s._menu+=[str(s._entries[s.selector.read()])]
+				for r in s.row:
+					s._menu+=[str(s.row[r])]
 
-	def additem(s,item):
-		s._items+=[s.safestring(item)]
-		s.setSelector()
-		s._build_()
 	# @property
 	# def location(s):
 	# 	return s._location
@@ -387,25 +536,25 @@ class Grid(Menu):
 	# 	s.setSelector()
 	# 	s.build()
 	def setfocus(s,item,focus=False):
-		change=ChangeSet()
-		s.changed.add(s.items[s.selector.read()])
+		s._changed=[s._entries[s.read()]]
 		s.selector.write(item)
-		s.changed.add(s.items[s.selector.read()])
-		return s.update()
+		s._changed+=[s._entries[s.read()]]
 
-	def prev(s):
+	# def prev(s):
+	#
+	# 	s.changed.add(s.items[s.selector.read()])
+	# 	s.selector.next()
+	# 	s.changed.add(s.items[s.selector.read()])
+	# 	return s.update()
+	# def next(s):
+	# 	s.changed.add(s.items[s.selector.read()])
+	# 	s.selector.prev()
+	# 	s.changed.add(s.items[s.selector.read()])
+	# 	return s.update()
 
-		s.changed.add(s.items[s.selector.read()])
-		s.selector.next()
-		s.changed.add(s.items[s.selector.read()])
-		return s.update()
-	def next(s):
-		s.changed.add(s.items[s.selector.read()])
-		s.selector.prev()
-		s.changed.add(s.items[s.selector.read()])
-		return s.update()
 	def rowcol(s,r=0,c=0):
-		return s.rows[s.selector.read()]+r,s.cols[s.selector.read()]+c
+		return s.rows[s.read()]+r,s.cols[s.read()]+c
+
 
 	def move_horizontal(s, val):
 		def wrap(col):
@@ -415,10 +564,16 @@ class Grid(Menu):
 				col = 1
 			assert col != 0
 			return col
-		sel=s.selector.read()
+
+		old=s._entries[s.read()]
+		old.deselect()
 		row,col=s.rowcol(0,val)
 		s.selector.write(s.col[wrap(col)][row][0])
-		s.changed.add(s.items[s.selector.read()])
+		new=s._entries[s.read()]
+		new.select()
+		s._changed+=[old,new]
+		s.draw()
+
 
 	def move_vertical(s, val):
 		def wrap(row):
@@ -428,25 +583,28 @@ class Grid(Menu):
 				row = 1
 			assert row != 0
 			return row
-		sel=s.selector.read()
-		s.changed.add(s.items[sel].format(**s.markup()))
+		old=s._entries[s.read()]
+		old.deselect()
 		row,col=s.rowcol(val,0)
 		s.selector.write(s.col[col][wrap(row)][0])
-		s.changed.add(s.items[s.selector.read()].format(**s.markup('7')))
+		new=s._entries[s.read()]
+		new.select()
+		s._changed+=[old,new]
+		s.draw()
 
 	def right(s):
 		s.move_horizontal(1)
-		return s.update()
+
 	def left(s):
 		s.move_horizontal(-1)
-		return s.update()
+
 	def up(s):
 		s.move_vertical(-1)
-		return s.update()
 
 	def down(s):
 		s.move_vertical(1)
-		return s.update()
+
+
 
 
 # from libTerm import Term

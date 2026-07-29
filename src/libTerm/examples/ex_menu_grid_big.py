@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 import time,sys,os
 from libTerm import Term
-from libTerm import Mode,Coord,Color,ColorSet
-from libTerm.modules.class_menu import Grid
+from libTerm import Mode,Coord,Color,ColorSet,Context
+from libTerm.modules.class_frame import Frame
+from libTerm.modules.class_menu import Grid,Formatting
+from libTerm.modules.class_controls import Controls
 import asyncio
 from random import randint
 
-def Controls(term,M):
+def controls(term,M):
 	from libTerm.components.enums import Ansi
 	CSI=Ansi.CSI
 	prev=''
@@ -32,7 +34,7 @@ def Controls(term,M):
 		loop=asyncio.get_running_loop()
 		key=term.stdin.read()
 		mapping={
-		CSI+'B':M.down,
+
 		CSI+'A':M.up,
 		CSI+'D':M.left,
 		CSI+'C':M.right,
@@ -48,24 +50,49 @@ def Controls(term,M):
 
 # 	return control
 #
-def makeMenu(term,items):
-	fg=Color(0,196,196)
-	mycolors=ColorSet(fg=fg)
 
-	M=Grid(term,items ,direction='horizontal', location=Coord(10,10),maxwidth=13,colors=mycolors)
-	M.draw()
 
 	return M
 
 def main(term):
+	from libTerm.components.enums import Ansi
+	CSI=Ansi.CSI
 	items = []
-	for i in range(250):
-		items += [chr(randint(65, 68)) + chr(randint(65, 68))]
-	menu=makeMenu(term,items)
+	fmt=Formatting()
+	fmt.pad_pre=' '
+	fmt.pad_post=' '
+	fmt.sep_nrlabel=':'
+	fmt.pad_sep=' '
 	loop = asyncio.new_event_loop()
 	asyncio.set_event_loop(loop)
-	loop.add_reader(term.stdin.fd, Controls(term,menu))
-	loop.run_forever()
+	ctx = Context('Main',term, loop)
+
+	frame=Frame(
+		ctx,
+		name='frmGridMenu',
+		location=Coord(5, 5))
+	fmt.mnu_maxwidth=frame.size.x
+	opts={'direction':'horizontal', 'maxhoritems':7,'fmt':fmt}
+	frame.addMenu(Grid,**opts)
+	# for i in range(50):
+	# 	frame.display.addItem(chr(randint(65, 89)) + chr(randint(65 + 32, 89 + 32)) + chr(randint(65 + 32, 68 + 32)) + chr(randint(65 + 32, 68 + 32)))
+	def add50():
+		for i in range(50):
+			frame.display.addItem(chr(randint(65, 89)) + chr(randint(65 + 32, 89 + 32)) + chr(randint(65 + 32, 68 + 32)) + chr(randint(65 + 32, 68 + 32)))
+	add50()
+
+	#
+	# loop = asyncio.new_event_loop()
+	# asyncio.set_event_loop(loop)
+	# ctrl=Controls(term=term,loop=loop)
+	# ctrl.regkey(CSI+'B',frame.display.down)
+	# ctrl.regkey(CSI+'A',frame.display.up)
+	# ctrl.regkey(CSI+'D',frame.display.left)
+	# ctrl.regkey(CSI+'C',frame.display.right)
+	# ctrl.regkey('+',add50)
+	# ctrl.regkey('\n',frame.display.choose)
+	# ctrl.regseq('qq',sys.exit)
+	# loop.run_forever()
 
 
 
@@ -78,14 +105,6 @@ if __name__ == '__main__':
 		t.mode = t.MODE.NORMAL
 		t.buffer = t.BUFFER.DEFAULT
 	t=Term()
-	t.mode=t.MODE.CONTROL
-	if t.buffer==t.BUFFER.DEFAULT:
-		t.buffer = t.BUFFER.ALTERNATE
-		t.ANSI.cls()
-	# t.buffer = t.BUFFER.ALTERNATE
-	# t.ANSI.cls()
-	atexit.register(ExitProcedure,t)
-
 	main(t)
 
 

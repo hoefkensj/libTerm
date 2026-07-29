@@ -17,7 +17,7 @@ def main(term):
 async def qscan(term):
 	import asyncio
 	loop=asyncio.get_running_loop()
-	event = t.stdin.sync
+	event = t.tty.input.event
 	print('press n for next example')
 	while True:
 		await asyncio.wait_for(event)
@@ -36,9 +36,14 @@ if __name__ == '__main__':
 		t.mode = t.MODE.DEFAULT
 		t.buffer = t.BUFFER.DEFAULT
 	t=Term()
+	print('initialized')
 	t.mode=t.MODE.CONTROL
 	t.buffer = t.BUFFER.ALTERNATE
 	t.ANSI.cls()
 	atexit.register(ExitProcedure,t)
+	import asyncio
+	loop = asyncio.get_running_loop()
+	loop.add_reader(t.tty.input.fd,qscan,t)
+	loop.run_forever()
 	main(t)
 

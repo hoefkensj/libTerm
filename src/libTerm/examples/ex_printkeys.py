@@ -22,7 +22,7 @@ def main(term):
 	Qs=[]
 	loop = asyncio.new_event_loop()
 	asyncio.set_event_loop(loop)
-	loop.add_reader(term.stdin.fd, Controls(term))
+	loop.add_reader(term.tty.input.fd, Controls(term))
 	loop.run_forever()
 
 if __name__ == '__main__':

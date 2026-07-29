@@ -22,10 +22,9 @@ class Cursor():
 		#TODO:		s.stamp=time_ns()
 		#TODO:		s.moved=False
 		#TODO:		s._history = [*(None,) * 64]ASDF
-	def __sync__(s):
+
+	def _postinit(s):
 		s.update()
-		s._xy=s.xy
-		return s._xy
 
 	@property
 	def xy(s):
@@ -45,7 +44,7 @@ class Cursor():
 
 	def update(s):
 
-		result = s.term.tty.query(s.ANSI.LOC)
+		result = s.term.tty.input.query(s.ANSI.LOC)
 		try:
 			groups = s._re.search(result).groupdict()
 			matched = Coord(int(groups['X']), int(groups['Y']))
@@ -66,10 +65,8 @@ class Cursor():
 			print(s.ANSI.show)
 			s.visible=True
 		return s.visible
-	@property
-	def show(s):
-		return s.visible
-	@show.setter
+
+
 	def show(s,state):
 		s.hide(not state)
 

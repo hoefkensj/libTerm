@@ -42,7 +42,7 @@ def LIBTERM(term):
 		props=propadd(props,*['.pid',f'{term.pid}','# Process ID of the current process.'])
 		props=propadd(props,*['.ppid',f'{term.ppid}','# Process ID of the parent process.Usually the shell that started the program.'])
 		props=propadd(props,*['.mode',f'\x1b[31mMode.\x1b[33m{term.MODE(term.mode).name}', '# The current mode of the terminal'])
-		props=propadd(props,*['.buffer',f'\x1b[31mBuffer.\x1b[33m{term.BUFFER(term.buffer).name}', '# The current Buffer of the terminal'])
+		props=propadd(props,*['.buffer',f'\x1b[31mBuffer.\x1b[33m{term.buffers.buffer.name}', '# The current Buffer of the terminal'])
 		# props=propadd(props,*['.echo',f'{term.echo}','# Whether the terminal is currently echoing input.'])
 		# props=propadd(props,*['.canonical',f'{term.canonical}','# Whether the terminal is currently in canonical mode.'])
 		return '\n'.join([section(ROOT='libTerm',KEY='Property',VAL='Value',SUBS	='.'.join(['','Term()'])),*makeprint(props,mkup)])

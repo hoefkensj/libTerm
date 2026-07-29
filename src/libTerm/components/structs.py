@@ -1,11 +1,14 @@
  #!/usr/bin/env python
 import sys,os,termios
+from abc import abstractmethod
 from os import get_terminal_size
 from time import time_ns
 from libTerm.components.rgbcolor import RGBColor
 from libTerm.components.enums import Ansi
 from libTerm.components import Input,Output
 import asyncio
+from abc import ABCMeta, abstractmethod , abstractproperty
+
 # Indices for termios list.
 IFLAG = 0;OFLAG = 1;CFLAG = 2;LFLAG = 3;ISPEED = 4;OSPEED = 5;CC = 6
 TCSAFLUSH = termios.TCSAFLUSH;ECHO = termios.ECHO;ICANON = termios.ICANON
@@ -184,32 +187,17 @@ class TermColors():
 		s._swapped=False
 		s._fg = None
 		s._bg = None
+		s._colors=None
 
-	@staticmethod
-	def _ansiparser_():
-		buf = ''
-		try:
-			for i in range(23):
-				buf += sys.stdin.read(1)
-			rgb = buf.split(':')[1].split('/')
-			rgb = [int(i, base=16) for i in rgb]
-			rgb = TermColors.COLOR(*rgb, 16)
-		except Exception as E:
-			# print(E)
-			rgb = None
-		return rgb
+
+
+	def _postinit(s):
+		if s.term.tty.isatty:
+			s._update_()
+
 
 	def _update_(s):
-		for ground in ['_fg','_bg']:
-			result = None
-			while not result:
-				try:
-					result = s.term.stdin.query(s._specs[ground])
-				except Exception:
-					pass
-			s.__setattr__(ground, result)
-
-		return {'fg': s.fg, 'bg': s.bg}
+		s._colors={'fg': s.fg, 'bg': s.bg}
 
 	def swap(s):
 		swap=(7*(not s._swap))+(27*(s._swap))
@@ -224,11 +212,11 @@ class TermColors():
 
 	@property
 	def fg(s):
-		s._update_()
+		s._fg = s.term.tty.input.query(s._specs['_fg'])
 		return s._fg
 	@property
 	def bg(s):
-		s._update_()
+		s._bg = s.term.tty.input.query(s._specs['_bg'])
 		return s._bg
 	@fg.setter
 	def fg(s,buffer):
@@ -254,8 +242,8 @@ class TermBuffers:
 	def __init__(s,**k):
 		s.term=k.get('term')
 		s._buffer=None
-		if s.term.tty.isatty:
-			s._buffer=s.BUFFER.NONE
+		s._name=None
+		s._buffer=s.BUFFER.NONE
 
 	def bufDefault(s):
 		s._buffer=s.BUFFER.DEFAULT
@@ -267,7 +255,9 @@ class TermBuffers:
 	@property
 	def buffer(s):
 		return s._buffer
-
+	@property
+	def name(s):
+		return '.'.join([s.buffer.__class__.__name__, s._buffer.name])
 	@buffer.setter
 	def buffer(s,buffer):
 		s.set(buffer)
@@ -333,82 +323,79 @@ class TermModes:
 			return s.current
 
 
-class TermSize():
+class TermSize(metaclass=ABCMeta):
 	from libTerm.components.base import Coord
 	COORD=Coord
+
+	def __new__(cls, **k):
+		if cls is TermSize:
+			if k.get('term').tty.output.isatty:
+				cls=LiveTermSize
+			else:
+				cls=FixedTermSize
+		return super().__new__(cls)
+
 	def __init__(s, **k):
-
 		s.term = k.get('term')
-		s.fixed= k.get('fixed',False)
-		s.fixheight=k.get('rows')
-		s.fixhwidth=k.get('cols')
-		s.time = None
-		s.last = None
-		s.xy = s.COORD(1, 1)
-		s._tmp = s.COORD(1, 1)
-		s.rows = 1
-		s.cols = 1
+		s._timestamp=None
+		s._livestamp=None
+		s._timestamps=[]
+		s._size = None
 
-		s.history = []
-		s.changed = False
-		s.changing = False
-		s.__startup__()
-
-	def __startup__(s):
-		if s.term.tty.output.isatty:
-			s.__update__()
-		if s.fixed:
-			s.fixsize=s.COORD(80,24)
-			s.rows=24
-			s.cols=80
+		s
+		s.history={}
+		s.changing=False
+		s.changed=asyncio.Event()
 
 	@property
-	def width(s):
-		if not s.fixed:
-			s.__update__()
-		return s.cols
+	@abstractmethod
+	def size(s):...
+
+class LiveTermSize(TermSize):
+	def __init__(s,**k):
+		super().__init__(**k)
+		s._fps=k.get('fps', 2)
+		s._period= 1000*(s._fps**-1)
+		s._oldsize=None
+		s._rawsize=None
+		s._livesize=None
+		s.time=None
 
 	@property
-	def height(s):
-		if not s.fixed:
-			s.__update__()
-		return s.rows
+	def xy(s):
+		return s.getsize()
 
 	@property
-	def rc(s):
-		s.__update__()
-		return s.COORD(s.rows,s.cols )
+	def size(s):
+		s._rawsize=[*list(get_terminal_size())]
+		s._size=s.COORD(*s._rawsize)
+		return s._size
 
 	def getsize(s):
-		if s.term.tty.output.isatty:
-			return s.COORD(*list(get_terminal_size()))
-		else:
-			return s.COORD(80, 24)
+		s._rawsize=[*list(get_terminal_size())]
+		s._size=s.COORD(*s._rawsize)
+		return s._size
 
-	def __update__(s):
-		if s.time is None:
-			s.last = time_ns()
-		size = s.COORD(*s.getsize())
-		if size == s.COORD(0, 0):
-			size=s.COORD(80, 24)
-		if size != s.xy:
 
-			if size != s._tmp:
-				s.changing = True
-				s._tmp = size
-				s._tmptime = time_ns()
-			if size == s._tmp:
-				if (time_ns() - s._tmptime) * 1e6 > 500:
-					s.changing = False
-					s.changed = True
-					s.history += [s.xy]
-					s.xy = size
-					s.rows = s.xy.y
-					s.cols = s.xy.x
-				else:
-					s._tmp = size
-		if size == s.xy:
-			s.changed = False
+class FixedTermSize(TermSize):
+	def __init__(s,**k):
+		super().__init__(**k)
+		s._fixedsize=k.get('fixedsize',s.COORD(k.get('cols',80),k.get('rows',24)))
+	def fixsize(s,size):
+		s._fixedsize=size
+
+	@property
+	def size(s):
+		s._size=s.COORD(*s._fixedsize)
+		return s._size
+
+	@property
+	def xy(s):
+		return s.getsize()
+
+	def getsize(s):
+		s._size=s._fixedsize
+		return s._size
 
 import pty
 import subprocess
@@ -475,10 +462,6 @@ class TermTty:
 		# 	s.tty = RealTTY(term=s.term)
 		# else:
 		# 	s.tty = s.virtual
-		s.input = None
-		s.output = None
-		s.stdinput = sys.stdin
-		s.stdoutput =sys.stdout
 		s.input=Input(term=s.term,tty=s)
 		s.output=Output(term=s.term,tty=s)
 
@@ -496,61 +479,18 @@ class TermTty:
 
 
 
-class TermControls:
+class base:
 	def __init__(s,**k):
-		s.term = k.get('term')
-		s.tty =  s.term.tty
-		s.input= s.tty.input
-		s._registry = {}
-		s._keys = set()
-		s._seqs = set()
-		s.keyin=None
-		s.seqin=''
-		s.loop=None
-		s.event=None
+		s.value=k.get('value')
+		if k.get('planet')=='moon':
+			pass
 
+class moonbase(base):
+	def __init__(s,**k):
+		super().__init__(**k)
+		s.moon=k.get('moon')
 
-	def asyncstart(s):
-		s.loop=s.term.loop
-		s.event=asyncio.Event()
-		s.input._notify_controls=lambda :s.event.set()
-
-
-
-	def regkey(s, key, func):
-		s._registry[key]=func
-		s._keys.add(key)
-
-	def watch(s):
-		while True:
-			s.event.clear()
-			s.event.wait()
-			s.match()
-
-
-
-	def readkey(s):
-		s.keyin = s.term.tty.input.read()
-		s.seqin+=s.keyin
-
-	def match(s):
-		def matchsingle():
-			for matchkey in s._keys:
-				if s.keyin == matchkey:
-					s._registry[matchkey](s.keyin)
-		def matchseq():
-			nonlocal partial
-			for seq in s._seqs:
-				if s.seqin.startswith(seq):
-					partial = True
-					if s.seqin == seq:
-						s._registry[seq](s.keyin)
-						s.seqin=''
-			if not partial:
-				s.seqin=''
-
-		partial = False
-		s.readkey()
-		matchsingle()
-		matchseq()
-		# print('ran match on key:',s.keyin,'seq:',s.seqin)
+class marsbase(base):
+	def __init__(s,**k):
+		super().__init__(**k)
+		s.mars=k.get('mars')

@@ -3,7 +3,7 @@ import termios,os,sys,atexit
 
 from libTerm.components.structs import TermTty
 from libTerm.term.base import baseTerm
-from libTerm.components import TermAttrs,TermBuffers,TermSize,TermModes,TermColors,TermControls,Cursor
+from libTerm.components import TermAttrs,TermBuffers,TermSize,TermModes,TermColors,Cursor
 from libTerm.components import Buffer,Mode,Ansi
 # Indices for termios list.
 IFLAG = 0;OFLAG = 1;CFLAG = 2;LFLAG = 3;ISPEED = 4;OSPEED = 5;CC = 6
@@ -19,6 +19,8 @@ class Term(baseTerm):
 	def __init__(s,*a,**k):
 		s.pid = os.getpid()
 		s.ppid = os.getppid()
+
+
 		s.tty=None
 		s.attr=None
 		s.buffers=None
@@ -26,42 +28,26 @@ class Term(baseTerm):
 		s.cursor=None
 		s.modes=None
 		s.size=None
-		s.loop=None
 
 
 		# Components
 		s.tty = TermTty(term=s)
 		s.attr = TermAttrs(term=s)
 		s.buffers = TermBuffers(term=s)
-		s.colors = TermColors(term=s)
-		s.cursor = Cursor(term=s)
 		s.modes = TermModes(term=s)
-
+		s.colors = TermColors(term=s)
 		s.size = TermSize(term=s)
-		s.controls=TermControls(term=s)
+		s.cursor = Cursor(term=s)
 
-		# if k.get('controls', False):
-		# 	s.asyncloop()
+		# shortcuts
 
-		atexit.register(s.__cleanup__)
+
+
+
 
 	def __cleanup__(s):
 		if s.mode is not None:
 			s.modes.set(s.MODE.NORMAL)
-
-	def asyncloop(s):
-		import asyncio
-		try:
-			s.loop=asyncio.get_running_loop()
-		except Exception:
-			s.loop=asyncio.new_event_loop()
-			asyncio.set_event_loop(s.loop)
-
-
-		s.tty.input.asyncstart()
-		s.controls.asyncstart()
-
-		# s.controls._watch = asyncio.create_task(s.controls.watch())
 
 
 	@property
@@ -74,7 +60,7 @@ class Term(baseTerm):
 
 	@property
 	def buffer(s):
-		return s.buffers._buffer
+		return s.buffers.name
 
 	@buffer.setter
 	def buffer(s,buffer):

@@ -19,7 +19,7 @@ def PrintUserIn():
 def CheckInput(term):
 	printer=PrintUserIn()
 	def checkinput():
-		key = term.stdin.read()
+		key = term.tty.input.read()
 		if key == 'q':
 			loop=asyncio.get_event_loop()
 			loop.stop()
@@ -36,7 +36,7 @@ def CheckInput(term):
 def main(term):
 	loop = asyncio.new_event_loop()
 	asyncio.set_event_loop(loop)
-	loop.add_reader(term.stdin.fd, CheckInput(term))
+	loop.add_reader(term.tty.input.fd, CheckInput(term))
 	loop.run_forever()
 
 

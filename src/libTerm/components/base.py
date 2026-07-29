@@ -142,6 +142,7 @@ class Coord(namedtuple('Coord', ['x', 'y'])):
 		x=s.x//other
 		y=s.y//other
 		return Coord(x,y)
+
 	@property
 	def real(s):
 		return s.x
@@ -151,7 +152,7 @@ class Coord(namedtuple('Coord', ['x', 'y'])):
 		return s.y
 
 	def keys(s):
-		return ('X', 'Y')
+		return ('x', 'y')
 
 
 	@property
@@ -375,4 +376,30 @@ class Store():
 		return store.values()
 
 
+from libTerm.modules.class_controls import Controls
+class Context:
+	def __init__(s,name=None,term=None,loop=None):
+		s.term=term
+		s.name=name
+		s._loop=loop
+		s.frames={}
+		s.focusid=0
+		s.frame=None
+		s.controls = Controls(term=s.term, loop=loop)
+	@property
+	def loop(s):
+		return s._loop
+	def selectFrame(s,n=1):
+		s.frame=s.frames.get(n)
+		if s.frame is not None:
+			s.frame.focus(True)
+			s.frame.draw()
+			s.focusid=n
 
+	def focusnext(s, *a):
+		if s.frame is not None:
+			s.frame.focus(False)
+		s.focusid += 1
+		if s.focusid > len(s.frames):
+			s.focusid = 0
+		s.selectFrame(s.focusid)

@@ -57,7 +57,7 @@ def ArrowKeys(key):
 
 def CheckInput(term):
 	def checkinput():
-		key = term.stdin.read()
+		key = term.tty.input.read()
 		ArrowKeys(key)
 	return checkinput
 
@@ -66,7 +66,7 @@ def main(term):
 
 	loop = asyncio.new_event_loop()
 	asyncio.set_event_loop(loop)
-	loop.add_reader(term.stdin.fd, CheckInput(term))
+	loop.add_reader(term.tty.input.fd, CheckInput(term))
 	loop.run_forever()
 
 
