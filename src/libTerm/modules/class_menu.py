@@ -171,13 +171,13 @@ class MenuItem:
 			call()
 
 class MenuBase(metaclass=ABCMeta):
-	def __init__(s,parent,*a,**k):
-		s.parent=parent
+	def __init__(s,ctx=None,parent=None,*a,**k):
+		s.ctx = ctx
+		s.parent = k.get('parent')
+		s.term =k.get('term', s.ctx.term)
 		s.name=k.get('name')
-		s.term=k.get('term')
-		s.state=None
+		s._state=None
 		s.flag={'redraw': False,'stop':False, 'init':True,'show':True}
-
 		s._fmt=k.get('fmt',Formatting())
 		s._location = k.get('location')
 		s._size=None
@@ -206,12 +206,42 @@ class MenuBase(metaclass=ABCMeta):
 		s._update=None
 		s._theme=None
 		s._build_()
+	@property
+	def location(s):
+		s._location=s.parent.location + Coord(2, 2)
+		return s._location
 
-	def read(s):
-		return s.selector.read()
+	@location.setter
+	def location(s,val):
+		s._location=val
+		s.updateview()
+
+	@property
+	def size(s):
+		s._size= s.parent.size + Coord(-2,-3)
+		return s._size
+
+	@size.setter
+	def size(s,val):
+		s._size=val
+		s.updateview()
+	@property
+	def item(s):
+		return s._item
+
+	@item.setter
+	def item(s,item):
+		s._item=item
+		s._item.select()
+
 
 	@abstractmethod
 	def _build_(self): ...
+
+
+
+	def read(s):
+		return s.selector.read()
 
 
 	def newid(s,id=None):
@@ -234,18 +264,10 @@ class MenuBase(metaclass=ABCMeta):
 		s._maxw['item']=sum([s._maxw['label'],s._maxw['num'],len(s._fmt)])
 		s._items[id]=menuitem
 		s.selector.expand(1)
-		if s.state is not None:
+		if s._state is not None:
 			s.flag['redraw']=True
 			# s._build_()
 			# s.draw()
-	@property
-	def item(s):
-		return s._item
-
-	@item.setter
-	def item(s,item):
-		s._item=item
-		s._item.select()
 
 	def show(s,state=True):
 		s.flag['show']=state
@@ -281,23 +303,7 @@ class MenuBase(metaclass=ABCMeta):
 		s._changed += [old, s.item]
 		s._changed+=[old,s.item]
 		s.draw()
-	@property
-	def size(s):
-		if s.parent is not None:
-			s._size=s.parent._size
-		return s._size
 
-	@property
-	def location(s):
-		if s.parent is not None:
-			s._location=s.parent.location+Coord(1,1)
-		loc=s._location
-		if loc is None:
-			loc=s.term.cursor.xy
-		return loc
-	@location.setter
-	def location(s,value):
-		s._location=value
 	@property
 	def direction(s):
 		return s._direction
@@ -321,7 +327,7 @@ class MenuBase(metaclass=ABCMeta):
 			draw+=[s.menu]
 		for d in draw[::-1]:
 			print(d)
-		s.state=1
+		s._state=1
 
 	def choose(s):
 		item=s.item

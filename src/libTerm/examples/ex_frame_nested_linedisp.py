@@ -8,9 +8,9 @@ from libTerm.modules.class_context import  Context
 
 async def DEMODATA(f):
 	from random import randint
-	for i in range(1, 1500):
+	for i in range(1, 1500000):
 		f.display.print(''.join([f'abcdefghijklmnopqrstuvwxyz '[randint(0, 26)] for i in range(randint(1, 150))]))
-		await asyncio.sleep(randint(0,100)/1000)
+		await asyncio.sleep(randint(0,100)/100000)
 
 
 
@@ -27,14 +27,14 @@ def setControls(ctx,control):
 		return fn.get(func)
 	def frame(func,val):
 		def movex(*a):
-			ctx.frame.location=ctx.frame.location+Coord(val,0)
+			ctx.frame.move(Coord(val,0))
 		def movey(*a):
-			ctx.frame.location=ctx.frame.location+Coord(0,val)
+			ctx.frame.move(Coord(0,val))
 		fn={'movex':movex,
 			'movey':movey}
 		return fn.get(func)
 
-	control.regkey('\t',ctx.focusnext)
+	control.regkey('\t',ctx.focusNext)
 	control.regkey(CSI+'B',disp('scroll',+1))
 	control.regkey(CSI+'A',disp('scroll',-1))
 	control.regkey(CSI+'F',disp('scroll',0))
@@ -75,37 +75,28 @@ def main(term):
 	loop = asyncio.new_event_loop()
 	asyncio.set_event_loop(loop)
 	ctx=Context(term,loop)
-	import time
-	firstframe=Frame(ctx,term=term,
-				  name='frm_First',
+	ctx.addFrame(name='frm_First',
 				  location=Coord(1,1),
-				  size=Coord(term.size.xy.x,term.size.xy.y),
+				  size=Coord(term.size.xy.x//2 or 80,term.size.xy.y//2 or 10),
 				  )
-	print(repr(firstframe.framestr))
-	time.sleep(3)
-	secondframe=Frame(ctx,term=term,
-				  name='frm_Second',
-				  location=Coord(90, 5),
-				  size=Coord(80, 15),
+	ctx.addFrame(name='frm_Second',
+				  location=Coord(1, term.size.xy.y//2),
+				  size=Coord(term.size.xy.x//2 or 80, term.size.xy.y//2-2),
 				  )
 
-	did=secondframe.addDisplay('demo',LineDisplay)
-	did=firstframe.addDisplay('demo',LineDisplay)
-	id2=ctx.addFrame(secondframe)
-	id1=ctx.addFrame(firstframe)
-	firstframe.selectDisplay(did)
-	secondframe.selectDisplay(did)
+
+	did=ctx.frm_First.addDisplay('demo1',LineDisplay)
+	did=ctx.frm_Second.addDisplay('demo2',LineDisplay)
+	# firstframe.selectDisplay(did)
+	# secondframe.selectDisplay(did)
 	# secondframe.draw()
 	# firstframe.draw()
-	secondframe.display.show(True)
-	firstframe.display.show(True)
-	ctx.enablteeControls(True)
-	setControls(ctx, ctx.controls)
-	ctx.loop.1(DEMODATA(secondframe))
-	ctx.loop.create_task(DEMODATA(firstframe))
-	ctx.loop.run_forever()
 
-	ctx.frames[id1].focus()
+	ctx.enableControls(True)
+	setControls(ctx, ctx.controls)
+	ctx.loop.create_task(DEMODATA(ctx.frm_First))
+	ctx.loop.create_task(DEMODATA(ctx.frm_Second))
+	ctx.loop.run_forever()
 
 
 

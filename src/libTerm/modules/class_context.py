@@ -2,6 +2,7 @@
 import asyncio
 
 from libTerm.modules.class_controls import Controls
+from libTerm.modules.class_frame import Frame
 from libTerm import Coord
 class Context():
 	def __init__(s,term,loop=None,name=None):
@@ -10,13 +11,18 @@ class Context():
 		s.name=name
 		s._frames={}
 		s._spacefill=[]
-		s.fid=0
-		s.focusid=0
+		s._frameid=0
+		s._idcount=0
+		s._focusid=0
 		s.frame=None
 		s.controls=None
 		s._location=Coord(1,1)
 		s._size=Coord(*s.term.size.xy)
 		s._show=False
+
+	def _mkframeid(s):
+		s._idcount+=1
+		return s._idcount
 
 	def enableControls(s,state):
 		if state:
@@ -24,36 +30,34 @@ class Context():
 		else:
 			s.controls=None
 
-	def addFrame(s,frame):
-		fid=len(s._frames)+1
-		s._frames[fid]=frame
-		if fid>0 and s.focusid==0:
-			s.focusid=1
-			s._frames[1].focus()
-		if s.frame is None:
-				s.frame=frame
-		return fid
+	def addFrame(s,**k):
+		fid=s._mkframeid()
+		frm=Frame(s, **k)
+		s.__setattr__(k.get('name'),frm)
+		s._frames[fid]=frm
+		if s._focusid==0:
+			s.focusFrame(fid)
+		frm.show(True)
+		return frm
 
-	def selectFrame(s,n=1):
-		s.frame=s._frames.get(n)
-		if s.frame is not None:
-			s.frame.focus(True)
-			s.frame.draw()
-			s.focusid=n
-
-	def focusnext(s,*a):
+	def focusFrame(s,frameid):
+		frameid=frameid%(s._idcount+1)
 		if s.frame is not None:
 			s.frame.focus(False)
-		s.focusid+=1
-		if s.focusid>len(s._frames):
-			s.focusid=0
-		s.selectFrame(s.focusid)
+		s.frame=s._frames.get(frameid)
+		if frameid !=0:
+			s.frame.focus(True)
+			s._frameid=frameid
+		s._focusid=frameid
 
-	def show(s):
-		if s._show is False:
-			s._show=True
-			for f in s._frames:
-				s._frames[f].show()
+	def focusNext(s,*a):
+		s.focusFrame(s._focusid+1)
+
+	def show(s,state=True):
+		s._show=state
+		for f in s._frames:
+			s._frames[f].show(state)
+
 	def ExitProcedure(s):
 		s.term.mode = s.term.MODE.DEFAULT
 		s.term.buffer = s.term.BUFFER.DEFAULT

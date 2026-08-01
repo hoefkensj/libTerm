@@ -67,105 +67,66 @@ class Frame:
 		s.symbolset=SymbolSet(*'╭╮│─╰╯┬┴├┤┌┐└┘')
 		s.clearset=SymbolSet()
 		s.ctx=ctx
-		s.term=k.get('term',k.get('t',getattr(s.ctx, 'term',None)))
+		s.term=k.get('term',k.get('term',getattr(s.ctx, 'term',None)))
 		s.name=k.get('name')
-		s.title=k.get('title',s.maketitle())
+		s.title=k.get('title',s._makeTitle())
 		s.border=k.get('border',True)
 		s.linenrs=k.get('linenrs',True)
-
 		s.subtitle='{SUBTITLE}'
-
-
-		s._draw=0
+		s._state=0
 		s._location=None
 		s._size=None
 		s._focus=False
 		s._hidden=False
-
-
 		s.lines={}
-
 		s.displays={}
 		s.display=None
-
-		s.location=k.get('location')
-
+		s.location=k.get('location',Coord(1,1))
 		s._setsize=k.get('size')
 		s.size=k.get('size')
-
-
-		s.framestr=''
-		s.framestr_clear=''
-		s.framewipelst=[]
-
-
-
+		s.str={}
+		s.str['frame']=''
+		s.str['clear']=''
+		s.str['wipe']=''
+		s.lst={}
+		s.lst['wipe']=[]
+		s.lst['border']={}
 
 		s.tpl={}
+		s.tpl['LINE']='{{XY}}{BG}{FG}{{LINE}}'
 		s.tpl['BORDER']={}
 		s.tpl['BORDER']['TOP']='{{XY}}{MKUP}{LTC}'+'{HL}'*(s.size.x-2)+'{RTC}{{RESET}}'
 		s.tpl['BORDER']['MID']= ['{{XYL}}{MKUP}{VL}{{RESET}}','{{XYR}}{MKUP}{VL}{{RESET}}',]
 		s.tpl['BORDER']['BOT']='{{XY}}{MKUP}{LBC}'+'{HL}'*(s.size.x-2)+'{RBC}{{RESET}}'
-		s.tpl['BORDERS']={}
-		s.tpl['CLEAR']={}
-		s.tpl['LINE']='{{XY}}{BG}{FG}{{LINE}}'
 		s.tpl['BUFFER']={}
+		s.tpl['BORDERS']={}
 		s.tpl['BORDERS'][1] = s.tpl['BORDER']['TOP'].format(**s.symbolset._asdict(),MKUP='{BG}{FG}')
 		s.tpl['BORDERS'][2] = s.tpl['BORDER']['MID'][0].format(**s.symbolset._asdict(), MKUP='{BG}{FG}')
 		s.tpl['BORDERS'][3] = s.tpl['BORDER']['MID'][1].format(**s.symbolset._asdict(), MKUP='{BG}{FG}')
 		s.tpl['BORDERS'][4] = s.tpl['BORDER']['BOT'].format(**s.symbolset._asdict(),MKUP='{BG}{FG}')
+		s.tpl['CLEAR']={}
 		s.tpl['CLEAR'][1] = s.tpl['BORDER']['TOP'].format(**s.clearset._asdict(),MKUP='{BG}{FG}')
 		s.tpl['CLEAR'][2] = s.tpl['BORDER']['MID'][0].format(**s.clearset._asdict(),MKUP='{BG}{FG}')
 		s.tpl['CLEAR'][3] = s.tpl['BORDER']['MID'][1].format(**s.clearset._asdict(),MKUP='{BG}{FG}')
-		s.tpl['CLEAR'][4] = s.tpl['BORDER']['BOT'].format(**s.symbolset._asdict(),MKUP='{BG}{FG}')
+		s.tpl['CLEAR'][4] = s.tpl['BORDER']['BOT'].format(**s.clearset._asdict(),MKUP='{BG}{FG}')
+		s.opts = {}
+		s.opts['MKUP']={}
+		s.opts['MKUP']['ACTIVE']={}
+		s.opts['MKUP']['ACTIVE']['BG']= ''
+		s.opts['MKUP']['ACTIVE']['FG']= ''
+		s.opts['MKUP']['ACTIVE']['RESET']='\x1b[m'
+		s.opts['MKUP']['ACTIVE']['UNSET']= Ansi.UNSET
+		s.opts['MKUP']['DEFAULT']={}
+		s.opts['MKUP']['DEFAULT']['BG']= ''
+		s.opts['MKUP']['DEFAULT']['FG']= ''
+		s.opts['MKUP']['DEFAULT']['RESET']='\x1b[m'
+		s.opts['MKUP']['DEFAULT']['UNSET']= Ansi.UNSET
+		s.opts['MKUP']['FOCUS']={}
+		s.opts['MKUP']['FOCUS']['BG']= ''
+		s.opts['MKUP']['FOCUS']['FG']= '\x1b[32m'
+		s.opts['MKUP']['FOCUS']['RESET']='\x1b[m'
+		s.opts['MKUP']['FOCUS']['UNSET']= Ansi.UNSET
 		# s.initspace()
-
-	def maketitle(s):
-		nosep=''
-		if isinstance(s.name,str):
-			noprefix=s.name.lstrip('frm')
-			nosep=noprefix.lstrip('_')
-		return nosep
-
-	def focus(s,val=None):
-		if val is None:
-			val=not s._focus
-		s._focus=val
-		s.makeFrame()
-		s.redraw()
-
-	def show(s,val=None):
-		if val is None:
-			val=not s._hidden
-		else:
-			val=not val
-		s._hidden=val
-		s.draw()
-
-	def makeFrame(s,LCR=None):
-		# print(s.symbolset._asdict())
-
-			# print(f'{i=}')
-		opts = {'BG': '', 'FG': '', 'RESET': '\x1b[m', 'UNSET': Ansi.UNSET}
-		if s.border:
-			if s._focus:
-				opts['FG']='\x1b[1m'
-			else:
-				opts['FG']=''
-
-			s.lines[1] =s.tpl['BORDERS'][1].format(XY=Coord(s.location.x,s.location.y),**opts)
-			for i in range(s.size.y):
-				s.lines[2+i]=(s.tpl['BORDERS'][2].format(XYL=Coord(s.location.x,s.location.y+1+i),**opts)+
-							  s.tpl['BORDERS'][3].format(XYR=Coord(s.location.x+s.size.x-1,s.location.y+1+i),**opts))
-				s.framewipelst+=[ s.tpl['CLEAR'][2].format(XYL=Coord(s.location.x, s.location.y+i), **opts)]
-				s.framewipelst+=[ s.tpl['CLEAR'][3].format(XYR=Coord(s.location.x+s.size.x-1, s.location.y+i), **opts)]
-			s.lines[len(s.lines)] = s.tpl['BORDERS'][4].format(XY=Coord(s.location.x, s.location.y + s.size.y-1), **opts)
-			for line in s.lines:
-				print(s.lines[line])
-			s.frame=''.join(s.lines.values())
-			s.framewipelst=[*s.framewipelst]
-			s.framestr_clear=''.join(s.framewipelst)
-
 	@property
 	def location(s):
 		return s._location
@@ -174,96 +135,114 @@ class Frame:
 		if not isinstance(value,Coord):
 			value=Coord(value)
 		s._location=value
-		for disp in s.displays:
-			s.displays[disp].location= s._location + Coord(2, 2)
-		if s._draw !=0 :
-			s.redraw()
-	def _displaylocation(s):
-		return s._location + Coord(2, 2)
 	@property
 	def size(s):
 		if s._size is None:
-			s._size-s.term.size.xy
+			s._size=s.term.size.xy
 		return s._size
 	@size.setter
 	def size(s,value):
 		s._size=value
 		for disp in s.displays:
 			s.displays[disp].size=s._size+Coord(-2,-2)
+		if s._state!=0:
+			s.makeFrame()
+	def _makeFrame(s):
+		opts=s.opts['MKUP']['ACTIVE']
+		locx=s.location.x
+		locy=s.location.y
+		s.lst['border'][1] =s.tpl['BORDERS'][1].format(XY=s.location,**opts)
+		s.lst['wipe'] += [s.tpl['CLEAR'][1].format(XY=s.location, **opts)]
 
-	def _displaysize(s):
-		return s._size+Coord(-2,-2)
+		for i in range(2,s.size.y-1):
+			s.lst['border'][i]=(s.tpl['BORDERS'][2].format(XYL=s.location+Coord(0,i-1),**opts)+
+							  s.tpl['BORDERS'][3].format(XYR=s.location+Coord(s.size.x-1,i-1),**opts))
+			s.lst['wipe']+=([ s.tpl['CLEAR'][2].format(XYL=s.location+Coord(0,i-1), **opts)]+
+							[' '*(s.size.x-2)]+
+							[ s.tpl['CLEAR'][3].format(XYR=s.location+Coord(s.size.x-1, i-1), **opts)])
+			j=i
+		s.lst['border'][j+1] = s.tpl['BORDERS'][4].format(XY=s.location+Coord(0, j), **opts)
+		s.lst['wipe'][j+1] = s.tpl['CLEAR'][4].format(XY=s.location+Coord(0, j), **opts)
+		s.frame=''.join(s.lst['border'].values())
+		s.lst['wipe']=[*s.lst['wipe']]
+		s.str['clear']=''.join(s.lst['wipe'])
+		s.str['frame']=''.join(s.lst['border'].values())
+	def _drawFrame(s):
+		print(s.str['frame'],end='',flush=True)
+	def _clearFrame(s):
+		print(s.str['clear'],end='',flush=True)
+	def _wipeFrame(s):
+		print(s.str['clear'],end='',flush=True)
 
+	def _makeTitle(s):
+		nosep=''
+		if isinstance(s.name,str):
+			noprefix=s.name.lstrip('frm')
+			nosep=noprefix.lstrip('_')
+		return nosep
+
+	def focus(s,val=True):
+		s._focus=val
+		if s._focus:
+			s.opts['MKUP']['ACTIVE']=s.opts['MKUP']['FOCUS']
+		else:
+			s.opts['MKUP']['ACTIVE']=s.opts['MKUP']['DEFAULT']
+		s._state=1
+		s.draw()
+	def show(s,val=True):
+		s._hidden=not val
+		for disp in s.displays:
+			s.displays[disp].show(val)
+		s._state=2
+		s.draw()
 	def draw(s):
+		if s._state==0:
+			s._makeFrame()
+		elif s._state==1:
+			s._clearFrame()
+			s._makeFrame()
+		elif s._state==2:
+			s._wipeFrame()
+			s._makeFrame()
 		if not s._hidden:
-			if s._draw==0:
-				s._draw=1
-				s.firstdraw()
-			else:
-				for disp in s.displays:
-					s.displays[disp].flag['redraw']=True
-					s.displays[disp].draw()
+			for disp in s.displays:
+				s.displays[disp].flag['redraw']=True
+				s.displays[disp].draw()
+			s._drawFrame()
+			s._state=3
 
-	def drawframe(s):
-		print(s.framestr,end='',flush=True)
 
-	def firstdraw(s):
-		if s.location and s.size :
-			s.makeFrame()
-			s.drawframe()
-			s.draw()
-
-	def redraw(s):
-		if s.location:
-			print(s.framestr_clear)
-			s.makeFrame()
-			s.draw()
-			s.drawframe()
-
-			# s.drawframe()
-			# s.draw()
-
-	def addDisplay(s,name,disp):
+	def addDisplay(s,name,disp,select=True):
 		did=len(s.displays)+1
-		s.displays[did]=disp(s,name)
-		return did
-
-	def selectDisplay(s,n=1):
-		s.display=s.displays.get(n)
-		s.display.show(True)
-		s.display.draw()
-
+		s.displays[did]=disp(s.ctx,s,name)
+		s.selectDisplay(did)
+		return s.displays[did]
 	def addMenu(s,menu,**opts):
 		# fg = Color(0, 196, 196)
 		# mycolors = ColorSet(fg=fg)
 		did=len(s.displays) + 1
 		s.displays[did]=menu(s, **opts)
 		s.selectDisplay(did)
-
-
+	def selectDisplay(s,n=1):
+		s.display=s.displays.get(n)
 
 	def print(s,line):
 		s.display.print(line)
-	def clear(s):
-		print(s._clear, end='', flush=True)
 
 	def move(s,location):
-		s.clear()
+		s._state=2
 		s.location=s.location+location
-		s.makeFrame()
 		s.draw()
+
 	def h_resize(s,val):
-		s.clear()
+		s._state=2
 		s.size=Coord(s.size.x+val,s.size.y)
-		s.makeFrame()
 		s.draw()
 
 	def v_resize(s,val):
-		s.clear()
+		s._state=2
 		s.size = Coord(s.size.x, s.size.y + val)
-		s.makeFrame()
 		s.draw()
-
 
 class FrameSet:
 

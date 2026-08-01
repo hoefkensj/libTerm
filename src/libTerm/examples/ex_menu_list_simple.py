@@ -1,13 +1,47 @@
 #!/usr/bin/env python
 import time,sys,os
-
+import asyncio
+from libTerm import Coord, Ansi
+from libTerm.modules.class_display import LineDisplay
+from libTerm.modules.class_frame import Frame
+from libTerm.modules.class_controls import Controls
+from libTerm.modules.class_context import  Context
 
 from libTerm import Term
 from libTerm import Coord,Color,ColorSet
 from libTerm.modules.class_menu import Menu
 import asyncio
 
+def setControls(ctx,control):
+	CSI=Ansi.CSI
+	def disp(func,val):
+		def next(*a):
+			ctx.frame.display.next()
+		def shift(*a):
+			ctx.frame.display.shift(val)
+		fn={'scroll':scroll,
+			'shift':shift
+			}
+		return fn.get(func)
+	def frame(func,val):
+		def movex(*a):
+			ctx.frame.move(Coord(val,0))
+		def movey(*a):
+			ctx.frame.move(Coord(0,val))
+		fn={'movex':movex,
+			'movey':movey}
+		return fn.get(func)
 
+	control.regkey('\t',ctx.focusNext)
+	control.regkey(CSI+'B',disp('next',+1))
+	control.regkey(CSI+'A',disp('prev',-1))
+	control.regkey(CSI+'F',disp('scroll',0))
+	control.regkey(CSI+'C',disp('shift',+1))
+	control.regkey(CSI+'D',disp('shift',-1))
+	control.regkey('4',frame('movex',-1))
+	control.regkey('6',frame('movex',+1))
+	control.regkey('8',frame('movey',-1))
+	control.regkey('2',frame('movey',+1))
 
 def Controls(term,M):
 	prev=''
@@ -35,6 +69,9 @@ def Controls(term,M):
 # 	return control
 #
 
+
+
+
 def main(term):
 	items = ['xxxx', 'xxxx', 'yyyy', 'dasdf', 'dasdf', 'erwrsdd', 'sdf', 'pppfpf']
 	theme=ColorSet(Color(192,192,0))
@@ -42,8 +79,31 @@ def main(term):
 	M.draw()
 	loop = asyncio.new_event_loop()
 	asyncio.set_event_loop(loop)
-	loop.add_reader(term.tty.input.fd, Controls(term,M))
-	loop.run_forever()
+	ctx=Context(term,loop)
+	ctx.addFrame(name='frm_First',
+				  location=Coord(1,1),
+				  size=Coord(term.size.xy.x//2 or 80,term.size.xy.y//2 or 10),
+				  )
+	ctx.addFrame(name='frm_Second',
+				  location=Coord(1, term.size.xy.y//2),
+				  size=Coord(term.size.xy.x//2 or 80, term.size.xy.y//2-2),
+				  )
+
+
+	did=ctx.frm_First.addDisplay('demo1',LineDisplay)
+	did=ctx.frm_Second.addDisplay('demo2',LineDisplay)
+	# firstframe.selectDisplay(did)
+	# secondframe.selectDisplay(did)
+	# secondframe.draw()
+	# firstframe.draw()
+
+	ctx.enableControls(True)
+	setControls(ctx, ctx.controls)
+	ctx.loop.create_task(DEMODATA(ctx.frm_First))
+	ctx.loop.create_task(DEMODATA(ctx.frm_Second))
+	ctx.loop.run_forever()
+
+
 
 if __name__ == '__main__':
 	import atexit
@@ -57,7 +117,10 @@ if __name__ == '__main__':
 	t.mode=t.MODE.CONTROL
 	t.buffer = t.BUFFER.ALTERNATE
 	t.ANSI.cls()
+
 	atexit.register(ExitProcedure,t)
+
 	main(t)
+
 
 

@@ -168,15 +168,16 @@ class LineDisplay:
 	charakters can be accessed in scroll mode by moving the viewport right
 
 	"""
-	def __init__(s,parent,name,linenrs=True):
+	def __init__(s,ctx=None,parent=None,name=None,linenrs=True,**k):
+		s.ctx=ctx
 		s.parent=parent
 		s.term=s.parent.term
 		s.name=name
 		s.linenrs=linenrs
 		s.flag={'redraw':False,}
 		s.wrapsyms='⟪«‹… …›»⟫'
-		s._location= s.parent.location + Coord(2, 2)
-		s._size= s.parent.size + Coord(-2,-2)
+		s._location=None
+		s._size= None
 		s._scroll=False
 		s._shift=False
 		s._hidden=False
@@ -185,7 +186,7 @@ class LineDisplay:
 		s.v_viewrng=ViewRange(1,s.size.y)
 		s.h_viewrng=ViewRange(1,s.size.x)
 		s.data_lines={}
-
+		s._longest=s.size.x
 		s.data_idx=0
 		s.linecount=lambda :s.data_idx
 		s.print_buffer={}
@@ -203,6 +204,7 @@ class LineDisplay:
 		return s.data_lines.values()
 	@property
 	def location(s):
+		s._location=s.parent.location + Coord(2, 2)
 		return s._location
 
 	@location.setter
@@ -212,6 +214,7 @@ class LineDisplay:
 
 	@property
 	def size(s):
+		s._size= s.parent.size + Coord(-2,-3)
 		return s._size
 
 	@size.setter
@@ -260,13 +263,9 @@ class LineDisplay:
 		s.initspace()
 		s.render()
 
-	def show(s,val=None):
-		if val is None:
-			val=not s._hidden
-		else:
-			val=not val
-		s._hidden=val
-		s.updateview()
+	def show(s,val=True):
+		s._hidden=not val
+		s.draw()
 
 	def make_linebuffer(s):
 		xy = f'\x1b[{{Y}};{s.location.x}H'
@@ -332,7 +331,11 @@ class LineDisplay:
 		if not s._hidden:
 			for idx in s.print_buffer:
 				print(s.print_buffer[idx])
-
+	def extendlines(s):
+		for line in s.data_lines.values():
+			if len(line['data']) < s._longest:
+				line['data'].ljust(s._longest)
+				line['crop']=s.crop(line['data'])
 	def crop(s,line):
 		def cropped(adjust=0):
 			start  =s.h_viewrng.start
@@ -356,6 +359,10 @@ class LineDisplay:
 
 	def addline(s,line):
 		s.data_idx+=1
+		longest=s._longest
+		s._longest=s._longest if len(line) <= s._longest else len(line)
+		if longest != s._longest:
+			s.extendlines()
 		s.data_lines[s.data_idx]={'data':line,'crop':s.crop(line)}
 		if not s._scroll:
 			s.v_viewrng.stop=s.data_idx
