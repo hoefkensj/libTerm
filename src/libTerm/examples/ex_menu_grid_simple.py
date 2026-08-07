@@ -51,7 +51,7 @@ def Controls(term,M):
 def makeMenu(term,items):
 	fg=Color(0,196,196)
 	mycolors=ColorSet(fg=fg)
-	M=Grid(term,items ,location=Coord(10,10),maxheight=5,colors=mycolors)
+	M=Grid(term=term,items=items ,location=Coord(10,10),maxheight=5,colors=mycolors)
 	M.draw()
 	return M
 
@@ -63,9 +63,10 @@ def main(term):
 	frm.size=Coord(200,20)
 	frm.show(True)
 
-	menu=makeMenu(term,items)
-	frm.addDisplay('menu',Grid)
-	frm.selectDisplay()
+	fg=Color(0,196,196)
+	mycolors=ColorSet(fg=fg)
+
+	frm.addMenu(Grid,items=items,location=Coord(10,10),maxheight=5,colors=mycolors)
 	for item in items:
 		frm.display.addItem(item)
 	print(str(frm.display))

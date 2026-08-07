@@ -68,25 +68,29 @@ class Formatting:
 		return sum([len(getattr(s,at)) for at in dir(s) if at.startswith('pad') or at.startswith('sep')])
 
 class MenuItem:
-	def __init__(s,menu,name,id=None,nr=None,label=None,**k):
+	def __init__(s,menu=None,ctx=None,name=None,id=None,nr=None,label=None,**k):
+		s.ctx=ctx
 		s.menu=menu
-		s.id=id or s.menu.newid()
-		s.nr = nr or s.id
-		s._fmt=k.get('fmt',Formatting())
-		s.tplitem='{LOC}'+s._fmt.tpl_item
-		s._label=None
 		s.name=name
-		s.label=label or name
+		s.tpl='{PADPRE}{LABEL}{PADPOST}{RESET}'
+		s._state=0
+		s._label=None
 		s._show=True
-		s.state=0
-		s.callback=[s.defaultcb]
-		s.markup=s.menu._theme
-		s.location=None
-		s.string=''
+		s._focus=False
+		s._selected=False
+		s._onfocus=[]
+		s._onselect=[]
+		s._callback=[s.defaultcb]
+		s._string=''
 
+
+	def focus(s,state=True):
+		s._focus=state
 
 	def width(s, part):
-		return s.menu._maxw.get(part)
+		if s.menu:
+			s.menu._maxw.get(part)
+		return len(s.name)
 
 	def fmt(s,part):
 		return getattr(s.menu._fmt,part)
@@ -118,14 +122,15 @@ class MenuItem:
 		s._label=value
 	def hide(s,state=True):
 		s._show=not state
-	def show(s,state):
+	def show(s,state=True):
 		s._show=state
 	def defaultcb(s):
 		return s.nr,s.name
 
 	def safestring(s):
 		return str(s._label).replace('{', '{{').replace('}', '}}')
-
+	def draw(s):
+		print(str(s))
 	def __len__(s):
 		return len(str(s))
 
@@ -163,18 +168,19 @@ class MenuItem:
 		'MOD'     : '\x1b[1;7m' if s.state==1 else '\x1b[m',
 		'NOMKUP'  : '\x1b[0m'
 		}
-		s.string= s.tplitem.format(NR=nr,LABEL=label,**val)
+		s.string= s._tplitem.format(NR=nr,LABEL=label,**val)
 		return s.string
 
 	def __call__(s):
 		for call in s.callback:
 			call()
 
+
 class MenuBase(metaclass=ABCMeta):
 	def __init__(s,ctx=None,parent=None,*a,**k):
 		s.ctx = ctx
 		s.parent = k.get('parent')
-		s.term =k.get('term', s.ctx.term)
+		s.term =k.get('term', None)
 		s.name=k.get('name')
 		s._state=None
 		s.flag={'redraw': False,'stop':False, 'init':True,'show':True}
@@ -256,7 +262,7 @@ class MenuBase(metaclass=ABCMeta):
 
 	def addItem(s,item):
 		id=s.newid()
-		menuitem=MenuItem(s,item,id=id,fmt=s._fmt)
+		menuitem=MenuItem(s,ctx=s.ctx,name=item,id=id,fmt=s._fmt)
 		lenlabel=len(menuitem.safestring())
 		s._maxw['label']=max([s._maxw['label'],lenlabel])
 		s._maxw['num']=len(str(len(s)))
@@ -264,15 +270,12 @@ class MenuBase(metaclass=ABCMeta):
 		s._maxw['item']=sum([s._maxw['label'],s._maxw['num'],len(s._fmt)])
 		s._items[id]=menuitem
 		s.selector.expand(1)
-		if s._state is not None:
-			s.flag['redraw']=True
-			# s._build_()
-			# s.draw()
+
 
 	def show(s,state=True):
 		s.flag['show']=state
 		for item in s._entries:
-			s._entries[item].show()
+			s._entries[item].show(True)
 
 	def select(s,nr):
 		if  s.__len__() != 0:
@@ -313,21 +316,7 @@ class MenuBase(metaclass=ABCMeta):
 
 	def draw(s):
 		draw=[]
-		update=s.update()
-		if  update is not None:
-			draw+=[update]
-			s._update=None
-		if s.flag.get('redraw',False) :
-			s.flag['redraw']=False
-			s._build_()
-			draw+=[s.menu]
-		if s.flag.get('init'):
-			s.flag['init']=False
-			s._build_()
-			draw+=[s.menu]
-		for d in draw[::-1]:
-			print(d)
-		s._state=1
+
 
 	def choose(s):
 		item=s.item
@@ -447,7 +436,7 @@ class Row:
 		return ''.join(str(item) for item in s._items)
 class Grid(MenuBase):
 
-	def __init__(s,parent,*a,**k):
+	def __init__(s,ctx=None,parent=None,*a,**k):
 		"""
 
 		:param term: instance of libTerm.Term
@@ -458,7 +447,7 @@ class Grid(MenuBase):
 		:param fgcolor:
 		:param bgcolor:
 		"""
-		super().__init__(parent,*a,**k)
+		super().__init__(parent=parent,ctx=ctx,*a,**k)
 		s.cols={}
 		s.rows={}
 		s.stop = False
@@ -611,7 +600,8 @@ class Grid(MenuBase):
 		s.move_vertical(1)
 
 
-
+g=Grid()
+print(g)
 
 # from libTerm import Term
 # items=['xxxx','xxxx','yyyy','dasdf','dasdf','erwrsdd','sdf','pppfpf']

@@ -148,14 +148,14 @@ default_markup.line.default=Markup('default')
 default_markup.line.default.colors=ColorSet(fg=Color(160,160,160),bg=Color(16,16,16))
 default_markup.line.default.mkup=''
 default_markup.line.selected=Markup('selected')
-default_markup.line.selected.colors=ColorSet(fg=Color(255,255,255),bg=Color(64,192,64))
+default_markup.line.selected.colors=ColorSet(fg=Color(160,160,160),bg=Color(64,192,64))
 default_markup.line.selected.mkup='\x1b[7m'
 default_markup.lnr=Markup('lnr')
 default_markup.lnr.default=Markup('default')
 default_markup.lnr.default.colors=ColorSet(fg=Color(128,128,128),bg=Color(64,64,64))
 default_markup.lnr.default.mkup=''
 default_markup.lnr.selected=Markup('selected')
-default_markup.lnr.selected.colors=ColorSet(fg=Color(255,255,255),bg=Color(64,192,64))
+default_markup.lnr.selected.colors=ColorSet(fg=Color(160,160,160),bg=Color(64,192,64))
 default_markup.lnr.selected.mkup=''
 
 
@@ -346,7 +346,7 @@ class LineDisplay:
 			if crop.strip(' ')=='':
 				suffix=' '
 			if start > 1:
-				prefix=' \x1b[38;2;64;192;64m…\x1b[39m'
+				prefix='\x1b[38;2;64;192;64m… \x1b[39m'
 				l=prefix+l[1:]
 
 			if suffix:
@@ -366,7 +366,7 @@ class LineDisplay:
 		s.data_lines[s.data_idx]={'data':line,'crop':s.crop(line)}
 		if not s._scroll:
 			s.v_viewrng.stop=s.data_idx
-			print('\x1b[2;1H',s.data_idx,s.v_viewrng)
+			# print('\x1b[2;1H',s.data_idx,s.v_viewrng)
 		if s.data_idx > s.size.y:
 			s.overflow=True
 

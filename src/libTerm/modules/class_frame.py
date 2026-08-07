@@ -89,7 +89,7 @@ class Frame:
 		s.str['clear']=''
 		s.str['wipe']=''
 		s.lst={}
-		s.lst['wipe']=[]
+		s.lst['wipe']={}
 		s.lst['border']={}
 
 		s.tpl={}
@@ -139,6 +139,8 @@ class Frame:
 	def size(s):
 		if s._size is None:
 			s._size=s.term.size.xy
+		if s._size.y < 3:
+			s._size =  Coord(s._size.x,3)
 		return s._size
 	@size.setter
 	def size(s,value):
@@ -152,20 +154,19 @@ class Frame:
 		locx=s.location.x
 		locy=s.location.y
 		s.lst['border'][1] =s.tpl['BORDERS'][1].format(XY=s.location,**opts)
-		s.lst['wipe'] += [s.tpl['CLEAR'][1].format(XY=s.location, **opts)]
-
+		s.lst['wipe'][1] = s.tpl['CLEAR'][1].format(XY=s.location, **opts)
+		j=0
 		for i in range(2,s.size.y-1):
 			s.lst['border'][i]=(s.tpl['BORDERS'][2].format(XYL=s.location+Coord(0,i-1),**opts)+
 							  s.tpl['BORDERS'][3].format(XYR=s.location+Coord(s.size.x-1,i-1),**opts))
-			s.lst['wipe']+=([ s.tpl['CLEAR'][2].format(XYL=s.location+Coord(0,i-1), **opts)]+
-							[' '*(s.size.x-2)]+
-							[ s.tpl['CLEAR'][3].format(XYR=s.location+Coord(s.size.x-1, i-1), **opts)])
+			s.lst['wipe'][i]=( s.tpl['CLEAR'][2].format(XYL=s.location+Coord(0,i-1), **opts)+
+							' '*(s.size.x-2)+
+							 s.tpl['CLEAR'][3].format(XYR=s.location+Coord(s.size.x-1, i-1), **opts))
 			j=i
 		s.lst['border'][j+1] = s.tpl['BORDERS'][4].format(XY=s.location+Coord(0, j), **opts)
 		s.lst['wipe'][j+1] = s.tpl['CLEAR'][4].format(XY=s.location+Coord(0, j), **opts)
 		s.frame=''.join(s.lst['border'].values())
-		s.lst['wipe']=[*s.lst['wipe']]
-		s.str['clear']=''.join(s.lst['wipe'])
+		s.str['clear']=''.join(s.lst['wipe'].values())
 		s.str['frame']=''.join(s.lst['border'].values())
 	def _drawFrame(s):
 		print(s.str['frame'],end='',flush=True)
@@ -214,7 +215,7 @@ class Frame:
 
 	def addDisplay(s,name,disp,select=True):
 		did=len(s.displays)+1
-		s.displays[did]=disp(s.ctx,s,name)
+		s.displays[did]=disp(ctx=s.ctx,parent=s,name=name)
 		s.selectDisplay(did)
 		return s.displays[did]
 	def addMenu(s,menu,**opts):

@@ -14,34 +14,16 @@ import asyncio
 
 def setControls(ctx,control):
 	CSI=Ansi.CSI
-	def disp(func,val):
-		def next(*a):
-			ctx.frame.display.next()
-		def shift(*a):
-			ctx.frame.display.shift(val)
-		fn={'scroll':scroll,
-			'shift':shift
-			}
-		return fn.get(func)
-	def frame(func,val):
-		def movex(*a):
-			ctx.frame.move(Coord(val,0))
-		def movey(*a):
-			ctx.frame.move(Coord(0,val))
-		fn={'movex':movex,
-			'movey':movey}
-		return fn.get(func)
-
 	control.regkey('\t',ctx.focusNext)
-	control.regkey(CSI+'B',disp('next',+1))
-	control.regkey(CSI+'A',disp('prev',-1))
-	control.regkey(CSI+'F',disp('scroll',0))
-	control.regkey(CSI+'C',disp('shift',+1))
-	control.regkey(CSI+'D',disp('shift',-1))
-	control.regkey('4',frame('movex',-1))
-	control.regkey('6',frame('movex',+1))
-	control.regkey('8',frame('movey',-1))
-	control.regkey('2',frame('movey',+1))
+	control.regkey(CSI+'B',ctx.frame.display.next)
+	control.regkey(CSI+'A',ctx.frame.display.prev)
+	control.regkey(CSI+'F',ctx.frame.display.scroll,0)
+	control.regkey(CSI+'C',ctx.frame.display.shift,+1)
+	control.regkey(CSI+'D',ctx.frame.display.shift,-1)
+	control.regkey('4',ctx.frame.move,Coord(-1,0))
+	control.regkey('6',ctx.frame.move,Coord(+1,0))
+	control.regkey('8',ctx.frame.move,Coord(0,-1))
+	control.regkey('2',ctx.frame.move,Coord(0,+1))
 
 def Controls(term,M):
 	prev=''

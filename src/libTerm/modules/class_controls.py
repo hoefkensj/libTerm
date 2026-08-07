@@ -14,6 +14,8 @@ class Controls:
 		s.sets = []
 		s.keyin=None
 		s.seqin=[]
+		s.args={}
+		s.kwargs={}
 
 		s.event=None
 		s.partial = False
