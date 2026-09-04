@@ -135,6 +135,8 @@ class Frame:
 		if not isinstance(value,Coord):
 			value=Coord(value)
 		s._location=value
+		for disp in s.displays:
+			s.displays[disp].location=s._location
 	@property
 	def size(s):
 		if s._size is None:
@@ -207,11 +209,10 @@ class Frame:
 			s._makeFrame()
 		if not s._hidden:
 			for disp in s.displays:
-				s.displays[disp].flag['redraw']=True
+				s.displays[disp].state=s._state
 				s.displays[disp].draw()
 			s._drawFrame()
 			s._state=3
-
 
 	def addDisplay(s,name,disp,select=True):
 		did=len(s.displays)+1
@@ -229,6 +230,8 @@ class Frame:
 
 	def print(s,line):
 		s.display.print(line)
+	def printto(s,display,line):
+		s.displays[display].print(line)
 
 	def move(s,location):
 		s._state=2

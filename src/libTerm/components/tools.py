@@ -29,3 +29,17 @@ def COLparser(stdin):
 		print(repr(buf),rgb)
 		return rgb
 	return parser
+
+
+def Cascade(fail=None,*a):
+	result=None
+	for item in a:
+		try:
+			probe=item()
+			if probe  is not fail:
+				result=item
+		except Exception:
+			result=fail
+		if result is not fail:
+			break
+	return result

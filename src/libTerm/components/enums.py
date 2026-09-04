@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from enum import IntEnum,StrEnum
+from enum import IntEnum,StrEnum,IntFlag
 
 class Mode(IntEnum):
 	NONE	= 0
@@ -72,7 +72,18 @@ class Ansi(StrEnum):
 	ALTBUF  = CSI+'?1049h'
 	COLFG   = OSC+'10;?\a'
 	COLBG   = OSC+'11;?\a'
+	RESET   = CSI+'m'
+	BOLD    = CSI+'1m'
+	DIM     = CSI+'2m'
+	ITALIC  = CSI+'3m'
+	UNDLIN  = CSI+'4m'
+	SBLINK  = CSI+'5m'
+	FBLINK  = CSI+'6m'
 	COLSWP	= CSI+'7m'
+	STRIKE  = CSI+'9m'
+	DUNDLIN = CSI+'21m'
+	UNBOLD  = CSI+'22m'
+	UNITALIC= CSI+'23m'
 	COLUNSWP= CSI+'27m'
 	UNSET   = CSI+'39m'
 
@@ -93,8 +104,8 @@ class Ansi(StrEnum):
 
 		return parsers.get(ret)
 
-	def __call__(self, *args, **kwargs):
-		print(self.value, end='', flush=True)
+	def __call__(s, *a, **k):
+		print(s.value, end='', flush=True)
 
 
 class Move(StrEnum):
@@ -126,3 +137,19 @@ class Move(StrEnum):
 			result=s.value.format(CSI=CSI,N=N)
 		return result
 
+class DrawState(IntFlag):
+	NONE      = 1
+	DEFAULT   = 1
+	INIT     = 2
+	CLEAR     = 4
+	WIPE      = 8
+	BUILD     = 16
+	REBUILD   = 32
+	UPDATE    = 64
+	DRAW      = 128
+
+# a=DrawState(1)
+# a^=a.UPDATE|a.DRAW|a.NONE
+# print(a.__dict__)
+# b=a.CLEAR|a.BUILD|a.DEFAULT
+# print(a.FIRST in b)

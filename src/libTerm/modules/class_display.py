@@ -1,7 +1,9 @@
 #!/usr/bin/env python
-from libTerm import Coord,Colors
+from libTerm import Coord,Colors,Ansi
 from libTerm import Term
-from libTerm.components import enums
+from libTerm.components.enums import DrawState
+from abc import ABCMeta, abstractmethod
+
 
 # class LineDisplay:
 # 	def __init__(s, ctx, pkg, location, size):
@@ -89,7 +91,6 @@ from libTerm.components import enums
 # 			for l, line in enumerate(s.data[s.viewrange[1]:s.viewrange[0]]):
 # 				print(s.linetpl.format(Y=s.loc.y + s.size.y - l, LINE=s.crop(line)), end='', flush=True)
 #
-
 class ViewRange():
 	def __init__(s,start,size):
 		s._start=start
@@ -139,6 +140,49 @@ class Markup():
 	def get(s,*props):
 		return '\x1b['+';'.join([s.__getattribute__(prop) for prop in props])+'m'
 
+class TemplateSet:
+	def __init__(s,):
+		s._location='{XY}'
+		s._markups={'HL':'{HL}{DATA}{NOHL}','FG':'{FG}{DATA}{NOFG}','BG':'{BG}{DATA}{NOBG}','UL':'{UL}{DATA}{NOUL}'}
+		s._controls={'SEL':'{SEL}{DATA}{SEL}','FOC':'{FOC}{DATA}{FOC}','PIC':'{PIC}{DATA}{PIC}','CNF':'{CNF}{DATA}{CNF}'}
+		s._markup='{MKUP}'
+		s._demarkup='DMKUP'
+		s._control='{CTRL}'
+		s._decontrol='{DCTRL}'
+		s._prefix='{PREFIX}'
+		s._leftpad='{LPAD}'
+		s._rightpad='{RPAD}'
+		s._data='{DATA}'
+		s._suffix='{SUFFIX}'
+		s._end='{RESET}'
+	def apply_mkup(s,item,markup=None):
+		if markup=='all'|markup is None:
+			for mkup in s.markups:
+				item=s.apply_mkup(item,mkup)
+			else:
+				item=s.markups[markup].format(data=item)
+		return item
+	def apply_ctrl(s,item,control=None):
+		if control=='all'| control is None:
+			for ctrl in s.markups:
+				item=s.apply_control(item,ctrl)
+			else:
+				item=s.controls[control].format(data=item)
+		return item
+
+
+
+	def enable(s,):
+	def __str__(s):
+		return '{LOC}{CTRL}{PREFIX}{DATA}{SUFFIX}{END}'.format(**s)
+	def __dict__(s):
+		return {'LOC':s.location,
+		'CTRL':s.control,
+		'PREFIX':s.markup+s.prefix+s.demarkup,
+		'DATA':s.markup+s.data+s.demarkup,
+		'SUFFIX':s.markup+s.suffix+s.demarkup,
+		'END':s.end	}
+
 ColorSet=Colors.Set
 Color=Colors.Color
 
@@ -158,8 +202,82 @@ default_markup.lnr.selected=Markup('selected')
 default_markup.lnr.selected.colors=ColorSet(fg=Color(160,160,160),bg=Color(64,192,64))
 default_markup.lnr.selected.mkup=''
 
+from libTerm.components.tools import Cascade
+class DisplayBase(metaclass=ABCMeta):
+	STATE=DrawState
+	def __init__(s, ctx=None, parent=None,*a, **k):
+		s.ctx=ctx
+		s.parent=parent
+		s.hasparent=True if parent is not None else False
+		s.term=Cascade(
+		            None,
+		            lambda:k.get('term'),
+					   lambda:s.parent.term,
+					   lambda:Term()
+		)
+		s.name=k.get('name',k.get('id'))
+		s.opts={}
+		s.opts['numbers']=False
+		s.opts['bullets']=False
+		s.opts['gutters']=False
+		s.opts['hidden']=False
+		s.opts['wrap']=False
+		s.opts['scroll']=False
+		s.tool={}
+		s.tool['symbols']={}
+		s.tool['symbols']['bullet']='⟪«‹… …›»⟫'
+		s.limits={}
+		s._location=None
+		s._size=None
+		s._overflow=False
+		s._scroll=False
+		s._shift=False
+		s._wrap=False
+		s._viewrange={}
+		s._viewrange['v']=ViewRange(1,40)
+		s._viewrange['h']=ViewRange(1,80)
+		s._count={}
+		s._flags={}
+		s._flags['drawstate']=DrawState(0)
+		s._data={}
+		s._cache={}
+		s._templates={}
+		s._templates['default']={}
+		s._buffers={}
+	@property
+	def drawflag(s):
+		return s._flags['drawstate']
+	@drawflag.setter
+	def drawflag(s, flags):
+		s._flags['drawstate']^=flags
+	@property
+	def location(s):
+		if s._location is None:
+			if s.hasparent:
+				s._location=s.parent.location+Coord(2,2)
+			else:
+				s._location=Coord(1,1)
+		return s._location
+	@location.setter
+	def location(s,val):
+		s._location=val+Coord(2, 2)
+		s.flags['drawstate']= s.STATE.WIPE | s.STATE.UPDATE | s.STATE.DRAW
+		s._draw()
+	@property
+	def size(s):
+		if s._size is None and s.parent is not None:
+			s._size=s.parent.size+Coord(-2,-3)
+		s.state=1
+		return s._size
 
-class LineDisplay:
+	@size.setter
+	def size(s,val):
+		s._size=val+Coord(-2,-3)
+		s.drawflag= flag.WIPE | flag.REBUILD | flag.DRAW
+		s.draw()
+
+
+class LineDisplay(DisplayBase):
 	"""
 	a line display that is framed of in size , and can be used to
 	print lines to. it fills the linebuffer untill full and then
@@ -168,61 +286,42 @@ class LineDisplay:
 	charakters can be accessed in scroll mode by moving the viewport right
 
 	"""
-	def __init__(s,ctx=None,parent=None,name=None,linenrs=True,**k):
-		s.ctx=ctx
-		s.parent=parent
-		s.term=s.parent.term
-		s.name=name
-		s.linenrs=linenrs
-		s.flag={'redraw':False,}
-		s.wrapsyms='⟪«‹… …›»⟫'
-		s._location=None
-		s._size= None
-		s._scroll=False
-		s._shift=False
-		s._hidden=False
-		s.overflow=False
-		s.wrap=False
-		s.v_viewrng=ViewRange(1,s.size.y)
-		s.h_viewrng=ViewRange(1,s.size.x)
-		s.data_lines={}
-		s._longest=s.size.x
-		s.data_idx=0
-		s.linecount=lambda :s.data_idx
-		s.print_buffer={}
-		s.mkup=default_markup
 
-		s.tpl={}
-		s.tpl['LINE']='{XY}{{LNR}}{BG}{FG}{{SEL}}{MKUP}{{LINE}}{UNSET}'
-		s.tpl['LNR']='{BG}{FG}{{SEL}}{MKUP}{{NR}}{UNSET}'
-		s.tpl['BUFFER']={}
-		s.make_linebuffer()
+	def __init__(s,ctx=None,parent=None,**k):
+		super().__init__(ctx=ctx,parent=parent,**k)
+		s._viewrange['v'] = ViewRange(1, 40)
+		s._viewrange['h'] = ViewRange(1, 80)
+		s._data['lines']={}
+		s._data['idx']=0
+		s._count['lines']=0
+		s._cache['longest_line']=0
+		s._buffers['print']={}
+		s.mkup=default_markup
+		s._templates['default']['LINE']={}
+		s._templates['default']['LINE']['LOC']='{XY}'
+		s._templates['default']['LINE']['CTRL']='{MODS}'
+		s._templates['default']['LINE']['PREFIX']='{MKUP}{LPAD}{{PREFIX}}{RPAD}'
+		s._templates['default']['LINE']['LINE']='{MKUP}{LPAD}{{LINE}}{RPAD}'
+		s._templates['default']['LINE']['SUFFIX']='{MKUP}{LPAD}{{SUFFIX}}{RPAD}'
+		s._templates['default']['LINE']['END']='{RESET}'
+		s._templates['default']['MODS']='{SEL}{FOC}{PIC}{CNF}'
+		s._templates['default']['MKUP']='{FG}{BG}{HL}{UL}'
+		s.drawflag=DrawState.INIT
+		s.draw()
+
 	def __len__(s):
-		return s.data_idx
+		return s._data['idx']
+	def _measure(s,line):
+		cur=s._cache['longest_line']
+		l=len(line)
+		if l > cur:
+			s._cache['longest_line'] = l
+			s.extendlines()
+
 	@property
 	def lines(s):
-		return s.data_lines.values()
-	@property
-	def location(s):
-		s._location=s.parent.location + Coord(2, 2)
-		return s._location
-
-	@location.setter
-	def location(s,val):
-		s._location=val
-		s.updateview()
-
-	@property
-	def size(s):
-		s._size= s.parent.size + Coord(-2,-3)
-		return s._size
-
-	@size.setter
-	def size(s,val):
-		s._size=val
-		s.updateview()
-
-	def printrng(s,xy):
+		return s._data['lines'].values()
+	def _printrange(s, xy):
 		x={}
 		y={}
 		x['start']=s.location.x
@@ -240,67 +339,65 @@ class LineDisplay:
 		:return:
 		"""
 		s.addline(line.rstrip("\n"))
-		s.update()
-		s.render()
+		s._flags['drawstate']=s.STATE.UPDATE
+		s.draw()
 
 	def initspace(s):
 		# s.printrng('y')
-		if s._hidden is False:
-			for l in range(1,s.size.y):
-				line = s.tpl['BUFFER'][l]
-				wipe = ' ' * (s.size.x-4)
-				gutter=s.tpl['LNR'].format(
-					SEL='',
-					NR='',
-					UNSET='\x1b[29m',
-					FG=s.mkup.lnr.default.colors.fg.ansifg,
-					BG=s.mkup.lnr.default.colors.bg.ansibg,
-					MKUP=s.mkup.lnr.default.mkup).format(SEL='', NR='    ')
-				print(line['LINE'].format(SEL='',LINE=wipe,LNR=gutter))
 
-	def updateview(s):
-		s.make_linebuffer()
-		s.initspace()
-		s.render()
+		line = s._buffers['print'][l]
+		wipe = ' ' * (s.size.x - 4)
+		xy = f'\x1b[{{Y}};{s.location.x}H'
+		ltpl = s._templates['default']['LINE']
+		mtpl = s._templates['default']['MKUP']
+
+		if s.opts['hidden'] is False:
+			for l in range(1,s.size.y):
+				mkup = mtpl.format(FG='',  BG='',  UL='', HL='')
+				loc = ltpl['LOC'].format(XY=xy.format(Y=line))
+				prefix = ltpl['PREFIX'].format(LPAD='', RPAD='', MKUP=mkup)
+				suffix = ltpl['SUFFIX'].format(LPAD='', RPAD='', MKUP=mkup)
+
+				print(line['LINE'].format(SEL='',LINE=wipe,LNR=gutter))
 
 	def show(s,val=True):
 		s._hidden=not val
 		s.draw()
 
-	def make_linebuffer(s):
+	def _build(s):
 		xy = f'\x1b[{{Y}};{s.location.x}H'
-		reset='\x1b[m'
-		rng=s.printrng('y')
+		ltpl=s._templates['default']['LINE']
+		mtpl=s._templates['default']['MKUP']
+
+		rng=s._printrange('y')
 		vp=range(rng['start'],rng['stop'])
 		for l,line in enumerate(vp,start=1):
+
 			if s.mkup.line.default.colors.bg:
 				bg=s.mkup.line.default.colors.bg
 			else:
 				bg=''
 
-			linefmt=s.tpl['LINE'].format(
-				XY=xy.format(Y=line),
-				UNSET=reset,
-				FG=s.mkup.line.default.colors.fg.ansifg,
-				BG=bg.ansibg,
-				MKUP=s.mkup.line.default.mkup)
-			lnrfmt=s.tpl['LNR'].format(
-				UNSET=reset,
-				FG=s.mkup.lnr.default.colors.fg.ansifg,
-				BG=s.mkup.lnr.default.colors.bg.ansibg,
-				MKUP=s.mkup.lnr.default.mkup
-			)
-			s.tpl['BUFFER'][l]={}
-			s.tpl['BUFFER'][l]['LNR']=lnrfmt
-			s.tpl['BUFFER'][l]['LINE']=linefmt
+
+			mkup=mtpl.format(FG=s.mkup.lnr.default.colors.fg.ansifg,
+							 BG=s.mkup.lnr.default.colors.bg.ansibg,
+							 UL='', HL='')
+			loc=ltpl['LOC'].format(XY=xy.format(Y=line))
+			prefix=ltpl['PREFIX'].format(LPAD='',RPAD='',MKUP=mkup)
+			suffix=ltpl['SUFFIX'].format(LPAD='',RPAD='',MKUP=mkup)
+			line=ltpl['LINE'].format(LPAD='',RPAD='',MKUP=mkup)
+			s._buffers['print'][l]={}
+			s._buffers['print'][l]['LOC']=prefix
+			s._buffers['print'][l]['LINE']=prefix+line+suffix
 
 	def update(s):
+
 		lnr=''
 		adjust=0
-		if not s.overflow:
-			for l,idx in enumerate(s.data_lines,start=1):
-				tpls=s.tpl['BUFFER'][l]
-				line=s.data_lines[idx]
+		if not s._overflow:
+			for l,idx in enumerate(s._data['lines'],start=1):
+				tpls=s._buffers['print'][l]
+				line=s._data['lines'][idx]
 				if s.linenrs:
 					nr=f'{idx}. '.rjust(len(str(idx))+3)
 					lnr=tpls['LNR'].format(SEL='',NR=nr)
@@ -323,18 +420,10 @@ class LineDisplay:
 
 				s.print_buffer[l]=tpls['LINE'].format(SEL='',LINE=line,LNR=lnr)
 
-	def render(s):
-		"""
-		prints the buffer to stdout
-		:return:
-		"""
-		if not s._hidden:
-			for idx in s.print_buffer:
-				print(s.print_buffer[idx])
 	def extendlines(s):
-		for line in s.data_lines.values():
-			if len(line['data']) < s._longest:
-				line['data'].ljust(s._longest)
+		for line in s._data['lines'].values():
+			if len(line['data']) < s._cache['longest_line']:
+				line['data'].ljust(s._cache['longest_line'])
 				line['crop']=s.crop(line['data'])
 	def crop(s,line):
 		def cropped(adjust=0):
@@ -358,16 +447,13 @@ class LineDisplay:
 		return cropped
 
 	def addline(s,line):
-		s.data_idx+=1
-		longest=s._longest
-		s._longest=s._longest if len(line) <= s._longest else len(line)
-		if longest != s._longest:
-			s.extendlines()
-		s.data_lines[s.data_idx]={'data':line,'crop':s.crop(line)}
+		s._data['idx']+=1
+		s._measure(line)
+		s._data['lines'][s._data['idx']]={'data':line,'crop':s.crop(line)}
 		if not s._scroll:
-			s.v_viewrng.stop=s.data_idx
+			s._viewrange['v'].stop=s._data['idx']
 			# print('\x1b[2;1H',s.data_idx,s.v_viewrng)
-		if s.data_idx > s.size.y:
+		if s._data['idx'] > s.size.y:
 			s.overflow=True
 
 	def scroll(s, val):
@@ -382,19 +468,36 @@ class LineDisplay:
 			elif val ==0:
 				s._scroll= False
 		s.v_viewrng.shift(v)
-		s.update()
-		s.render()
+		s._state=2
+		s.draw()
 
 	def shift(s,val):
 		if not s._shift:
 			s._shift = True
 		s.h_viewrng.shift(val)
 		s.update()
-		s.render()
 
 	def draw(s):
-		if not s._hidden:
+		if s.STATE.INIT in s.drawflag:
+			s._build()
 			s.initspace()
-			s.updateview()
+			s._flags['drawstate'] ^=s.STATE.INIT
+			s._flags['drawstate'] |= s.STATE.DRAW
 
+		if s.STATE.WIPE in s._flags['drawstate']:
+			s._flags['drawstate'] ^= s.STATE.WIPE
+
+		if s.STATE.CLEAR in s._flags['drawstate']:
+			s._flags['drawstate'] ^= s.STATE.CLEAR
+		if s.STATE.UPDATE in s._flags['drawstate']:
+			s._flags['drawstate'] ^= s.STATE.UPDATE
+		if s.STATE.BUILD in s._flags['drawstate']:
+			s._flags['drawstate'] ^= s.STATE.BUILD
+		if s.STATE.REBUILD in s._flags['drawstate']:
+			s._flags['drawstate'] ^= s.STATE.REBUILD
+		if s.STATE.DRAW in s._flags['drawstate']:
+			s._flags['drawstate'] ^= s.STATE.DRAW
+			if not s._flags['hidden']:
+				for idx in s._buffers['print']:
+					print(s._buffers['print'][idx])
 

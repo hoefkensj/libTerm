@@ -65,14 +65,12 @@ def main(term):
 	fmt.pad_sep=' '
 	loop = asyncio.new_event_loop()
 	asyncio.set_event_loop(loop)
-	ctx = Context('Main',term, loop)
-
-	frame=Frame(
-		ctx,
-		name='frmGridMenu',
+	ctx = Context('Main',term=term, loop=loop)
+	ctx.
+	frame=Frame(		name='frmGridMenu',
 		location=Coord(5, 5))
-	fmt.mnu_maxwidth=frame.size.x
-	opts={'direction':'horizontal', 'maxhoritems':7,'fmt':fmt}
+
+	opts={'name':'GridMenu','direction':'horizontal', 'maxhoritems':7,'fmt':fmt}
 	frame.addMenu(Grid,**opts)
 	# for i in range(50):
 	# 	frame.display.addItem(chr(randint(65, 89)) + chr(randint(65 + 32, 89 + 32)) + chr(randint(65 + 32, 68 + 32)) + chr(randint(65 + 32, 68 + 32)))

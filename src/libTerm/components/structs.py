@@ -1,20 +1,20 @@
  #!/usr/bin/env python
 import sys,os,termios
-from abc import abstractmethod
 from os import get_terminal_size
-from time import time_ns
 from libTerm.components.rgbcolor import RGBColor
 from libTerm.components.enums import Ansi
 from libTerm.components import Input,Output
 import asyncio
-from abc import ABCMeta, abstractmethod , abstractproperty
+from abc import ABCMeta, abstractmethod
+from enum import IntEnum
+import pty
+import subprocess
 
 # Indices for termios list.
 IFLAG = 0;OFLAG = 1;CFLAG = 2;LFLAG = 3;ISPEED = 4;OSPEED = 5;CC = 6
 TCSAFLUSH = termios.TCSAFLUSH;ECHO = termios.ECHO;ICANON = termios.ICANON
 VMIN = 6;VTIME = 5
 
-from enum import IntEnum
 
 class IOFlag(IntEnum):
 	IFLAG  = 0
@@ -234,7 +234,6 @@ class TermColors():
 		s._bg=color
 		print(color.ansibg,end='',flush=True)
 
-
 class TermBuffers:
 	from libTerm.components.enums import Buffer,Ansi
 	BUFFER=Buffer
@@ -322,7 +321,6 @@ class TermModes:
 				s.modeCtl()
 			return s.current
 
-
 class TermSize(metaclass=ABCMeta):
 	from libTerm.components.base import Coord
 	COORD=Coord
@@ -376,7 +374,6 @@ class LiveTermSize(TermSize):
 		s._size=s.COORD(*s._rawsize)
 		return s._size
 
-
 class FixedTermSize(TermSize):
 	def __init__(s,**k):
 		super().__init__(**k)
@@ -396,10 +393,6 @@ class FixedTermSize(TermSize):
 	def getsize(s):
 		s._size=s._fixedsize
 		return s._size
-
-import pty
-import subprocess
-import time
 
 class VirtTTY:
 	def __init__(s,**k):
@@ -451,9 +444,6 @@ class RealTTY:
 		s.input	=	sys.stdin
 		s.output = sys.stdout
 
-
-
-
 class TermTty:
 	def __init__(s,**k):
 		s.term=k.get('term')
@@ -474,23 +464,3 @@ class TermTty:
 		s.output.write(query)
 		return s.input.read()
 
-
-
-
-
-
-class base:
-	def __init__(s,**k):
-		s.value=k.get('value')
-		if k.get('planet')=='moon':
-			pass
-
-class moonbase(base):
-	def __init__(s,**k):
-		super().__init__(**k)
-		s.moon=k.get('moon')
-
-class marsbase(base):
-	def __init__(s,**k):
-		super().__init__(**k)
-		s.mars=k.get('mars')

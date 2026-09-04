@@ -35,172 +35,237 @@ class ChangeSet:
 from abc import ABCMeta, abstractmethod
 
 
-
-
-class Formatting:
-	def __init__(s):
-		s.pad_pre=''
-		s.pad_sep=''
-		s.pad_post=''
-		s.pad_nr=''
-		s.pad_label=''
-		s.sep_nrlabel=''
-		s.sep_item=''
-		s.sep_row=''
-		s.sep_col=''
-		s.tpl_item='{MOD}{MKUP}{PADPRE}{NR}{SEP}{PADSEP}{LABEL}{PADPOST}{NOMKUP}'
-		s.mnu_maxwidth=None
-		s.mnu_maxhitems=None
-		s.mnu_maxheight=None
-		s.mnu_maxvitems=None
-		s.mnu_direction='horizontal'
-		s.mku_colorItem=ColorSet(fg=Color(64,192,192),bg=None)
-		s.mku_colorNr=ColorSet(fg=Color(64,192,192),bg=None)
-
-	@property
-	def fg(s):
-		return s.mku_colorItem.fg
-	@fg.setter
-	def fg(s,color):
-		s.mku_colorItem.fg=color
-
-	def __len__(s):
-		return sum([len(getattr(s,at)) for at in dir(s) if at.startswith('pad') or at.startswith('sep')])
-
 class MenuItem:
-	def __init__(s,menu=None,ctx=None,name=None,id=None,nr=None,label=None,**k):
-		s.ctx=ctx
-		s.menu=menu
-		s.name=name
-		s.tpl='{PADPRE}{LABEL}{PADPOST}{RESET}'
-		s._state=0
-		s._label=None
-		s._show=True
-		s._focus=False
+	def __init__(s,*a,**k):
+		s._name=k.get('name',a[0])
+		s._label=s.safestring(k.get('label',s._name))
 		s._selected=False
-		s._onfocus=[]
-		s._onselect=[]
-		s._callback=[s.defaultcb]
-		s._string=''
-
-
-	def focus(s,state=True):
-		s._focus=state
-
-	def width(s, part):
-		if s.menu:
-			s.menu._maxw.get(part)
-		return len(s.name)
-
-	def fmt(s,part):
-		return getattr(s.menu._fmt,part)
-	def choose(s):
-		s.highlight()
-		s()
-		s.menu.choice=s
-		s.menu.draw()
-
-	def highlight(s):
-		s.selected=False
-		s.normal=False
-		s.highlt=True
-		s.state=2
-		s.menu.update()
-	def deselect(s):
-		s.state=0
-		s.menu.update()
-	def select(s):
-		s.state=1
-		s.menu.update()
+		s._focused=False
+		s._chosen=False
+		s._confirmed=False
+		s._formatting=k.get('format',Formatting())
+		s._mkup={'MKUP':''}
+		s._padd={'LPAD':s.lpad,'RPAD':s.rpad}
+		s._xy=None
+		s._lpad=None
+		s._rpad=None
+		s._bullet={}
+		s._bullet['enabled']=False
+		s._bullet['string']=''
+		s._bullet['pad']={'lpad':'','rpad':''}
+		s._bullet['mkup']=''
+		s._number={}
+		s._number['enabled']=False
+		s._number['string']=''
+		s._number['pad']={'lpad':'','rpad':''}
+		s._number['mkup']=''
+		s._num=None
+		s._template={}
+		s._template['part']='{MKUP}{LPAD}{PART}{RPAD}'
+		s._template['bullet']=s._template['part'].format(MKUP='{BULLET_MKUP}',LPAD='{BULLET_LPAD}',RPAD='BULLET_RPAD',PART='BULLET')
+		s._template['number']=s._template['part'].format(MKUP='{NUMBER_MKUP}',LPAD='{NUMBER_LPAD}',RPAD='NUMBER_RPAD',PART='NUMBER',)
+		s._template['label']=s._template['part'].format(MKUP='{LABEL_MKUP}',LPAD='{LABEL_LPAD}',RPAD='LABEL_RPAD',PART='LABEL',)
+		s._templete['mods']='{SEL}{FOC}{PIC}{CNF}'
+		s._template['string']='{XY}{MODS}{PREFIX}{LABEL}{SUFFIX}{RESET}'
 
 	@property
-	def label(s):
-		return s.safestring()
+	def bullet(s):
+		return s._bullet['enabled']
+	@property
+	def bulletstr(s):
+		return s._bullet['string']		
+	@bullet.setter
+	def bullet(s,state=None,string=None):
+		if state is not None:
+			s._bullet['enable']=state
+		if string is not None:
+			s._bullet['string']=string
+	@property
+	def number(s):
+		return s._number['enabled']
+	@property
+	def numberstr(s):
+		return s._number['string']
+	@number.setter
+	def number(s,state=None,string=None):
+		if state is not None:
+			s._number['enable']=state
+		if string is not None:
+			s._number['string']=string
 
-	@label.setter
-	def label(s,value):
-		s._label=value
-	def hide(s,state=True):
-		s._show=not state
-	def show(s,state=True):
-		s._show=state
-	def defaultcb(s):
-		return s.nr,s.name
-
-	def safestring(s):
-		return str(s._label).replace('{', '{{').replace('}', '}}')
-	def draw(s):
-		print(str(s))
-	def __len__(s):
-		return len(str(s))
+	def safestring(s,string):
+		return str(string).replace('{', '{{').replace('}', '}}')
 
 	def __str__(s):
-		if s._show:
-			nr=str(s.nr).rjust(s.width('num'))
-			label=s.label.ljust(s.width('label')+len(s.fmt('pad_label')))
-			mkup='\x1b[38;2;{FG}m'.format(FG=s._fmt.mku_colorItem.fg.ansi())
-			sep=s.fmt('sep_nrlabel')
-			padsep=s.fmt('pad_sep')
-			padpre=s.fmt('pad_pre')
-			padpost=s.fmt('pad_post')
-		elif not s._show:
-			nr=''
-			label=''
-			mkup=''
-			sep=''
-			padsep=''
-			padpre=''
-			padpost=''
-		else:
-			nr=' '*len(str(s.nr).rjust(s.width('num')))
-			label=' '*len(s.label.ljust(s.width('label')+len(s.fmt('pad_label'))))
-			mkup='\x1b[m'
+		def mkprefix():
+			pfx=''
+			if s.bullet:
+				pfx+=s._template['bullet']
+			if s.number:
+				pfx+=s._template['number']
+			return pfx
+		string=s._template['string']
+		XY=s.location
+		MODS=s._template['mods']
+		PFX=mkprefix()
 
-
-
-		val={
-		'MKUP'    : mkup,
-		'LOC'     : str(s.location),
-		'PADSEP'  : padsep,
-		'PADPRE'  : padpre,
-		'PADPOST' : padpost,
-		'SEP'     : sep,
-		'MOD'     : '\x1b[1;7m' if s.state==1 else '\x1b[m',
-		'NOMKUP'  : '\x1b[0m'
+		mods={
+			'SEL': s._selected  *s._formatting.select,
+			'FOC': s._focused   *s._formatting.focus,
+			'PIC': s._chosen    *s._formatting.choose,
+			'CNF': s._confirmed *s._formatting.confirm
 		}
-		s.string= s._tplitem.format(NR=nr,LABEL=label,**val)
-		return s.string
-
-	def __call__(s):
-		for call in s.callback:
-			call()
+		return s._template.format(MODS=MODS.format(**mods),PFX=PFX,LABEL=s._label,SFX='')
+	def __len__(s):
+		return len(s._label)
+	def focus(s,val=True):
+		s._focused=val
+	def select(s,val=True):
+		s._selected=val
+	def confirm(s,val=True):
+		s._confirmed=val
+	def draw(s):
+		print(s.__str__(),end='',flush='')
+# class MenuItem:
+# 	def __init__(s,menu=None,ctx=None,name=None,id=None,nr=None,label=None,**k):
+# 		s.ctx=ctx
+# 		s.menu=menu
+# 		s.name=name
+# 		s.tpl='{PADPRE}{LABEL}{PADPOST}{RESET}'
+# 		s._state=0
+# 		s._label=None
+# 		s._show=True
+# 		s._focus=False
+# 		s._selected=False
+# 		s._onfocus=[]
+# 		s._onselect=[]
+# 		s._callback=[s.defaultcb]
+# 		s._string=''
+#
+#
+# 	def focus(s,state=True):
+# 		s._focus=state
+#
+# 	def width(s, part):
+# 		if s.menu:
+# 			s.menu._maxw.get(part)
+# 		return len(s.name)
+#
+# 	def fmt(s,part):
+# 		return getattr(s.menu._fmt,part)
+# 	def choose(s):
+# 		s.highlight()
+# 		s()
+# 		s.menu.choice=s
+# 		s.menu.draw()
+#
+# 	def highlight(s):
+# 		s.selected=False
+# 		s.normal=False
+# 		s.highlt=True
+# 		s.state=2
+# 		s.menu.update()
+# 	def deselect(s):
+# 		s.state=0
+# 		s.menu.update()
+# 	def select(s):
+# 		s.state=1
+# 		s.menu.update()
+#
+# 	@property
+# 	def label(s):
+# 		return s.safestring()
+#
+# 	@label.setter
+# 	def label(s,value):
+# 		s._label=value
+# 	def hide(s,state=True):
+# 		s._show=not state
+# 	def show(s,state=True):
+# 		s._show=state
+# 	def defaultcb(s):
+# 		return s.nr,s.name
+#
+# 	def safestring(s):
+# 		return str(s._label).replace('{', '{{').replace('}', '}}')
+# 	def draw(s):
+# 		print(str(s))
+# 	def __len__(s):
+# 		return len(str(s))
+#
+# 	def __str__(s):
+# 		if s._show:
+# 			nr=str(s.nr).rjust(s.width('num'))
+# 			label=s.label.ljust(s.width('label')+len(s.fmt('pad_label')))
+# 			mkup='\x1b[38;2;{FG}m'.format(FG=s._fmt.mku_colorItem.fg.ansi())
+# 			sep=s.fmt('sep_nrlabel')
+# 			padsep=s.fmt('pad_sep')
+# 			padpre=s.fmt('pad_pre')
+# 			padpost=s.fmt('pad_post')
+# 		elif not s._show:
+# 			nr=''
+# 			label=''
+# 			mkup=''
+# 			sep=''
+# 			padsep=''
+# 			padpre=''
+# 			padpost=''
+# 		else:
+# 			nr=' '*len(str(s.nr).rjust(s.width('num')))
+# 			label=' '*len(s.label.ljust(s.width('label')+len(s.fmt('pad_label'))))
+# 			mkup='\x1b[m'
+#
+#
+#
+# 		val={
+# 		'MKUP'    : mkup,
+# 		'LOC'     : str(s.location),
+# 		'PADSEP'  : padsep,
+# 		'PADPRE'  : padpre,
+# 		'PADPOST' : padpost,
+# 		'SEP'     : sep,
+# 		'MOD'     : '\x1b[1;7m' if s.state==1 else '\x1b[m',
+# 		'NOMKUP'  : '\x1b[0m'
+# 		}
+# 		s.string= s._tplitem.format(NR=nr,LABEL=label,**val)
+# 		return s.string
+#
+# 	def __call__(s):
+# 		for call in s.callback:
+# 			call()
 
 
 class MenuBase(metaclass=ABCMeta):
 	def __init__(s,ctx=None,parent=None,*a,**k):
 		s.ctx = ctx
-		s.parent = k.get('parent')
-		s.term =k.get('term', None)
-		s.name=k.get('name')
-		s._state=None
-		s.flag={'redraw': False,'stop':False, 'init':True,'show':True}
-		s._fmt=k.get('fmt',Formatting())
-		s._location = k.get('location')
-		s._size=None
-		s._direction=k.get('direction')
-		s._size=None
-
+		s.parent = parent
+		s.term = s.parent.term
+		s.name = name
+		s.bulletsyms = '⟪«‹… …›»⟫'
+		s._location = None
+		s._size = None
+		s._scroll = False
+		s._shift = False
+		s._hidden = False
+		s.overflow = False
+		s.v_viewrng = ViewRange(1, s.size.y)
+		s.h_viewrng = ViewRange(1, s.size.x)
+		s.linecount = lambda: s.data_idx
+		s.tpl = {}
+		s.tpl['LINE'] = '{XY}{MKUP}{{ITEM}}{RESET}'
+		s.tpl['LNR'] = '{BG}{FG}{{SEL}}{MKUP}{{NR}}{UNSET}'
+		s.tpl['BUFFER'] = {}
+		s._direction=None
 		s._idlist=[]
 		s._lastid=None
-
 		s._items={}
 		s._item=None
 		s._entries={}
 		s._choice=None
 		s._selitem=None
+		s._focitem=None
 		s._linecount=0
 		s.linecount=lambda : s._linecount
-
 		s.selector=Selector(1, len(s._idlist))
 		s._num_enable=k.get('nums',True)
 		s._num_start=k.get('numstart',1)
@@ -214,23 +279,37 @@ class MenuBase(metaclass=ABCMeta):
 		s._build_()
 	@property
 	def location(s):
-		s._location=s.parent.location + Coord(2, 2)
+		if s._location is None and s.parent is not None:
+			s._location=s.parent.location+Coord(2,2)
 		return s._location
 
 	@location.setter
 	def location(s,val):
-		s._location=val
-		s.updateview()
+		s._location=val+Coord(2, 2)
+		s._state=1
+		s.draw()
 
 	@property
 	def size(s):
-		s._size= s.parent.size + Coord(-2,-3)
+		if s._size is None and s.parent is not None:
+			s._size=s.parent.size+Coord(-2,-3)
+		s.state=1
 		return s._size
 
 	@size.setter
 	def size(s,val):
-		s._size=val
-		s.updateview()
+		s._size=val+Coord(-2,-3)
+		s.state=1
+		s.draw()
+
+	@property
+	def direction(s):
+		return s._direction
+
+	@direction.setter
+	def direction(s,value):
+		s._direction=value
+
 	@property
 	def item(s):
 		return s._item
@@ -238,17 +317,13 @@ class MenuBase(metaclass=ABCMeta):
 	@item.setter
 	def item(s,item):
 		s._item=item
-		s._item.select()
-
+		s.update()
 
 	@abstractmethod
-	def _build_(self): ...
-
-
+	def build(self): ...
 
 	def read(s):
 		return s.selector.read()
-
 
 	def newid(s,id=None):
 		if id is not None:
@@ -262,20 +337,18 @@ class MenuBase(metaclass=ABCMeta):
 
 	def addItem(s,item):
 		id=s.newid()
-		menuitem=MenuItem(s,ctx=s.ctx,name=item,id=id,fmt=s._fmt)
-		lenlabel=len(menuitem.safestring())
+		menuitem=MenuItem(s,name=item)
+		lenlabel=len(menuitem)
 		s._maxw['label']=max([s._maxw['label'],lenlabel])
 		s._maxw['num']=len(str(len(s)))
 
-		s._maxw['item']=sum([s._maxw['label'],s._maxw['num'],len(s._fmt)])
+		s._maxw['item']=sum([s._maxw['label'],s._maxw['num']])
 		s._items[id]=menuitem
 		s.selector.expand(1)
 
-
 	def show(s,state=True):
-		s.flag['show']=state
-		for item in s._entries:
-			s._entries[item].show(True)
+		s._show=state
+		s.draw()
 
 	def select(s,nr):
 		if  s.__len__() != 0:
@@ -291,49 +364,27 @@ class MenuBase(metaclass=ABCMeta):
 
 	def prev(s):
 		old=s._entries[s.read()]
-		old.deselect()
+		old.focus(False)
 		s.selector.prev()
 		s.item=s._entries[s.read()]
-		s._changed+=[old,s.item]
-		s.draw()
-
+		s.item.focus()
+		s.update()
 
 	def next(s):
 		old=s._entries[s.read()]
-		old.deselect()
+		old.focus(False)
 		s.selector.next()
 		s.item = s._entries[s.read()]
-		s._changed += [old, s.item]
-		s._changed+=[old,s.item]
-		s.draw()
+		s.item.focus()
+		s.update()
 
-	@property
-	def direction(s):
-		return s._direction
-	@direction.setter
-	def direction(s,value):
-		s._direction=value
 
 	def draw(s):
-		draw=[]
-
-
-	def choose(s):
-		item=s.item
-		item.deselect()
-		item.choose()
-		s.changed = [item]
-		s.draw()
-		return [s.selector.read(),item]
+		for item in s._items:
+			item.draw()
 
 	def update(s):
-		s._update=None
-		if s._changed:
-			update = ''.join([str(i) for i in s._changed])
-			s._changed=[]
-			if update:
-				s._update=update
-		return s._update
+		return
 
 	def __len__(s):
 		return len(s._idlist)
@@ -396,7 +447,6 @@ class Menu(MenuBase):
 		print(s.changed ,end='',flush=True)
 		return s.update
 
-
 	def delItem(s,item):
 		items=[*s._items.remove(item)]
 		s.setItems(items)
@@ -447,7 +497,7 @@ class Grid(MenuBase):
 		:param fgcolor:
 		:param bgcolor:
 		"""
-		super().__init__(parent=parent,ctx=ctx,*a,**k)
+		super().__init__(ctx=ctx,parent=parent,*a,**k)
 		s.cols={}
 		s.rows={}
 		s.stop = False
@@ -457,15 +507,9 @@ class Grid(MenuBase):
 		s.nrows={}
 		s.ncols={}
 
-	@property
-	def maxhoritems(s):
-		width=s.size.x
-		maxitems=width//s._maxw['item']
-		return maxitems
-
 	# def safestring(s,string):
 	# 	return str(string).replace('{', '{{').replace('}', '}}')
-	def _build_(s):
+	def _build(s):
 		if s._lastid is not None:
 			row=1
 			hide=False
@@ -569,7 +613,6 @@ class Grid(MenuBase):
 		s._changed+=[old,new]
 		s.draw()
 
-
 	def move_vertical(s, val):
 		def wrap(row):
 			if (val < 0) * (row < 1):
@@ -600,12 +643,34 @@ class Grid(MenuBase):
 		s.move_vertical(1)
 
 
-g=Grid()
-print(g)
-
+# g=Grid()
+# print(g)
+#
 # from libTerm import Term
 # items=['xxxx','xxxx','yyyy','dasdf','dasdf','erwrsdd','sdf','pppfpf']
 # t=Term()
 # g=Grid(t,items,Coord(5,5),maxheight=3)
 # g.draw()
 # print()z
+class Formatting:
+	from libTerm import Ansi
+	CSI = Ansi.CSI
+	def __init__(s):
+		s.lpad=''
+		s.rpad=''
+		s.select=Ansi.BOLD
+		s.deselect=''
+		s.focus=Ansi.COLSWP
+		s.unfocus=Ansi.COLUNSWP
+		s.choose=''
+		s.confirm=''
+		s.reset=Ansi.RESET
+		s.maxwidth=None
+		s.color=ColorSet(fg=Color(64,192,192),bg=None)
+
+	@property
+	def fg(s):
+		return s.color.fg
+	@fg.setter
+	def fg(s,color):
+		s.color.fg=color
