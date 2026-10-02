@@ -29,24 +29,26 @@ def CheckInput(term):
 			print('\x1b[15;20H\x1b[2K')
 			term.mode =Mode.CONTROL
 			printer(userin)
+		print('\x1b[15;20Hpress "i" for input "q" for quit')
 
 	return checkinput
 
 
-def main(term):
+def main():
+	term = Term()
+	atexit.register(ExitProcedure, term)
+	term.ANSI.cls()
+	term.mode = Mode.CONTROL
+	term.buffer = Buffer.ALTERNATE
+
 	loop = asyncio.new_event_loop()
 	asyncio.set_event_loop(loop)
 	loop.add_reader(term.tty.input.fd, CheckInput(term))
+	print('\x1b[1;1Hpress "i" for input "q" for quit')
 	loop.run_forever()
 
 
-if __name__ == '__main__':
-	term = Term()
-	term.mode = Mode.CONTROL
-	term.buffer = Buffer.ALTERNATE
-	term.ANSI.cls()
-	atexit.register(ExitProcedure, term)
-	print('\x1b[1;1Hpress "i" for input "q" for quit')
 
-	main(term)
+if __name__ == '__main__':
+	main()
 

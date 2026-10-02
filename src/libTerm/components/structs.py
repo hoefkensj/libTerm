@@ -302,7 +302,7 @@ class TermModes:
 		s.term._mode = s.current
 
 	def modeCtl(s):
-		s.term.cursor.show(False)
+		s.term.cursor.show=False
 		s.term.attr.echo = False
 		s.term.attr.canonical = False
 		s.current=s.MODE.CONTROL
