@@ -76,7 +76,7 @@ def cursor():
 	print('    \x1b[4mProperty', '\x1b[20GValue', '\x1b[40GDescription\x1b[m')
 	props = {}
 
-	props = propadd(props, *['.term', f'{term.cursor.term}', '# Link to the parent(Term()'])
+	props = propadd(props, *['.term', f'{term.cursor._term}', '# Link to the parent(Term()'])
 	props = propadd(props, *['.ansi', f'{'\n'.join([str(item) for item in term.cursor.ansi.__members__.items()])}', '# Ansi Enums'])
 	props = propadd(props, *['.move', f'{term.cursor.move}', '# Ansi Move Enums'])
 	props = propadd(props, *['.visible', f'{term.cursor.visible}', '# Whether the terminal is showing the cursor'])

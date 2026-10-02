@@ -1,5 +1,7 @@
 #!/usr/bin/env python
-from libTerm import Coord,Colors,Ansi
+import asyncio
+
+from libTerm import Coord,Colors,Ansi,Move
 from libTerm import Term
 from libTerm.components.enums import DrawState
 from abc import ABCMeta, abstractmethod
@@ -172,7 +174,7 @@ class TemplateSet:
 
 
 
-	def enable(s,):
+	# def enable(s,):
 	def __str__(s):
 		return '{LOC}{CTRL}{PREFIX}{DATA}{SUFFIX}{END}'.format(**s)
 	def __dict__(s):
@@ -212,12 +214,13 @@ class DisplayBase(metaclass=ABCMeta):
 		s.term=Cascade(
 		            None,
 		            lambda:k.get('term'),
-					   lambda:s.parent.term,
+					   lambda:s.parent._term,
 					   lambda:Term()
 		)
 		s.name=k.get('name',k.get('id'))
 		s.opts={}
-		s.opts['numbers']=False
+		s.opts['numbers']=True
+		s.opts['gutter']=True
 		s.opts['bullets']=False
 		s.opts['gutters']=False
 		s.opts['hidden']=False
@@ -229,16 +232,20 @@ class DisplayBase(metaclass=ABCMeta):
 		s.limits={}
 		s._location=None
 		s._size=None
-		s._overflow=False
-		s._scroll=False
-		s._shift=False
-		s._wrap=False
+		s._ctlflags={}
+		s._ctlflags['overflow']=False
+		s._ctlflags['scroll']=False
+		s._ctlflags['shift']=False
+		s._ctlflags['wrap']=False
 		s._viewrange={}
 		s._viewrange['v']=ViewRange(1,40)
 		s._viewrange['h']=ViewRange(1,80)
 		s._count={}
 		s._flags={}
 		s._flags['drawstate']=DrawState(0)
+		s._flags['asyncdraw']=asyncio.Event()
+		s._flags['asyncdone']=asyncio.Event()
+		s._flags['overflow']=False
 		s._data={}
 		s._cache={}
 		s._templates={}
@@ -249,7 +256,14 @@ class DisplayBase(metaclass=ABCMeta):
 		return s._flags['drawstate']
 	@drawflag.setter
 	def drawflag(s, flags):
+		s._flags['drawstate']=flags
+	def toggleflag(s,flags):
 		s._flags['drawstate']^=flags
+	def setflag(s,flags):
+		s._flags['drawstate']|=flags
+	def clearflag(s,flags):
+		s._flags['drawstate']&=~flags
+
 	@property
 	def location(s):
 		if s._location is None:
@@ -260,9 +274,12 @@ class DisplayBase(metaclass=ABCMeta):
 		return s._location
 	@location.setter
 	def location(s,val):
+		draw = s.STATE
 		s._location=val+Coord(2, 2)
-		s.flags['drawstate']= s.STATE.WIPE | s.STATE.UPDATE | s.STATE.DRAW
-		s._draw()
+		s.drawflag = draw.WIPE | draw.UPDATE | draw.DRAW
+		print('\x1b[1;120H'+repr(s.drawflag),end='',flush=True)
+
+		s.draw()
 	@property
 	def size(s):
 		if s._size is None and s.parent is not None:
@@ -272,8 +289,10 @@ class DisplayBase(metaclass=ABCMeta):
 
 	@size.setter
 	def size(s,val):
+		draw = s.STATE
 		s._size=val+Coord(-2,-3)
-		s.drawflag= flag.WIPE | flag.REBUILD | flag.DRAW
+		s.drawflag= draw.WIPE | draw.REBUILD | draw.DRAW
+		print('\x1b[1;120H'+repr(s.drawflag),end='',flush=True)
 		s.draw()
 
 
@@ -296,17 +315,21 @@ class LineDisplay(DisplayBase):
 		s._count['lines']=0
 		s._cache['longest_line']=0
 		s._buffers['print']={}
+		s._buffers['line']={}
+		s._buffers['clear']={}
 		s.mkup=default_markup
 		s._templates['default']['LINE']={}
 		s._templates['default']['LINE']['LOC']='{XY}'
 		s._templates['default']['LINE']['CTRL']='{MODS}'
-		s._templates['default']['LINE']['PREFIX']='{MKUP}{LPAD}{{PREFIX}}{RPAD}'
-		s._templates['default']['LINE']['LINE']='{MKUP}{LPAD}{{LINE}}{RPAD}'
-		s._templates['default']['LINE']['SUFFIX']='{MKUP}{LPAD}{{SUFFIX}}{RPAD}'
+		s._templates['default']['LINE']['PREFIX']='{MKUP}{LPAD}{{PREFIX}}{RPAD}{END}'
+		s._templates['default']['LINE']['LINE']='{MKUP}{LPAD}{{LINE}}{RPAD}{END}'
+		s._templates['default']['LINE']['SUFFIX']='{MKUP}{LPAD}{{SUFFIX}}{RPAD}{END}'
 		s._templates['default']['LINE']['END']='{RESET}'
+		s._templates['default']['GUTTER']= {}
+		s._templates['default']['GUTTER']['NUMBER']='{NUM}'
 		s._templates['default']['MODS']='{SEL}{FOC}{PIC}{CNF}'
 		s._templates['default']['MKUP']='{FG}{BG}{HL}{UL}'
-		s.drawflag=DrawState.INIT
+		s.drawflag=DrawState.NONE
 		s.draw()
 
 	def __len__(s):
@@ -342,23 +365,23 @@ class LineDisplay(DisplayBase):
 		s._flags['drawstate']=s.STATE.UPDATE
 		s.draw()
 
-	def initspace(s):
-		# s.printrng('y')
-
-		line = s._buffers['print'][l]
-		wipe = ' ' * (s.size.x - 4)
-		xy = f'\x1b[{{Y}};{s.location.x}H'
-		ltpl = s._templates['default']['LINE']
-		mtpl = s._templates['default']['MKUP']
-
-		if s.opts['hidden'] is False:
-			for l in range(1,s.size.y):
-				mkup = mtpl.format(FG='',  BG='',  UL='', HL='')
-				loc = ltpl['LOC'].format(XY=xy.format(Y=line))
-				prefix = ltpl['PREFIX'].format(LPAD='', RPAD='', MKUP=mkup)
-				suffix = ltpl['SUFFIX'].format(LPAD='', RPAD='', MKUP=mkup)
-
-				print(line['LINE'].format(SEL='',LINE=wipe,LNR=gutter))
+	# def initspace(s):
+	# 	# s.printrng('y')
+	#
+	# 	line = s._buffers['print'][l]
+	# 	wipe = ' ' * (s.size.x - 4)
+	# 	xy = f'\x1b[{{Y}};{s.location.x}H'
+	# 	ltpl = s._templates['default']['LINE']
+	# 	mtpl = s._templates['default']['MKUP']
+	#
+	# 	if s.opts['hidden'] is False:
+	# 		for l in range(1,s.size.y):
+	# 			mkup = mtpl.format(FG='',  BG='',  UL='', HL='')
+	# 			loc = ltpl['LOC'].format(XY=xy.format(Y=line))
+	# 			prefix = ltpl['PREFIX'].format(LPAD='', RPAD='', MKUP=mkup)
+	# 			suffix = ltpl['SUFFIX'].format(LPAD='', RPAD='', MKUP=mkup)
+	#
+	# 			print(line['LINE'].format(SEL='',LINE=wipe,LNR=gutter))
 
 	def show(s,val=True):
 		s._hidden=not val
@@ -373,75 +396,108 @@ class LineDisplay(DisplayBase):
 		vp=range(rng['start'],rng['stop'])
 		for l,line in enumerate(vp,start=1):
 
-			if s.mkup.line.default.colors.bg:
-				bg=s.mkup.line.default.colors.bg
+			if s.opts['gutter']:
+				pfxbg=s.mkup.lnr.default.colors.bg.ansibg
 			else:
-				bg=''
+				pfxbg=''
 
 
 			mkup=mtpl.format(FG=s.mkup.lnr.default.colors.fg.ansifg,
-							 BG=s.mkup.lnr.default.colors.bg.ansibg,
+							 BG=pfxbg,
 							 UL='', HL='')
 			loc=ltpl['LOC'].format(XY=xy.format(Y=line))
-			prefix=ltpl['PREFIX'].format(LPAD='',RPAD='',MKUP=mkup)
-			suffix=ltpl['SUFFIX'].format(LPAD='',RPAD='',MKUP=mkup)
-			line=ltpl['LINE'].format(LPAD='',RPAD='',MKUP=mkup)
-			s._buffers['print'][l]={}
-			s._buffers['print'][l]['LOC']=prefix
-			s._buffers['print'][l]['LINE']=prefix+line+suffix
+			prefix=ltpl['PREFIX'].format(LPAD='',RPAD='',MKUP=mkup,END='\x1b[m')
+			suffix=ltpl['SUFFIX'].format(LPAD='',RPAD='',MKUP=mkup,END='\x1b[m')
+			line=ltpl['LINE'].format(LPAD='',RPAD='',MKUP='',END='\x1b[m')
+			s._buffers['line'][l]={}
+			s._buffers['line'][l]['LOC']=loc
+			s._buffers['line'][l]['LINE']=prefix+line+suffix
+			s._buffers['line'][l]['WIPE']=' '*s.size.x
+			s._buffers['clear'][l]=loc+s._buffers['line'][l]['WIPE']
 
-	def update(s):
+	def frame_fill(s, adjust):
+		for l, idx in enumerate(s._data['lines'], start=1):
+			tpls = s._buffers['line'][l]
+			line = s._data['lines'][idx]
+			if s.opts['numbers']:
+				nr = f'{idx}. '.rjust(len(str(idx)) + 3)
+				lnr = s._templates['default']['GUTTER']['NUMBER'].format(NUM=nr)
+				adjust = -len(nr)
+			if not s.opts['wrap']:
+				line = line['crop'](adjust=adjust)
+			
+			s._buffers['print'][l] = [str(s._buffers['line'][l]['LOC'])]
+			s._buffers['print'][l] += [tpls['LINE'].format(PREFIX=lnr, LINE=line, SUFFIX='')]
 
-		lnr=''
+	def frame_autoscroll(s,adjust):
+		for l in range(1, s.size.y + 1):
+			tpls = s._buffers['line'][l]
+			offset = s._viewrange['v'].start + l
+			line = s._data['lines'][offset]
+			if s.opts['numbers']:
+				nr = f'{offset}. '.rjust(4)
+				lnr = s._templates['default']['GUTTER']['NUMBER'].format(NUM=nr)
+				adjust = -len(nr)
+			if not s.opts['wrap']:
+				line = line['crop'](adjust=adjust)
+			s._buffers['print'][l] = [stdfr(s._buffers['line'][l]['LOC'])]
+			s._buffers['print'][l] += [tpls['LINE'].format(PREFIX=lnr, LINE=line, SUFFIX='')]
+
+	def update_buffers(s):
+
 		adjust=0
-		if not s._overflow:
-			for l,idx in enumerate(s._data['lines'],start=1):
-				tpls=s._buffers['print'][l]
-				line=s._data['lines'][idx]
-				if s.linenrs:
-					nr=f'{idx}. '.rjust(len(str(idx))+3)
-					lnr=tpls['LNR'].format(SEL='',NR=nr)
-					adjust=-len(nr)
-				if not s.wrap:
-					line=line['crop'](adjust=adjust)
-				s.print_buffer[l]=tpls['LINE'].format(SEL='',LINE=line,LNR=lnr)
+		if not s._ctlflags['overflow']:
+			s.frame_fill(adjust)
 
 		else:
-			for l in range(1,s.size.y+1):
-				tpls=s.tpl['BUFFER'][l]
-				offset=s.v_viewrng.start+l
-				line=s.data_lines[offset]
-				if s.linenrs:
-					nr = f'{offset}. '.rjust(4)
-					lnr = tpls['LNR'].format(SEL='', NR=nr)
-					adjust = -len(nr)
-				if not s.wrap:
-					line=line['crop'](adjust=adjust)
-
-				s.print_buffer[l]=tpls['LINE'].format(SEL='',LINE=line,LNR=lnr)
+			s.frame_autoscroll(adjust)
 
 	def extendlines(s):
 		for line in s._data['lines'].values():
 			if len(line['data']) < s._cache['longest_line']:
 				line['data'].ljust(s._cache['longest_line'])
 				line['crop']=s.crop(line['data'])
+
+	def wrap(s,line):
+		# TODO: figure this out as it seems impossible with this setup
+		def wrapped(adjust=0):
+
+			save=ctx._term.cursor.quicksave
+			load=ctx._term.cursor.quickload
+			down=Move.DOWN
+			maxw   = s._viewrange['h'].size
+			start  = s._viewrange['h'].start
+			stop   = s._viewrange['h'].stop+adjust+2
+			ol = line.ljust(maxw).rjust(maxw)
+			ll=[]
+			while ol :
+				ll+=[save()+ol[:maxw]+load()+down()]
+				ol=ol[maxw:]
+
+
 	def crop(s,line):
 		def cropped(adjust=0):
-			start  =s.h_viewrng.start
-			stop   =s.h_viewrng.stop+adjust+2
-			suffix =' [\x1b[38;2;64;192;64m…\x1b[39m]' if len(line)>(s.h_viewrng.size+adjust)else False
-			l      =line.ljust(s.h_viewrng.size).rjust(s.h_viewrng.size)[start:stop]
-			crop=line.ljust(s.h_viewrng.size).rjust(s.h_viewrng.size)[stop:]
-			if crop.strip(' ')=='':
-				suffix=' '
-			if start > 1:
-				prefix='\x1b[38;2;64;192;64m… \x1b[39m'
-				l=prefix+l[1:]
-
-			if suffix:
+			cropping = False
+			clipping = False
+			nfix   = color(64,192,64).ansi.fg + '…' + '\x1b[39m'
+			maxw   = s._viewrange['h'].size
+			start  = s._viewrange['h'].start
+			stop   = s._viewrange['h'].stop+adjust+2
+			suffix = f' [{nfix}]' if len(line)>(maxw+adjust) else False
+			l      = line.ljust(maxw).rjust(maxw)[start:stop]
+			crop   = line.ljust(maxw).rjust(maxw)[stop:]
+			if crop.strip(' ')!='':
+				cropping=True
+			if start > 0:
+				clipping=True
+			if clipping:
+				l=nfix+l[:-1]
+			if cropping:
 				l=l[:-5]+suffix
-			if len(l)<s.h_viewrng.size+adjust:
-				l+=' '*(s.h_viewrng.size+(adjust-len(l)))
+
+			#
+			# if len(l)<s._viewrange['h'].size+adjust:
+			# 	l+=' '*(s._viewrange['h'].size+(adjust-len(l)))
 
 			return l
 		return cropped
@@ -450,54 +506,86 @@ class LineDisplay(DisplayBase):
 		s._data['idx']+=1
 		s._measure(line)
 		s._data['lines'][s._data['idx']]={'data':line,'crop':s.crop(line)}
-		if not s._scroll:
+		if not s._ctlflags['overflow']:
 			s._viewrange['v'].stop=s._data['idx']
-			# print('\x1b[2;1H',s.data_idx,s.v_viewrng)
-		if s._data['idx'] > s.size.y:
-			s.overflow=True
+			# print('\x1b[2;1H',s.data_idx,s._viewrange['v'])
+
+		if s._data['idx'] == s.size.y:
+			s._ctlflags['overflow']=True
 
 	def scroll(s, val):
 		v=val
+		draw = s.STATE
 		if not s._scroll:
 			s._scroll = True
 		if s._scroll:
-			if s.v_viewrng.stop+1 == s.data_idx:
+			if s._viewrange['v'].stop+1 == s._data['idx']:
 				s._scroll = False
-			elif s.v_viewrng.start == 1:
+			elif s._viewrange['v'].start == 1:
 				v=0
 			elif val ==0:
 				s._scroll= False
-		s.v_viewrng.shift(v)
-		s._state=2
+		s._viewrange['v'].shift(v)
+		s.drawflag=draw.WIPE | draw.REBUILD | draw.DRAW
 		s.draw()
 
 	def shift(s,val):
 		if not s._shift:
 			s._shift = True
-		s.h_viewrng.shift(val)
-		s.update()
+		s._viewrange['h'].shift(val)
+		s.update_buffers()
+
+	def wipelines(s):
+		for idx in s._buffers['clear']:
+			print(s._buffers['clear'][idx], end='', flush=True)
 
 	def draw(s):
-		if s.STATE.INIT in s.drawflag:
+		draw=s.STATE
+		def pstate():
+			print('\x1b[1;120H' + repr(s.drawflag), end='', flush=True)
+
+		def forcedraw():
+			if draw.DRAW not in s.drawflag:
+				s.drawflag=draw.DRAW
+
+		if draw.START in s.drawflag:
+			s.drawflag = draw.INIT
+
+		if draw.INIT in s.drawflag:
 			s._build()
-			s.initspace()
-			s._flags['drawstate'] ^=s.STATE.INIT
-			s._flags['drawstate'] |= s.STATE.DRAW
+			s.clearflag(draw.INIT)
+			s.setflag(draw.DEFAULT)
+			pstate()
+			forcedraw()
 
-		if s.STATE.WIPE in s._flags['drawstate']:
-			s._flags['drawstate'] ^= s.STATE.WIPE
+		if draw.DEFAULT in s.drawflag:
+			if draw.WIPE in s.drawflag:
+				s.drawflag = draw.WIPE
+				pstate()
+				s.wipelines()
 
-		if s.STATE.CLEAR in s._flags['drawstate']:
-			s._flags['drawstate'] ^= s.STATE.CLEAR
-		if s.STATE.UPDATE in s._flags['drawstate']:
-			s._flags['drawstate'] ^= s.STATE.UPDATE
-		if s.STATE.BUILD in s._flags['drawstate']:
-			s._flags['drawstate'] ^= s.STATE.BUILD
-		if s.STATE.REBUILD in s._flags['drawstate']:
-			s._flags['drawstate'] ^= s.STATE.REBUILD
-		if s.STATE.DRAW in s._flags['drawstate']:
-			s._flags['drawstate'] ^= s.STATE.DRAW
-			if not s._flags['hidden']:
-				for idx in s._buffers['print']:
-					print(s._buffers['print'][idx])
+			if draw.CLEAR in s.drawflag:
+				pstate()
+				s.drawflag = draw.CLEAR
+
+			if draw.UPDATE in s.drawflag:
+				s.drawflag = draw.UPDATE
+				pstate()
+				s.update_buffers()
+				forcedraw()
+
+			if draw.BUILD in s.drawflag:
+				s.drawflag = draw.BUILD
+				pstate()
+			if draw.REBUILD in s.drawflag:
+				s.drawflag = draw.REBUILD
+				pstate()
+
+			if draw.DRAW in s.drawflag:
+				pstate()
+				s.drawflag = draw.DRAW
+				if not s.opts['hidden']:
+					for idx in s._buffers['print']:
+						print(''.join(s._buffers['print'][idx]),end='',flush=True)
+
 

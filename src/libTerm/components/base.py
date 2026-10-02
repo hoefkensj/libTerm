@@ -65,8 +65,6 @@ class Coord(namedtuple('Coord', ['x', 'y'])):
 	_x: int = field(default=0)
 	_y: int = field(default=0)
 
-
-
 	def __str__(s):
 		return f'\x1b[{s.y + 1};{s.x + 1}H'
 

@@ -107,7 +107,6 @@ class Ansi(StrEnum):
 	def __call__(s, *a, **k):
 		print(s.value, end='', flush=True)
 
-
 class Move(StrEnum):
 	CSI   = Ansi.CSI
 	UP    = CSI+'{N}A'
@@ -138,7 +137,7 @@ class Move(StrEnum):
 		return result
 
 class DrawState(IntFlag):
-	NONE      = 1
+	NONE      = 0
 	DEFAULT   = 1
 	INIT     = 2
 	CLEAR     = 4
@@ -147,6 +146,7 @@ class DrawState(IntFlag):
 	REBUILD   = 32
 	UPDATE    = 64
 	DRAW      = 128
+	START     = 256
 
 # a=DrawState(1)
 # a^=a.UPDATE|a.DRAW|a.NONE

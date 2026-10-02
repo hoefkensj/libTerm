@@ -9,8 +9,8 @@ from libTerm.modules.class_context import  Context
 async def DEMODATA(f):
 	from random import randint
 	for i in range(1, 1500000):
-		f.display.print(''.join([f'abcdefghijklmnopqrstuvwxyz '[randint(0, 26)] for i in range(randint(1, 150))]))
-		await asyncio.sleep(randint(0,1000)/randint(100000,10000000))
+		f.display.print(str(i)+''.join([f'abcdefghijklmnopqrstuvwxyz '[randint(0, 26)] for i in range(randint(1, 150))]))
+		await asyncio.sleep(randint(0,1000)/randint(100,1000))
 
 def setControls(ctx):
 	CSI=Ansi.CSI

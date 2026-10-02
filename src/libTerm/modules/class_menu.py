@@ -239,7 +239,7 @@ class MenuBase(metaclass=ABCMeta):
 	def __init__(s,ctx=None,parent=None,*a,**k):
 		s.ctx = ctx
 		s.parent = parent
-		s.term = s.parent.term
+		s.term = s.parent._term
 		s.name = name
 		s.bulletsyms = '⟪«‹… …›»⟫'
 		s._location = None

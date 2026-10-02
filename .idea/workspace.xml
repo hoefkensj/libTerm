@@ -8,24 +8,15 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="bc73ff2f-338a-4651-a389-91491c2041b6" name="Changes" comment="added tests , prolly not that usefull as its only testing if stuff exists , and written by copilot">
-      <change beforePath="$PROJECT_DIR$/.STATUS_TESTS" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/AGENTS.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CURSOR_FIX_SUMMARY.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/libterm.cast" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/libterm.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/libterm_framenested.cast" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/libterm_framenested.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/libterm_framenestedd.cast" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/libTerm/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/libTerm/components/base.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/components/base.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/libTerm/components/enums.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/components/enums.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/libTerm/components/structs.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/components/structs.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/libTerm/components/tools.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/components/tools.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/libTerm/examples/ex_basic.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/examples/ex_basic.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/libTerm/examples/ex_frame_nested_linedisp.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/examples/ex_frame_nested_linedisp.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/libTerm/examples/ex_menu_grid_big.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/examples/ex_menu_grid_big.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/libTerm/modules/class_display.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/modules/class_display.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/libTerm/modules/class_frame.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/modules/class_frame.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/libTerm/modules/class_menu.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/libTerm/modules/class_menu.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test_cursor_fix.py" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -102,17 +93,17 @@
     <setting file="file://$USER_HOME$/.cache/JetBrains/PyCharmCE2025.2/python_stubs/1522887055/atexit.py" root0="SKIP_INSPECTION" />
     <setting file="file://$PROJECT_DIR$/pyproject.toml" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/src/libTerm/__init__.py" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/src/libTerm/components/enums.py" root0="SKIP_INSPECTION" />
     <setting file="file://$PROJECT_DIR$/src/libTerm/examples/__init__.py" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/src/libTerm/examples/ex_arrowkeys.py" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/src/libTerm/examples/ex_menu_list_simple.py" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/src/libTerm/examples/ex_printkeys.py" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/src/libTerm/examples/ex_snake_manual.py" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/src/libTerm/modules/class_display.py" root0="SKIP_INSPECTION" />
-    <setting file="file://$PROJECT_DIR$/src/libTerm/modules/class_frame.py" root0="SKIP_INSPECTION" />
+    <setting file="file://$PROJECT_DIR$/src/libTerm/modules/class_frame.py" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/src/libTerm/modules/class_menu.py" root0="SKIP_INSPECTION" />
     <setting file="file://$PROJECT_DIR$/src/libTerm/term/__init__.py" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/src/libTerm/term/mock.py" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/src/libTerm/term/posix.py" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/src/libTerm/term/posix.py" root0="SKIP_INSPECTION" />
     <setting file="file://$PROJECT_DIR$/src/libTerm/term/virt.py" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/tests/test_cursor.py" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/tests/test_store.py" root0="FORCE_HIGHLIGHTING" />
@@ -217,7 +208,7 @@
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
     &quot;copilot.chat.legacySessionMetadata.migrated&quot;: &quot;true&quot;,
     &quot;git-widget-placeholder&quot;: &quot;master&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/home/jeroen/exclusivein&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/home/jeroen/tmppython/libTerm&quot;,
     &quot;settings.editor.selected.configurable&quot;: &quot;reference.settingsdialog.IDE.editor.colors.Python&quot;
   },
   &quot;keyToStringList&quot;: {
@@ -240,7 +231,7 @@
       <recent name="$PROJECT_DIR$/.local/venvs" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.ex_frame_nested_linedisp">
+  <component name="RunManager" selected="Python.class_frame (1)">
     <configuration name="__init__" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
       <module name="libTerm" />
       <option name="ENV_FILES" value="" />
@@ -285,6 +276,28 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
+    <configuration name="class_frame (1)" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="libTerm" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src/libTerm/modules" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/libTerm/modules/class_frame.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <configuration name="class_frame" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
       <module name="libTerm" />
       <option name="ENV_FILES" value="" />
@@ -302,28 +315,6 @@
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="true" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="class_menu" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="libTerm" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src/libTerm/modules" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/libTerm/modules/class_menu.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
       <option name="MODULE_MODE" value="false" />
       <option name="REDIRECT_INPUT" value="false" />
       <option name="INPUT_FILE" value="" />
@@ -513,19 +504,19 @@
       <item itemvalue="Python.ex_snake_automatic" />
       <item itemvalue="Python.example" />
       <item itemvalue="Python.posix" />
+      <item itemvalue="Python.class_frame (1)" />
       <item itemvalue="Python.class_display" />
-      <item itemvalue="Python.class_menu" />
       <item itemvalue="Python.enums" />
       <item itemvalue="Python.ex_frame_nested_linedisp" />
       <item itemvalue="Python.ex_menu_grid_big" />
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.class_frame (1)" />
         <item itemvalue="Python.ex_frame_nested_linedisp" />
         <item itemvalue="Python.class_display" />
         <item itemvalue="Python.enums" />
         <item itemvalue="Python.ex_menu_grid_big" />
-        <item itemvalue="Python.class_menu" />
       </list>
     </recent_temporary>
   </component>
@@ -660,6 +651,16 @@
           <url>file://$PROJECT_DIR$/src/libTerm/modules/class_menu.py</url>
           <line>610</line>
           <option name="timeStamp" value="75" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/src/libTerm/modules/class_display.py</url>
+          <line>561</line>
+          <option name="timeStamp" value="80" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/src/libTerm/modules/class_frame.py</url>
+          <line>256</line>
+          <option name="timeStamp" value="84" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
